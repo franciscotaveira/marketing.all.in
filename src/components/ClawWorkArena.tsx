@@ -53,7 +53,7 @@ export const ClawWorkArena: React.FC<{ onClose: () => void }> = ({ onClose }) =>
           worker.status = 'working';
           worker.currentTask = task.desc;
           
-          setLogs(l => [{ id: Math.random().toString(), time: new Date(), msg: `${worker.name} started: ${task.desc}`, type: 'start' }, ...l].slice(0, 50));
+          setLogs(l => [{ id: Math.random().toString(), time: new Date(), msg: `${worker.name} started: ${task.desc}`, type: 'start' as const }, ...l].slice(0, 50));
         } else if (worker.status === 'working') {
           const earned = Math.floor(Math.random() * 300) + 100;
           worker.status = Math.random() > 0.8 ? 'resting' : 'idle';
@@ -62,7 +62,7 @@ export const ClawWorkArena: React.FC<{ onClose: () => void }> = ({ onClose }) =>
           worker.currentTask = undefined;
           
           setTotalEarnings(prevEarnings => prevEarnings + earned);
-          setLogs(l => [{ id: Math.random().toString(), time: new Date(), msg: `${worker.name} earned $${earned} completing a task.`, type: 'earn' }, ...l].slice(0, 50));
+          setLogs(l => [{ id: Math.random().toString(), time: new Date(), msg: `${worker.name} earned $${earned} completing a task.`, type: 'earn' as const }, ...l].slice(0, 50));
         }
 
         next[idx] = worker;

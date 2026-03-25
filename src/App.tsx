@@ -1163,12 +1163,8 @@ export default function App() {
 
       {/* Main Content */}
       <main className="flex-1 flex flex-col relative min-w-0">
-        {isSwarmView ? (
-          <SwarmFlow agents={agents} />
-        ) : (
-          <>
-            {/* Header */}
-            <header className="h-16 bg-white/70 backdrop-blur-2xl border-b border-black/5 flex items-center justify-between px-6 sticky top-0 z-30 shadow-[0_1px_3px_rgba(0,0,0,0.02)]">
+        {/* Header */}
+        <header className="min-h-[4rem] py-3 bg-white/70 backdrop-blur-2xl border-b border-black/5 flex items-center justify-between px-6 sticky top-0 z-30 shadow-[0_1px_3px_rgba(0,0,0,0.02)]">
           <div className="flex items-center gap-4">
             {!isSidebarOpen && (
               <button 
@@ -1179,18 +1175,52 @@ export default function App() {
               </button>
             )}
             <div className="flex flex-col">
-              <h1 className="text-sm font-black uppercase tracking-[0.15em] text-black/80 flex items-center gap-2">
-                {selectedSkill ? selectedSkill.name : "Inteligência de Marketing"}
+              <div className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-widest text-black/40 mb-1">
                 <button 
-                  onClick={() => setMessages([])}
-                  className="text-[8px] font-black uppercase tracking-widest text-black/30 hover:text-red-500 transition-colors ml-4"
+                  onClick={() => {
+                    setSelectedSkill(null);
+                    setIsSwarmView(false);
+                  }}
+                  className="hover:text-black/70 transition-colors"
                 >
-                  Limpar Conversa
+                  Home
                 </button>
+                {isSwarmView ? (
+                  <>
+                    <ChevronRight className="w-3 h-3" />
+                    <span className="text-blue-600">Swarm View</span>
+                  </>
+                ) : selectedSkill ? (
+                  <>
+                    <ChevronRight className="w-3 h-3" />
+                    <button 
+                      onClick={() => {
+                        setSelectedSkill(null);
+                        setExpandedCategory(selectedSkill.category);
+                      }}
+                      className="hover:text-black/70 transition-colors"
+                    >
+                      {selectedSkill.category}
+                    </button>
+                    <ChevronRight className="w-3 h-3" />
+                    <span className="text-blue-600">{selectedSkill.name}</span>
+                  </>
+                ) : null}
+              </div>
+              <h1 className="text-sm font-black uppercase tracking-[0.15em] text-black/80 flex items-center gap-2">
+                {isSwarmView ? "Swarm View" : selectedSkill ? selectedSkill.name : "Inteligência de Marketing"}
+                {!isSwarmView && (
+                  <button 
+                    onClick={() => setMessages([])}
+                    className="text-[8px] font-black uppercase tracking-widest text-black/30 hover:text-red-500 transition-colors ml-4"
+                  >
+                    Limpar Conversa
+                  </button>
+                )}
                 <span className="w-1.5 h-1.5 bg-blue-500 rounded-full animate-pulse shadow-[0_0_8px_rgba(59,130,246,0.6)]" />
               </h1>
               <p className="text-[10px] text-black/40 font-bold uppercase tracking-tighter">
-                {selectedSkill ? selectedSkill.persona : "Selecione uma habilidade para começar"}
+                {isSwarmView ? "Visualização do enxame de agentes" : selectedSkill ? selectedSkill.persona : "Selecione uma habilidade para começar"}
               </p>
             </div>
           </div>
@@ -1367,7 +1397,13 @@ export default function App() {
           </div>
         </header>
 
-        {/* Agent Brain Modal */}
+        {isSwarmView ? (
+          <div className="flex-1 p-6 overflow-hidden">
+            <SwarmFlow agents={agents} />
+          </div>
+        ) : (
+          <>
+            {/* Agent Brain Modal */}
         <AnimatePresence>
           {isBrainOpen && (
             <AgentBrain 
