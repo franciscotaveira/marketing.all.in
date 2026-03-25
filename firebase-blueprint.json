@@ -1,0 +1,112 @@
+{
+  "entities": {
+    "Message": {
+      "title": "Message",
+      "description": "A single message in a chat conversation.",
+      "type": "object",
+      "properties": {
+        "role": {
+          "type": "string",
+          "enum": ["user", "ai"],
+          "description": "The role of the message sender."
+        },
+        "content": {
+          "type": "string",
+          "description": "The text content of the message."
+        },
+        "agentName": {
+          "type": "string",
+          "description": "The name of the agent that sent the message (if AI)."
+        },
+        "agentTier": {
+          "type": "string",
+          "description": "The tier of the agent."
+        },
+        "images": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Base64 encoded images attached to the message."
+        },
+        "artifacts": {
+          "type": "array",
+          "items": { "$ref": "Artifact" },
+          "description": "Artifacts generated in this message."
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Timestamp of when the message was created."
+        }
+      },
+      "required": ["role", "content", "createdAt"]
+    },
+    "Artifact": {
+      "title": "Artifact",
+      "description": "A generated marketing asset.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "title": { "type": "string" },
+        "type": { "type": "string" },
+        "content": { "type": "string" },
+        "agentName": { "type": "string" },
+        "metadata": { "type": "object" }
+      }
+    },
+    "BrainMemory": {
+      "title": "BrainMemory",
+      "description": "A learned insight or memory stored in the agent's brain.",
+      "type": "object",
+      "properties": {
+        "agentId": { "type": "string" },
+        "title": { "type": "string" },
+        "content": { "type": "string" },
+        "tags": { "type": "array", "items": { "type": "string" } },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "roi": { "type": "number" }
+      },
+      "required": ["agentId", "title", "content", "createdAt"]
+    },
+    "BrandProfile": {
+      "title": "BrandProfile",
+      "description": "Strategic profile of the user's brand.",
+      "type": "object",
+      "properties": {
+        "name": { "type": "string" },
+        "audience": { "type": "string" },
+        "tone": { "type": "string" },
+        "messaging": { "type": "string" },
+        "productDetails": { "type": "string" },
+        "competitors": { "type": "string" }
+      }
+    },
+    "User": {
+      "title": "User",
+      "description": "User profile and settings.",
+      "type": "object",
+      "properties": {
+        "email": { "type": "string" },
+        "role": { "type": "string", "enum": ["admin", "client"] },
+        "createdAt": { "type": "string", "format": "date-time" }
+      }
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": "User",
+      "description": "User profile document."
+    },
+    "/users/{userId}/chats/{chatId}/messages/{messageId}": {
+      "schema": "Message",
+      "description": "Messages within a specific chat session."
+    },
+    "/users/{userId}/brainMemories/{memoryId}": {
+      "schema": "BrainMemory",
+      "description": "Memories stored for the user's agents."
+    },
+    "/users/{userId}/brandProfile/current": {
+      "schema": "BrandProfile",
+      "description": "The current brand profile for the user."
+    }
+  }
+}

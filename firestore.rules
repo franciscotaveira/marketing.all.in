@@ -1,0 +1,168 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ===============================================================
+    // Assumed Data Model
+    // ===============================================================
+    //
+    // Collection: users
+    // Document ID: {userId}
+    // Fields:
+    //   - email: string (required) - User's email
+    //   - role: string (required, ['admin', 'client']) - User's role
+    //   - createdAt: timestamp (required) - Account creation date
+    //
+    // Collection: users/{userId}/chats/{chatId}/messages
+    // Document ID: {messageId}
+    // Fields:
+    //   - role: string (required, ['user', 'ai']) - Sender role
+    //   - content: string (required, max 10000) - Message text
+    //   - agentName: string (optional) - Name of the AI agent
+    //   - agentTier: string (optional) - Tier of the AI agent
+    //   - createdAt: timestamp (required) - Message timestamp
+    //   - artifacts: list (optional) - List of generated artifacts
+    //
+    // Collection: users/{userId}/brainMemories
+    // Document ID: {memoryId}
+    // Fields:
+    //   - agentId: string (required) - ID of the agent
+    //   - title: string (required, max 200) - Memory title
+    //   - content: string (required, max 5000) - Memory content
+    //   - tags: list (optional) - List of tags
+    //   - createdAt: timestamp (required) - Creation timestamp
+    //
+    // Collection: users/{userId}/knowledgeBase
+    // Document ID: {knowledgeId}
+    // Fields:
+    //   - agentId: string (required)
+    //   - topic: string (required, max 200)
+    //   - content: string (required, max 5000)
+    //   - confidence: number (required, 0-1)
+    //   - tags: list (required, max 20)
+    //   - createdAt: timestamp (required)
+    //
+    // Collection: users/{userId}/brandProfile
+    // Document ID: current
+    // Fields:
+    //   - name: string (optional)
+    //   - audience: string (optional)
+    //   - tone: string (optional)
+    //   - messaging: string (optional)
+    //   - productDetails: string (optional)
+    //   - competitors: string (optional)
+    //
+    // ===============================================================
+
+    // ===============================================================
+    // Helper Functions
+    // ===============================================================
+    
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+
+    function isAdmin() {
+      return isAuthenticated() &&
+        (get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin' ||
+          (request.auth.token.email == "franciscotaveira.rios@gmail.com" && request.auth.token.email_verified == true));
+    }
+
+    function hasRequiredFields(fields) {
+      return request.resource.data.keys().hasAll(fields);
+    }
+
+    function hasOnlyAllowedFields(fields) {
+      return request.resource.data.keys().hasOnly(fields);
+    }
+
+    function isValidEmail(email) {
+      return email is string && email.matches("^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$");
+    }
+
+    // ===============================================================
+    // Domain Validators
+    // ===============================================================
+
+    function isValidUser(data) {
+      return hasRequiredFields(['email', 'role', 'createdAt']) &&
+             data.email is string && isValidEmail(data.email) &&
+             data.role in ['admin', 'client'] &&
+             data.createdAt is timestamp;
+    }
+
+    function isValidMessage(data) {
+      return hasRequiredFields(['role', 'content', 'createdAt']) &&
+             data.role in ['user', 'ai'] &&
+             data.content is string && data.content.size() <= 10000 &&
+             data.createdAt is timestamp;
+    }
+
+    function isValidBrainMemory(data) {
+      return hasRequiredFields(['agentId', 'title', 'content', 'createdAt']) &&
+             data.agentId is string &&
+             data.title is string && data.title.size() <= 200 &&
+             data.content is string && data.content.size() <= 5000 &&
+             data.createdAt is timestamp;
+    }
+
+    function isValidKnowledgeItem(data) {
+      return hasRequiredFields(['agentId', 'topic', 'content', 'confidence', 'tags', 'createdAt']) &&
+             data.agentId is string &&
+             data.topic is string && data.topic.size() <= 200 &&
+             data.content is string && data.content.size() <= 5000 &&
+             data.confidence is number && data.confidence >= 0 && data.confidence <= 1 &&
+             data.tags is list && data.tags.size() <= 20 &&
+             data.createdAt is timestamp;
+    }
+
+    function isValidBrandProfile(data) {
+      return true; // Simple profile validation
+    }
+
+    // ===============================================================
+    // Rules
+    // ===============================================================
+
+    match /users/{userId} {
+      allow read: if isOwner(userId) || isAdmin();
+      allow create: if isAuthenticated() && isValidUser(request.resource.data) && (isOwner(userId) && request.resource.data.role == 'client' || isAdmin());
+      allow update: if isAuthenticated() && isValidUser(request.resource.data) && (isOwner(userId) && request.resource.data.role == resource.data.role || isAdmin());
+
+      match /chats/{chatId}/messages/{messageId} {
+        allow read: if isOwner(userId) || isAdmin();
+        allow create: if isOwner(userId) && isValidMessage(request.resource.data);
+        allow update: if isOwner(userId) && isValidMessage(request.resource.data);
+        allow delete: if isOwner(userId) || isAdmin();
+      }
+
+      match /brainMemories/{memoryId} {
+        allow read: if isOwner(userId) || isAdmin();
+        allow create: if isOwner(userId) && isValidBrainMemory(request.resource.data);
+        allow update: if isOwner(userId) && isValidBrainMemory(request.resource.data);
+        allow delete: if isOwner(userId) || isAdmin();
+      }
+
+      match /knowledgeBase/{knowledgeId} {
+        allow read: if isOwner(userId) || isAdmin();
+        allow create: if isOwner(userId) && isValidKnowledgeItem(request.resource.data);
+        allow update: if isOwner(userId) && isValidKnowledgeItem(request.resource.data);
+        allow delete: if isOwner(userId) || isAdmin();
+      }
+
+      match /brandProfile/current {
+        allow read: if isOwner(userId) || isAdmin();
+        allow write: if isOwner(userId) && isValidBrandProfile(request.resource.data);
+      }
+    }
+
+    // Default deny
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}
