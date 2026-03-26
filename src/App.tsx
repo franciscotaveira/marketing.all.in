@@ -64,6 +64,7 @@ import {
   Network,
   Terminal,
   Trophy,
+  HelpCircle,
 } from "lucide-react";
 import ReactMarkdown from "react-markdown";
 import { SwarmFlow } from "./components/SwarmFlow";
@@ -74,6 +75,7 @@ import { LiveConversation } from "./components/LiveConversation";
 import { AgentBrain } from "./components/AgentBrain";
 import { AgentControlPanel } from "./components/AgentControlPanel";
 import { ErrorBoundary } from "./components/ErrorBoundary";
+import { ChatMessage } from "./components/ChatMessage";
 import { ClawWorkArena } from "./components/ClawWorkArena";
 import { CustomAgentModal } from "./components/CustomAgentModal";
 import { MARKETING_SKILLS, MARKETING_FRAMEWORKS, CATEGORY_COLORS, CATEGORY_TEXT_COLORS, CATEGORY_BG_LIGHT_COLORS } from "./constants";
@@ -98,12 +100,17 @@ export default function App() {
   const [isProcessing, setIsProcessing] = useState(false);
   const [messages, setMessages] = useState<Message[]>([]);
   const [isLoading, setIsLoading] = useState(false);
-  const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(window.innerWidth >= 768);
   const [activeAgents, setActiveAgents] = useState<{id: string, status: 'idle' | 'thinking' | 'using_tool', tool?: string}[]>([]);
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [isBrandModalOpen, setIsBrandModalOpen] = useState(false);
   const [selectedFramework, setSelectedFramework] = useState<string | null>(null);
-  const [brandProfile, setBrandProfile] = useState<BrandProfile>({
+  const [brandProfiles, setBrandProfiles] = useState<BrandProfile[]>([]);
+  const [activeBrandProfileId, setActiveBrandProfileId] = useState<string | null>(null);
+  const [editingProfile, setEditingProfile] = useState<BrandProfile | null>(null);
+
+  const activeBrandProfile = brandProfiles.find(p => p.id === activeBrandProfileId) || {
+    id: "",
     name: "",
     audience: "",
     tone: "",
@@ -111,10 +118,11 @@ export default function App() {
     productDetails: "",
     competitors: "",
     dataSources: ""
-  });
+  };
   const [selectedImages, setSelectedImages] = useState<string[]>([]);
   const [useGrounding, setUseGrounding] = useState(false);
   const [isSwarmMode, setIsSwarmMode] = useState(false);
+  const [activeTooltip, setActiveTooltip] = useState<string | null>(null);
   
   // Agent Logs State
   const [agentLogs, setAgentLogs] = useState<{id: string, timestamp: Date, agentId: string, message: string, type: 'info' | 'action' | 'success' | 'error'}[]>([]);
@@ -132,6 +140,12 @@ export default function App() {
   const [isGeneralAssistantMode, setIsGeneralAssistantMode] = useState(false);
   const [isHighThinking, setIsHighThinking] = useState(false);
   const [isLiveMode, setIsLiveMode] = useState(false);
+
+  const handleArtifactClick = (art: Artifact) => {
+    setActiveArtifact(art);
+    setIsWorkspaceOpen(true);
+  };
+
   const [agents, setAgents] = useState<Array<{ id: string, name: string, status: "idle" | "thinking" | "orchestrating" | "swarming", role: string }>>([
     { id: "1", name: "Hermes", status: "idle", role: "Content & Copy" },
     { id: "2", name: "Apollo", status: "thinking", role: "SEO & Discovery" },
@@ -224,8 +238,13 @@ export default function App() {
   useEffect(() => {
     if (user) {
       const loadData = async () => {
-        const profile = await firebaseService.getBrandProfile();
-        if (profile.data) setBrandProfile(profile.data);
+        const profiles = await firebaseService.getBrandProfiles();
+        if (profiles.data) {
+          setBrandProfiles(profiles.data);
+          if (profiles.data.length > 0) {
+            setActiveBrandProfileId(profiles.data[0].id || null);
+          }
+        }
         
         // Load messages for the current chat (using a default chat ID for now)
         const chatMessages = await firebaseService.getMessages("default");
@@ -250,15 +269,8 @@ export default function App() {
     try {
       await signOut(auth);
       setMessages([]);
-      setBrandProfile({
-        name: "",
-        audience: "",
-        tone: "",
-        messaging: "",
-        productDetails: "",
-        competitors: "",
-        dataSources: ""
-      });
+      setBrandProfiles([]);
+      setActiveBrandProfileId(null);
     } catch (error) {
       console.error("Logout Error:", error);
     }
@@ -491,8 +503,8 @@ export default function App() {
     setIsLoading(true);
 
     try {
-      const brandContext = brandProfile.name 
-        ? `\n\nPerfil da Marca:\n- Nome: ${brandProfile.name}\n- Público: ${brandProfile.audience}\n- Tom: ${brandProfile.tone}\n- Mensagem: ${brandProfile.messaging}\n- Detalhes: ${brandProfile.productDetails}\n- Concorrentes: ${brandProfile.competitors}${brandProfile.dataSources ? `\n\nFONTES DE DADOS E INTEGRAÇÕES:\n${brandProfile.dataSources}` : ''}`
+      const brandContext = activeBrandProfile.name 
+        ? `\n\nPerfil da Marca:\n- Nome: ${activeBrandProfile.name}\n- Público: ${activeBrandProfile.audience}\n- Tom: ${activeBrandProfile.tone}\n- Mensagem: ${activeBrandProfile.messaging}\n- Detalhes: ${activeBrandProfile.productDetails}\n- Concorrentes: ${activeBrandProfile.competitors}${activeBrandProfile.dataSources ? `\n\nFONTES DE DADOS E INTEGRAÇÕES:\n${activeBrandProfile.dataSources}` : ''}`
         : "";
 
       const skillContext = (!isGeneralAssistantMode && selectedSkill) 
@@ -631,28 +643,48 @@ export default function App() {
 
       // Extract artifacts and metadata
       const artifacts: Artifact[] = [];
-      const artifactRegex = /```artifact:(\w+):(.+)\n([\s\S]*?)```/g;
+      const artifactRegex = /```artifact:([a-zA-Z0-9_-]+):([^\n]+)\n([\s\S]*?)```/g;
       let match;
       while ((match = artifactRegex.exec(aiResponse)) !== null) {
         let content = match[3].trim();
         let metadata = undefined;
         
-        // Try to extract JSON metadata from the end of content
-        const jsonMatch = content.match(/\{[\s\S]*"metadata"[\s\S]*\}$/);
-        if (jsonMatch) {
-          try {
-            const parsed = JSON.parse(jsonMatch[0]);
-            metadata = parsed.metadata;
-            content = content.replace(jsonMatch[0], "").trim();
-          } catch (e) {
-            console.error("Failed to parse artifact metadata", e);
+        // Try to extract JSON metadata from the content
+        try {
+          // Look for a markdown JSON block
+          const jsonBlockMatch = content.match(/```json\s*([\s\S]*?)\s*```/);
+          if (jsonBlockMatch) {
+            const parsed = JSON.parse(jsonBlockMatch[1]);
+            metadata = parsed.metadata !== undefined ? parsed.metadata : parsed;
+            content = content.replace(jsonBlockMatch[0], '').trim();
+          } else {
+            // Fallback: look for a JSON object at the end of the content
+            const jsonStart = content.lastIndexOf('{');
+            const jsonEnd = content.lastIndexOf('}');
+            
+            if (jsonStart !== -1 && jsonEnd !== -1 && jsonEnd > jsonStart) {
+              const possibleJson = content.substring(jsonStart, jsonEnd + 1);
+              try {
+                const parsed = JSON.parse(possibleJson);
+                metadata = parsed.metadata !== undefined ? parsed.metadata : parsed;
+                content = content.substring(0, jsonStart).trim();
+                // Remove trailing ``` if any
+                if (content.endsWith('```')) {
+                  content = content.substring(0, content.length - 3).trim();
+                }
+              } catch (e) {
+                // Not valid JSON, ignore
+              }
+            }
           }
+        } catch (e) {
+          console.error("Failed to parse artifact metadata", e);
         }
 
         artifacts.push({
           id: Math.random().toString(36).substr(2, 9),
           type: match[1] as any,
-          title: match[2],
+          title: match[2].trim(),
           content: content,
           agentName: selectedSkill?.persona || "Assistente Geral",
           metadata
@@ -739,9 +771,32 @@ export default function App() {
     }
   };
 
-  const handleSaveBrandProfile = () => {
-    firebaseService.saveBrandProfile(brandProfile);
-    setIsBrandModalOpen(false);
+  const handleSaveBrandProfile = async () => {
+    if (!editingProfile) return;
+    
+    const result = await firebaseService.saveBrandProfile(editingProfile);
+    if (result.data) {
+      const savedProfile = result.data;
+      setBrandProfiles(prev => {
+        const exists = prev.find(p => p.id === savedProfile.id);
+        if (exists) {
+          return prev.map(p => p.id === savedProfile.id ? savedProfile : p);
+        }
+        return [...prev, savedProfile];
+      });
+      setActiveBrandProfileId(savedProfile.id || null);
+      setEditingProfile(null);
+    }
+  };
+
+  const handleDeleteBrandProfile = async (id: string) => {
+    const result = await firebaseService.deleteBrandProfile(id);
+    if (!result.error) {
+      setBrandProfiles(prev => prev.filter(p => p.id !== id));
+      if (activeBrandProfileId === id) {
+        setActiveBrandProfileId(null);
+      }
+    }
   };
 
   if (!isAuthReady) {
@@ -795,13 +850,29 @@ export default function App() {
 
   return (
     <ErrorBoundary>
-      <div className="flex h-screen bg-[#E4E3E0] text-[#141414] font-sans overflow-hidden">
+      <div 
+        className="flex h-screen bg-[#E4E3E0] text-[#141414] font-sans overflow-hidden"
+        onClick={() => setActiveTooltip(null)}
+      >
       {/* Sidebar */}
+      {/* Overlay for mobile when sidebar is open */}
+      <AnimatePresence>
+        {isSidebarOpen && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={() => setIsSidebarOpen(false)}
+            className="md:hidden fixed inset-0 bg-black/50 z-30 backdrop-blur-sm"
+          />
+        )}
+      </AnimatePresence>
       <motion.aside 
         initial={false}
         animate={{ width: isSidebarOpen ? 280 : 0, opacity: isSidebarOpen ? 1 : 0 }}
         className={cn(
-          "h-full bg-[#0A0A0A] text-[#E4E3E0] flex flex-col border-r border-white/5 overflow-hidden relative z-40 shadow-2xl",
+          "h-full bg-[#0A0A0A] text-[#E4E3E0] flex flex-col border-r border-white/5 overflow-hidden z-40 shadow-2xl shrink-0",
+          "absolute md:relative left-0 top-0 bottom-0",
           !isSidebarOpen && "pointer-events-none"
         )}
       >
@@ -825,124 +896,192 @@ export default function App() {
           <div className="space-y-3">
             <h2 className="text-[10px] uppercase tracking-[0.2em] font-black text-white/30 px-2">Configurações</h2>
             <div className="space-y-1.5">
-              <div className="relative group/tooltip">
-                <button 
-                  onClick={() => setIsSwarmMode(!isSwarmMode)}
-                  className={cn(
-                    "w-full p-3.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all flex items-center justify-between group border",
-                    isSwarmMode 
-                      ? "bg-blue-600 border-blue-500 text-white shadow-[0_0_15px_rgba(37,99,235,0.3)]" 
-                      : "bg-white/5 border-white/5 text-white/40 hover:bg-white/10"
-                  )}
-                >
-                  <div className="flex items-center gap-2.5">
-                    <Bot className={cn("w-4 h-4", isSwarmMode ? "text-white" : "text-white/40")} />
-                    <span>Modo Swarm</span>
-                  </div>
-                  <div className={cn(
-                    "w-8 h-4 rounded-full relative transition-all",
-                    isSwarmMode ? "bg-white/20" : "bg-white/10"
-                  )}>
+              <div className="relative">
+                <div className={cn(
+                  "w-full rounded-xl text-[10px] font-black uppercase tracking-widest transition-all flex items-center justify-between group border",
+                  isSwarmMode 
+                    ? "bg-blue-600 border-blue-500 text-white shadow-[0_0_15px_rgba(37,99,235,0.3)]" 
+                    : "bg-white/5 border-white/5 text-white/40 hover:bg-white/10"
+                )}>
+                  <button 
+                    onClick={() => setIsSwarmMode(!isSwarmMode)}
+                    className="p-3.5 flex-1 flex items-center justify-between"
+                  >
+                    <div className="flex items-center gap-2.5">
+                      <Bot className={cn("w-4 h-4", isSwarmMode ? "text-white" : "text-white/40")} />
+                      <span>Modo Swarm</span>
+                    </div>
                     <div className={cn(
-                      "absolute top-1 w-2 h-2 rounded-full transition-all shadow-sm",
-                      isSwarmMode ? "right-1 bg-white" : "left-1 bg-white/50"
-                    )} />
-                  </div>
-                </button>
-                <div className="absolute top-1/2 -translate-y-1/2 left-full ml-2 hidden group-hover/tooltip:block w-48 p-2.5 bg-black text-white text-[10px] rounded-xl shadow-xl z-50 pointer-events-none leading-relaxed">
-                  <strong className="block text-blue-400 mb-1">Modo Enxame (Swarm)</strong>
-                  Ativa múltiplos especialistas para analisar seu pedido e criar uma estratégia 360º.
+                      "w-8 h-4 rounded-full relative transition-all",
+                      isSwarmMode ? "bg-white/20" : "bg-white/10"
+                    )}>
+                      <div className={cn(
+                        "absolute top-1 w-2 h-2 rounded-full transition-all shadow-sm",
+                        isSwarmMode ? "right-1 bg-white" : "left-1 bg-white/50"
+                      )} />
+                    </div>
+                  </button>
+                  <button
+                    onClick={(e) => { e.stopPropagation(); setActiveTooltip(activeTooltip === 'modo_swarm' ? null : 'modo_swarm'); }}
+                    className="pr-3 pl-1 py-3.5 opacity-50 hover:opacity-100"
+                  >
+                    <HelpCircle className="w-3.5 h-3.5" />
+                  </button>
                 </div>
+                <AnimatePresence>
+                  {activeTooltip === 'modo_swarm' && (
+                    <motion.div 
+                      initial={{ opacity: 0, x: -5 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      exit={{ opacity: 0, x: -5 }}
+                      className="absolute top-1/2 -translate-y-1/2 left-full ml-2 w-48 p-2.5 bg-black text-white text-[10px] rounded-xl shadow-xl z-50 leading-relaxed"
+                    >
+                      <strong className="block text-blue-400 mb-1">Modo Enxame (Swarm)</strong>
+                      Ativa múltiplos especialistas para analisar seu pedido e criar uma estratégia 360º.
+                    </motion.div>
+                  )}
+                </AnimatePresence>
               </div>
               
-              <div className="relative group/tooltip">
-                <button 
-                  onClick={() => setIsHumanizedMode(!isHumanizedMode)}
-                  className={cn(
-                    "w-full p-3.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all flex items-center justify-between group border",
-                    isHumanizedMode 
-                      ? "bg-rose-600 border-rose-500 text-white shadow-[0_0_15px_rgba(225,29,72,0.3)]" 
-                      : "bg-white/5 border-white/5 text-white/40 hover:bg-white/10"
-                  )}
-                >
-                  <div className="flex items-center gap-2.5">
-                    <Sparkles className={cn("w-4 h-4", isHumanizedMode ? "text-white" : "text-white/40")} />
-                    <span>Humanizado</span>
-                  </div>
-                  <div className={cn(
-                    "w-8 h-4 rounded-full relative transition-all",
-                    isHumanizedMode ? "bg-white/20" : "bg-white/10"
-                  )}>
+              <div className="relative">
+                <div className={cn(
+                  "w-full rounded-xl text-[10px] font-black uppercase tracking-widest transition-all flex items-center justify-between group border",
+                  isHumanizedMode 
+                    ? "bg-rose-600 border-rose-500 text-white shadow-[0_0_15px_rgba(225,29,72,0.3)]" 
+                    : "bg-white/5 border-white/5 text-white/40 hover:bg-white/10"
+                )}>
+                  <button 
+                    onClick={() => setIsHumanizedMode(!isHumanizedMode)}
+                    className="p-3.5 flex-1 flex items-center justify-between"
+                  >
+                    <div className="flex items-center gap-2.5">
+                      <Sparkles className={cn("w-4 h-4", isHumanizedMode ? "text-white" : "text-white/40")} />
+                      <span>Humanizado</span>
+                    </div>
                     <div className={cn(
-                      "absolute top-1 w-2 h-2 rounded-full transition-all shadow-sm",
-                      isHumanizedMode ? "right-1 bg-white" : "left-1 bg-white/50"
-                    )} />
-                  </div>
-                </button>
-                <div className="absolute top-1/2 -translate-y-1/2 left-full ml-2 hidden group-hover/tooltip:block w-48 p-2.5 bg-black text-white text-[10px] rounded-xl shadow-xl z-50 pointer-events-none leading-relaxed">
-                  <strong className="block text-rose-400 mb-1">Modo Humanizado</strong>
-                  Deixa o texto mais natural, empático e focado em conexão emocional.
+                      "w-8 h-4 rounded-full relative transition-all",
+                      isHumanizedMode ? "bg-white/20" : "bg-white/10"
+                    )}>
+                      <div className={cn(
+                        "absolute top-1 w-2 h-2 rounded-full transition-all shadow-sm",
+                        isHumanizedMode ? "right-1 bg-white" : "left-1 bg-white/50"
+                      )} />
+                    </div>
+                  </button>
+                  <button
+                    onClick={(e) => { e.stopPropagation(); setActiveTooltip(activeTooltip === 'modo_humanizado' ? null : 'modo_humanizado'); }}
+                    className="pr-3 pl-1 py-3.5 opacity-50 hover:opacity-100"
+                  >
+                    <HelpCircle className="w-3.5 h-3.5" />
+                  </button>
                 </div>
+                <AnimatePresence>
+                  {activeTooltip === 'modo_humanizado' && (
+                    <motion.div 
+                      initial={{ opacity: 0, x: -5 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      exit={{ opacity: 0, x: -5 }}
+                      className="absolute top-1/2 -translate-y-1/2 left-full ml-2 w-48 p-2.5 bg-black text-white text-[10px] rounded-xl shadow-xl z-50 leading-relaxed"
+                    >
+                      <strong className="block text-rose-400 mb-1">Modo Humanizado</strong>
+                      Deixa o texto mais natural, empático e focado em conexão emocional.
+                    </motion.div>
+                  )}
+                </AnimatePresence>
               </div>
 
-              <div className="relative group/tooltip">
-                <button 
-                  onClick={() => setIsGeneralAssistantMode(!isGeneralAssistantMode)}
-                  className={cn(
-                    "w-full p-3.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all flex items-center justify-between group border",
-                    isGeneralAssistantMode 
-                      ? "bg-indigo-600 border-indigo-500 text-white shadow-[0_0_15px_rgba(79,70,229,0.3)]" 
-                      : "bg-white/5 border-white/5 text-white/40 hover:bg-white/10"
-                  )}
-                >
-                  <div className="flex items-center gap-2.5">
-                    <Bot className={cn("w-4 h-4", isGeneralAssistantMode ? "text-white" : "text-white/40")} />
-                    <span>Assistente Geral</span>
-                  </div>
-                  <div className={cn(
-                    "w-8 h-4 rounded-full relative transition-all",
-                    isGeneralAssistantMode ? "bg-white/20" : "bg-white/10"
-                  )}>
+              <div className="relative">
+                <div className={cn(
+                  "w-full rounded-xl text-[10px] font-black uppercase tracking-widest transition-all flex items-center justify-between group border",
+                  isGeneralAssistantMode 
+                    ? "bg-indigo-600 border-indigo-500 text-white shadow-[0_0_15px_rgba(79,70,229,0.3)]" 
+                    : "bg-white/5 border-white/5 text-white/40 hover:bg-white/10"
+                )}>
+                  <button 
+                    onClick={() => setIsGeneralAssistantMode(!isGeneralAssistantMode)}
+                    className="p-3.5 flex-1 flex items-center justify-between"
+                  >
+                    <div className="flex items-center gap-2.5">
+                      <Bot className={cn("w-4 h-4", isGeneralAssistantMode ? "text-white" : "text-white/40")} />
+                      <span>Assistente Geral</span>
+                    </div>
                     <div className={cn(
-                      "absolute top-1 w-2 h-2 rounded-full transition-all shadow-sm",
-                      isGeneralAssistantMode ? "right-1 bg-white" : "left-1 bg-white/50"
-                    )} />
-                  </div>
-                </button>
-                <div className="absolute top-1/2 -translate-y-1/2 left-full ml-2 hidden group-hover/tooltip:block w-48 p-2.5 bg-black text-white text-[10px] rounded-xl shadow-xl z-50 pointer-events-none leading-relaxed">
-                  <strong className="block text-indigo-400 mb-1">Assistente Geral</strong>
-                  Desativa as habilidades específicas e atua como um assistente de marketing genérico.
+                      "w-8 h-4 rounded-full relative transition-all",
+                      isGeneralAssistantMode ? "bg-white/20" : "bg-white/10"
+                    )}>
+                      <div className={cn(
+                        "absolute top-1 w-2 h-2 rounded-full transition-all shadow-sm",
+                        isGeneralAssistantMode ? "right-1 bg-white" : "left-1 bg-white/50"
+                      )} />
+                    </div>
+                  </button>
+                  <button
+                    onClick={(e) => { e.stopPropagation(); setActiveTooltip(activeTooltip === 'assistente_geral' ? null : 'assistente_geral'); }}
+                    className="pr-3 pl-1 py-3.5 opacity-50 hover:opacity-100"
+                  >
+                    <HelpCircle className="w-3.5 h-3.5" />
+                  </button>
                 </div>
+                <AnimatePresence>
+                  {activeTooltip === 'assistente_geral' && (
+                    <motion.div 
+                      initial={{ opacity: 0, x: -5 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      exit={{ opacity: 0, x: -5 }}
+                      className="absolute top-1/2 -translate-y-1/2 left-full ml-2 w-48 p-2.5 bg-black text-white text-[10px] rounded-xl shadow-xl z-50 leading-relaxed"
+                    >
+                      <strong className="block text-indigo-400 mb-1">Assistente Geral</strong>
+                      Desativa as habilidades específicas e atua como um assistente de marketing genérico.
+                    </motion.div>
+                  )}
+                </AnimatePresence>
               </div>
 
-              <div className="relative group/tooltip">
-                <button 
-                  onClick={() => setIsHighThinking(!isHighThinking)}
-                  className={cn(
-                    "w-full p-3.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all flex items-center justify-between group border",
-                    isHighThinking 
-                      ? "bg-amber-600 border-amber-500 text-white shadow-[0_0_15px_rgba(245,158,11,0.3)]" 
-                      : "bg-white/5 border-white/5 text-white/40 hover:bg-white/10"
-                  )}
-                >
-                  <div className="flex items-center gap-2.5">
-                    <Brain className={cn("w-4 h-4", isHighThinking ? "text-white" : "text-white/40")} />
-                    <span>Pensamento Avançado</span>
-                  </div>
-                  <div className={cn(
-                    "w-8 h-4 rounded-full relative transition-all",
-                    isHighThinking ? "bg-white/20" : "bg-white/10"
-                  )}>
+              <div className="relative">
+                <div className={cn(
+                  "w-full rounded-xl text-[10px] font-black uppercase tracking-widest transition-all flex items-center justify-between group border",
+                  isHighThinking 
+                    ? "bg-amber-600 border-amber-500 text-white shadow-[0_0_15px_rgba(245,158,11,0.3)]" 
+                    : "bg-white/5 border-white/5 text-white/40 hover:bg-white/10"
+                )}>
+                  <button 
+                    onClick={() => setIsHighThinking(!isHighThinking)}
+                    className="p-3.5 flex-1 flex items-center justify-between"
+                  >
+                    <div className="flex items-center gap-2.5">
+                      <Brain className={cn("w-4 h-4", isHighThinking ? "text-white" : "text-white/40")} />
+                      <span>Pensamento Avançado</span>
+                    </div>
                     <div className={cn(
-                      "absolute top-1 w-2 h-2 rounded-full transition-all shadow-sm",
-                      isHighThinking ? "right-1 bg-white" : "left-1 bg-white/50"
-                    )} />
-                  </div>
-                </button>
-                <div className="absolute top-1/2 -translate-y-1/2 left-full ml-2 hidden group-hover/tooltip:block w-48 p-2.5 bg-black text-white text-[10px] rounded-xl shadow-xl z-50 pointer-events-none leading-relaxed">
-                  <strong className="block text-amber-400 mb-1">Pensamento Avançado</strong>
-                  Ativa o raciocínio profundo para resolver problemas complexos (pode demorar mais).
+                      "w-8 h-4 rounded-full relative transition-all",
+                      isHighThinking ? "bg-white/20" : "bg-white/10"
+                    )}>
+                      <div className={cn(
+                        "absolute top-1 w-2 h-2 rounded-full transition-all shadow-sm",
+                        isHighThinking ? "right-1 bg-white" : "left-1 bg-white/50"
+                      )} />
+                    </div>
+                  </button>
+                  <button
+                    onClick={(e) => { e.stopPropagation(); setActiveTooltip(activeTooltip === 'pensamento_avancado' ? null : 'pensamento_avancado'); }}
+                    className="pr-3 pl-1 py-3.5 opacity-50 hover:opacity-100"
+                  >
+                    <HelpCircle className="w-3.5 h-3.5" />
+                  </button>
                 </div>
+                <AnimatePresence>
+                  {activeTooltip === 'pensamento_avancado' && (
+                    <motion.div 
+                      initial={{ opacity: 0, x: -5 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      exit={{ opacity: 0, x: -5 }}
+                      className="absolute top-1/2 -translate-y-1/2 left-full ml-2 w-48 p-2.5 bg-black text-white text-[10px] rounded-xl shadow-xl z-50 leading-relaxed"
+                    >
+                      <strong className="block text-amber-400 mb-1">Pensamento Avançado</strong>
+                      Ativa o raciocínio profundo para resolver problemas complexos (pode demorar mais).
+                    </motion.div>
+                  )}
+                </AnimatePresence>
               </div>
 
               <div className="space-y-2 p-3 bg-white/5 rounded-xl border border-white/5">
@@ -1083,7 +1222,10 @@ export default function App() {
                       {categorySkills.map((skill) => (
                         <button
                           key={skill.id}
-                          onClick={() => setSelectedSkill(skill)}
+                          onClick={() => {
+                            setSelectedSkill(skill);
+                            if (window.innerWidth < 768) setIsSidebarOpen(false);
+                          }}
                           className={cn(
                             "w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all group relative overflow-hidden text-sm",
                             selectedSkill?.id === skill.id 
@@ -1125,7 +1267,7 @@ export default function App() {
           >
             <Settings className="w-4 h-4 text-white/40 group-hover:text-white transition-colors group-hover:rotate-90 duration-500" />
             <span className="text-[11px] font-black uppercase tracking-[0.1em]">Configurar Marca</span>
-            {brandProfile.name && <div className="ml-auto w-1.5 h-1.5 bg-blue-500 rounded-full animate-pulse" />}
+            {activeBrandProfile.name && <div className="ml-auto w-1.5 h-1.5 bg-blue-500 rounded-full animate-pulse" />}
           </button>
 
           <div className="flex items-center gap-3 p-3 bg-white/5 rounded-2xl border border-white/5">
@@ -1164,12 +1306,12 @@ export default function App() {
       {/* Main Content */}
       <main className="flex-1 flex flex-col relative min-w-0">
         {/* Header */}
-        <header className="min-h-[4rem] py-3 bg-white/70 backdrop-blur-2xl border-b border-black/5 flex items-center justify-between px-6 sticky top-0 z-30 shadow-[0_1px_3px_rgba(0,0,0,0.02)]">
-          <div className="flex items-center gap-4">
+        <header className="min-h-[4rem] py-3 bg-white/70 backdrop-blur-2xl border-b border-black/5 flex flex-col md:flex-row items-start md:items-center justify-between px-4 md:px-6 sticky top-0 z-30 shadow-[0_1px_3px_rgba(0,0,0,0.02)] gap-4 md:gap-0">
+          <div className="flex items-center gap-2 md:gap-4 w-full md:w-auto">
             {!isSidebarOpen && (
               <button 
                 onClick={() => setIsSidebarOpen(true)}
-                className="p-2.5 hover:bg-black/5 rounded-xl transition-all active:scale-95 group shadow-sm bg-white border border-black/5"
+                className="p-2 md:p-2.5 hover:bg-black/5 rounded-xl transition-all active:scale-95 group shadow-sm bg-white border border-black/5"
               >
                 <Menu className="w-5 h-5 text-black/60 group-hover:text-black" />
               </button>
@@ -1225,21 +1367,38 @@ export default function App() {
             </div>
           </div>
 
-          <div className="flex items-center gap-3">
-            <div className="relative group/tooltip">
-              <button
-                onClick={() => setIsSwarmView(!isSwarmView)}
-                className={cn(
-                  "p-2.5 rounded-xl transition-all active:scale-95 border",
-                  isSwarmView ? "bg-blue-600 text-white border-blue-500" : "bg-white border-black/5 text-black/60 hover:bg-black/5"
-                )}
-              >
-                <Users className="w-5 h-5" />
-              </button>
-              <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 hidden group-hover/tooltip:block w-48 p-2.5 bg-black text-white text-[10px] rounded-xl shadow-xl z-50 pointer-events-none leading-relaxed text-center">
-                <strong className="block text-blue-400 mb-1">Visualizar Enxame</strong>
-                Abre o painel para acompanhar a atividade e o status de todos os agentes.
+          <div className="flex items-center gap-2 md:gap-3 flex-wrap justify-start md:justify-end w-full md:w-auto">
+            <div className="relative">
+              <div className={cn(
+                "flex items-center rounded-xl transition-all shadow-sm border",
+                isSwarmView ? "bg-blue-600 text-white border-blue-500" : "bg-white border-black/5 text-black/60 hover:bg-black/5"
+              )}>
+                <button
+                  onClick={() => setIsSwarmView(!isSwarmView)}
+                  className="p-2.5 active:scale-95"
+                >
+                  <Users className="w-5 h-5" />
+                </button>
+                <button
+                  onClick={(e) => { e.stopPropagation(); setActiveTooltip(activeTooltip === 'visualizar_enxame' ? null : 'visualizar_enxame'); }}
+                  className="pr-2.5 pl-1 py-2.5 opacity-50 hover:opacity-100"
+                >
+                  <HelpCircle className="w-3.5 h-3.5" />
+                </button>
               </div>
+              <AnimatePresence>
+                {activeTooltip === 'visualizar_enxame' && (
+                  <motion.div 
+                    initial={{ opacity: 0, y: 5 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: 5 }}
+                    className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-48 p-2.5 bg-black text-white text-[10px] rounded-xl shadow-xl z-50 leading-relaxed text-center"
+                  >
+                    <strong className="block text-blue-400 mb-1">Visualizar Enxame</strong>
+                    Abre o painel para acompanhar a atividade e o status de todos os agentes.
+                  </motion.div>
+                )}
+              </AnimatePresence>
             </div>
             <div className="hidden lg:flex items-center gap-2 mr-4 px-3 py-1.5 bg-black/5 rounded-xl border border-black/5">
               <div className="flex -space-x-2">
@@ -1253,145 +1412,285 @@ export default function App() {
             </div>
 
             <div className="flex items-center gap-1.5 bg-black/5 p-1 rounded-xl border border-black/5">
-              <div className="relative group/tooltip">
-                <button 
-                  onClick={() => setIsHumanizedMode(!isHumanizedMode)}
-                  className={cn(
-                    "flex items-center gap-2 px-4 py-2 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all shadow-sm",
-                    isHumanizedMode 
-                      ? "bg-gradient-to-r from-pink-500 to-rose-500 text-white shadow-pink-200" 
-                      : "text-black/40 hover:text-black/60"
-                  )}
-                >
-                  <Heart className={cn("w-3.5 h-3.5", isHumanizedMode && "fill-current")} />
-                  <span className="hidden sm:inline">Humanizado</span>
-                </button>
-                <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 hidden group-hover/tooltip:block w-48 p-2.5 bg-black text-white text-[10px] rounded-xl shadow-xl z-50 pointer-events-none leading-relaxed text-center">
-                  <strong className="block text-rose-400 mb-1">Modo Humanizado</strong>
-                  Deixa o texto mais natural, empático e focado em conexão emocional.
+              <div className="relative">
+                <div className={cn(
+                  "flex items-center rounded-lg transition-all shadow-sm",
+                  isHumanizedMode 
+                    ? "bg-gradient-to-r from-pink-500 to-rose-500 text-white shadow-pink-200" 
+                    : "text-black/40 hover:text-black/60 hover:bg-black/5"
+                )}>
+                  <button 
+                    onClick={() => setIsHumanizedMode(!isHumanizedMode)}
+                    className="flex items-center gap-2 pl-4 pr-2 py-2 text-[10px] font-black uppercase tracking-widest"
+                  >
+                    <Heart className={cn("w-3.5 h-3.5", isHumanizedMode && "fill-current")} />
+                    <span className="hidden sm:inline">Humanizado</span>
+                  </button>
+                  <button
+                    onClick={(e) => { e.stopPropagation(); setActiveTooltip(activeTooltip === 'humanizado' ? null : 'humanizado'); }}
+                    className="pr-3 pl-1 py-2 opacity-50 hover:opacity-100"
+                  >
+                    <HelpCircle className="w-3.5 h-3.5" />
+                  </button>
                 </div>
+                <AnimatePresence>
+                  {activeTooltip === 'humanizado' && (
+                    <motion.div 
+                      initial={{ opacity: 0, y: -5 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: -5 }}
+                      className="absolute top-full left-1/2 -translate-x-1/2 mt-2 w-48 p-2.5 bg-black text-white text-[10px] rounded-xl shadow-xl z-50 leading-relaxed text-center"
+                    >
+                      <strong className="block text-rose-400 mb-1">Modo Humanizado</strong>
+                      Deixa o texto mais natural, empático e focado em conexão emocional.
+                    </motion.div>
+                  )}
+                </AnimatePresence>
               </div>
 
-              <div className="relative group/tooltip">
-                <button 
-                  onClick={() => setIsSwarmMode(!isSwarmMode)}
-                  className={cn(
-                    "flex items-center gap-2 px-4 py-2 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all shadow-sm",
-                    isSwarmMode 
-                      ? "bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-blue-200" 
-                      : "text-black/40 hover:text-black/60"
-                  )}
-                >
-                  <Zap className={cn("w-3.5 h-3.5", isSwarmMode && "fill-current text-yellow-300")} />
-                  <span className="hidden sm:inline">Enxame</span>
-                </button>
-                <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 hidden group-hover/tooltip:block w-56 p-2.5 bg-black text-white text-[10px] rounded-xl shadow-xl z-50 pointer-events-none leading-relaxed text-center">
-                  <strong className="block text-blue-400 mb-1">Modo Enxame (Swarm)</strong>
-                  Ativa múltiplos especialistas para analisar seu pedido e criar uma estratégia 360º.
+              <div className="relative">
+                <div className={cn(
+                  "flex items-center rounded-lg transition-all shadow-sm",
+                  isSwarmMode 
+                    ? "bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-blue-200" 
+                    : "text-black/40 hover:text-black/60 hover:bg-black/5"
+                )}>
+                  <button 
+                    onClick={() => setIsSwarmMode(!isSwarmMode)}
+                    className="flex items-center gap-2 pl-4 pr-2 py-2 text-[10px] font-black uppercase tracking-widest"
+                  >
+                    <Zap className={cn("w-3.5 h-3.5", isSwarmMode && "fill-current text-yellow-300")} />
+                    <span className="hidden sm:inline">Enxame</span>
+                  </button>
+                  <button
+                    onClick={(e) => { e.stopPropagation(); setActiveTooltip(activeTooltip === 'enxame' ? null : 'enxame'); }}
+                    className="pr-3 pl-1 py-2 opacity-50 hover:opacity-100"
+                  >
+                    <HelpCircle className="w-3.5 h-3.5" />
+                  </button>
                 </div>
+                <AnimatePresence>
+                  {activeTooltip === 'enxame' && (
+                    <motion.div 
+                      initial={{ opacity: 0, y: -5 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: -5 }}
+                      className="absolute top-full left-1/2 -translate-x-1/2 mt-2 w-56 p-2.5 bg-black text-white text-[10px] rounded-xl shadow-xl z-50 leading-relaxed text-center"
+                    >
+                      <strong className="block text-blue-400 mb-1">Modo Enxame (Swarm)</strong>
+                      Ativa múltiplos especialistas para analisar seu pedido e criar uma estratégia 360º.
+                    </motion.div>
+                  )}
+                </AnimatePresence>
               </div>
 
-              <div className="relative group/tooltip">
-                <button 
-                  onClick={() => setUseGrounding(!useGrounding)}
-                  className={cn(
-                    "flex items-center gap-2 px-4 py-2 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all shadow-sm",
-                    useGrounding 
-                      ? "bg-gradient-to-r from-emerald-500 to-teal-500 text-white shadow-emerald-200" 
-                      : "text-black/40 hover:text-black/60"
-                  )}
-                >
-                  <Globe className={cn("w-3.5 h-3.5", useGrounding && "animate-spin-slow")} />
-                  <span className="hidden sm:inline">Pesquisa</span>
-                </button>
-                <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 hidden group-hover/tooltip:block w-48 p-2.5 bg-black text-white text-[10px] rounded-xl shadow-xl z-50 pointer-events-none leading-relaxed text-center">
-                  <strong className="block text-emerald-400 mb-1">Pesquisa em Tempo Real</strong>
-                  Conecta a IA à internet para buscar dados e referências atualizadas.
+              <div className="relative">
+                <div className={cn(
+                  "flex items-center rounded-lg transition-all shadow-sm",
+                  useGrounding 
+                    ? "bg-gradient-to-r from-emerald-500 to-teal-500 text-white shadow-emerald-200" 
+                    : "text-black/40 hover:text-black/60 hover:bg-black/5"
+                )}>
+                  <button 
+                    onClick={() => setUseGrounding(!useGrounding)}
+                    className="flex items-center gap-2 pl-4 pr-2 py-2 text-[10px] font-black uppercase tracking-widest"
+                  >
+                    <Globe className={cn("w-3.5 h-3.5", useGrounding && "animate-spin-slow")} />
+                    <span className="hidden sm:inline">Pesquisa</span>
+                  </button>
+                  <button
+                    onClick={(e) => { e.stopPropagation(); setActiveTooltip(activeTooltip === 'pesquisa' ? null : 'pesquisa'); }}
+                    className="pr-3 pl-1 py-2 opacity-50 hover:opacity-100"
+                  >
+                    <HelpCircle className="w-3.5 h-3.5" />
+                  </button>
                 </div>
+                <AnimatePresence>
+                  {activeTooltip === 'pesquisa' && (
+                    <motion.div 
+                      initial={{ opacity: 0, y: -5 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: -5 }}
+                      className="absolute top-full left-1/2 -translate-x-1/2 mt-2 w-48 p-2.5 bg-black text-white text-[10px] rounded-xl shadow-xl z-50 leading-relaxed text-center"
+                    >
+                      <strong className="block text-emerald-400 mb-1">Pesquisa em Tempo Real</strong>
+                      Conecta a IA à internet para buscar dados e referências atualizadas.
+                    </motion.div>
+                  )}
+                </AnimatePresence>
               </div>
             </div>
 
             <div className="w-px h-6 bg-black/10 mx-1" />
 
             <div className="flex items-center gap-1.5">
-              <div className="relative group/tooltip">
-                <button 
-                  onClick={() => setIsBrainOpen(true)}
-                  className="p-2.5 hover:bg-black/5 rounded-xl transition-all text-black/60 relative group"
-                >
-                  <Brain className="w-5 h-5 group-hover:text-blue-600 transition-colors" />
-                  <div className="absolute top-1 right-1 w-2 h-2 bg-blue-500 rounded-full border-2 border-white" />
-                </button>
-                <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 hidden group-hover/tooltip:block w-48 p-2.5 bg-black text-white text-[10px] rounded-xl shadow-xl z-50 pointer-events-none leading-relaxed text-center">
-                  <strong className="block text-blue-400 mb-1">Cérebro Sináptico</strong>
-                  Gerencia a base de conhecimento e aprendizado contínuo do Enxame.
+              <div className="relative">
+                <div className="flex items-center rounded-xl transition-all hover:bg-black/5 text-black/60">
+                  <button 
+                    onClick={() => setIsBrainOpen(true)}
+                    className="p-2.5 relative group"
+                  >
+                    <Brain className="w-5 h-5 group-hover:text-blue-600 transition-colors" />
+                    <div className="absolute top-1 right-1 w-2 h-2 bg-blue-500 rounded-full border-2 border-white" />
+                  </button>
+                  <button
+                    onClick={(e) => { e.stopPropagation(); setActiveTooltip(activeTooltip === 'cerebro' ? null : 'cerebro'); }}
+                    className="pr-2.5 pl-1 py-2.5 opacity-50 hover:opacity-100"
+                  >
+                    <HelpCircle className="w-3.5 h-3.5" />
+                  </button>
                 </div>
-              </div>
-              <div className="relative group/tooltip">
-                <button 
-                  onClick={() => setIsCalculatorOpen(true)}
-                  className="p-2.5 hover:bg-black/5 rounded-xl transition-all text-black/60 group"
-                >
-                  <BarChart3 className="w-5 h-5 group-hover:text-green-600 transition-colors" />
-                </button>
-                <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 hidden group-hover/tooltip:block w-48 p-2.5 bg-black text-white text-[10px] rounded-xl shadow-xl z-50 pointer-events-none leading-relaxed text-center">
-                  <strong className="block text-green-400 mb-1">Calculadora de ROI</strong>
-                  Ferramenta para projetar e analisar o retorno sobre investimento das campanhas.
-                </div>
-              </div>
-              <div className="relative group/tooltip">
-                <button 
-                  onClick={() => {
-                    setIsSwarmView(true);
-                    setIsWorkspaceOpen(true);
-                  }}
-                  className={cn(
-                    "p-2.5 rounded-xl transition-all relative group shadow-sm border",
-                    isSwarmView && isWorkspaceOpen
-                      ? "bg-blue-600 text-white border-blue-600" 
-                      : "bg-white hover:bg-black/5 text-black/60 border-black/5"
+                <AnimatePresence>
+                  {activeTooltip === 'cerebro' && (
+                    <motion.div 
+                      initial={{ opacity: 0, y: -5 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: -5 }}
+                      className="absolute top-full left-1/2 -translate-x-1/2 mt-2 w-48 p-2.5 bg-black text-white text-[10px] rounded-xl shadow-xl z-50 leading-relaxed text-center"
+                    >
+                      <strong className="block text-blue-400 mb-1">Cérebro Sináptico</strong>
+                      Gerencia a base de conhecimento e aprendizado contínuo do Enxame.
+                    </motion.div>
                   )}
-                >
-                  <Users className="w-5 h-5" />
-                </button>
-                <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 hidden group-hover/tooltip:block w-48 p-2.5 bg-black text-white text-[10px] rounded-xl shadow-xl z-50 pointer-events-none leading-relaxed text-center">
-                  <strong className="block text-blue-400 mb-1">Sala dos Agentes</strong>
-                  Abre o painel para acompanhar a atividade e o status de todos os agentes.
-                </div>
+                </AnimatePresence>
               </div>
-              <div className="relative group/tooltip">
-                <button 
-                  onClick={() => setIsTerminalOpen(!isTerminalOpen)}
-                  className={cn(
-                    "p-2.5 rounded-xl transition-all relative group shadow-sm border",
-                    isTerminalOpen 
-                      ? "bg-black text-white border-black" 
-                      : "bg-white hover:bg-black/5 text-black/60 border-black/5"
-                  )}
-                >
-                  <Terminal className="w-5 h-5" />
-                </button>
-                <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 hidden group-hover/tooltip:block w-48 p-2.5 bg-black text-white text-[10px] rounded-xl shadow-xl z-50 pointer-events-none leading-relaxed text-center">
-                  <strong className="block text-blue-400 mb-1">Terminal de Execução</strong>
-                  Acompanhe o raciocínio e as ações dos agentes em tempo real.
+              
+              <div className="relative">
+                <div className="flex items-center rounded-xl transition-all hover:bg-black/5 text-black/60">
+                  <button 
+                    onClick={() => setIsCalculatorOpen(true)}
+                    className="p-2.5 group"
+                  >
+                    <BarChart3 className="w-5 h-5 group-hover:text-green-600 transition-colors" />
+                  </button>
+                  <button
+                    onClick={(e) => { e.stopPropagation(); setActiveTooltip(activeTooltip === 'calculadora' ? null : 'calculadora'); }}
+                    className="pr-2.5 pl-1 py-2.5 opacity-50 hover:opacity-100"
+                  >
+                    <HelpCircle className="w-3.5 h-3.5" />
+                  </button>
                 </div>
+                <AnimatePresence>
+                  {activeTooltip === 'calculadora' && (
+                    <motion.div 
+                      initial={{ opacity: 0, y: -5 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: -5 }}
+                      className="absolute top-full left-1/2 -translate-x-1/2 mt-2 w-48 p-2.5 bg-black text-white text-[10px] rounded-xl shadow-xl z-50 leading-relaxed text-center"
+                    >
+                      <strong className="block text-green-400 mb-1">Calculadora de ROI</strong>
+                      Ferramenta para projetar e analisar o retorno sobre investimento das campanhas.
+                    </motion.div>
+                  )}
+                </AnimatePresence>
               </div>
-              <div className="relative group/tooltip">
-                <button 
-                  onClick={() => setIsWorkspaceOpen(!isWorkspaceOpen)}
-                  className={cn(
-                    "p-2.5 rounded-xl transition-all relative group shadow-sm border",
-                    isWorkspaceOpen 
-                      ? "bg-black text-white border-black" 
-                      : "bg-white hover:bg-black/5 text-black/60 border-black/5"
-                  )}
-                >
-                  <LayoutDashboard className="w-5 h-5" />
-                </button>
-                <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 hidden group-hover/tooltip:block w-48 p-2.5 bg-black text-white text-[10px] rounded-xl shadow-xl z-50 pointer-events-none leading-relaxed text-center">
-                  <strong className="block text-gray-400 mb-1">Workspace</strong>
-                  Abre o espaço de trabalho com os artefatos gerados.
+              
+              <div className="relative">
+                <div className={cn(
+                  "flex items-center rounded-xl transition-all shadow-sm border",
+                  isSwarmView && isWorkspaceOpen
+                    ? "bg-blue-600 text-white border-blue-600" 
+                    : "bg-white hover:bg-black/5 text-black/60 border-black/5"
+                )}>
+                  <button 
+                    onClick={() => {
+                      setIsSwarmView(true);
+                      setIsWorkspaceOpen(true);
+                    }}
+                    className="p-2.5"
+                  >
+                    <Users className="w-5 h-5" />
+                  </button>
+                  <button
+                    onClick={(e) => { e.stopPropagation(); setActiveTooltip(activeTooltip === 'sala_agentes' ? null : 'sala_agentes'); }}
+                    className="pr-2.5 pl-1 py-2.5 opacity-50 hover:opacity-100"
+                  >
+                    <HelpCircle className="w-3.5 h-3.5" />
+                  </button>
                 </div>
+                <AnimatePresence>
+                  {activeTooltip === 'sala_agentes' && (
+                    <motion.div 
+                      initial={{ opacity: 0, y: -5 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: -5 }}
+                      className="absolute top-full left-1/2 -translate-x-1/2 mt-2 w-48 p-2.5 bg-black text-white text-[10px] rounded-xl shadow-xl z-50 leading-relaxed text-center"
+                    >
+                      <strong className="block text-blue-400 mb-1">Sala dos Agentes</strong>
+                      Abre o painel para acompanhar a atividade e o status de todos os agentes.
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </div>
+              
+              <div className="relative">
+                <div className={cn(
+                  "flex items-center rounded-xl transition-all shadow-sm border",
+                  isTerminalOpen 
+                    ? "bg-black text-white border-black" 
+                    : "bg-white hover:bg-black/5 text-black/60 border-black/5"
+                )}>
+                  <button 
+                    onClick={() => setIsTerminalOpen(!isTerminalOpen)}
+                    className="p-2.5"
+                  >
+                    <Terminal className="w-5 h-5" />
+                  </button>
+                  <button
+                    onClick={(e) => { e.stopPropagation(); setActiveTooltip(activeTooltip === 'terminal' ? null : 'terminal'); }}
+                    className="pr-2.5 pl-1 py-2.5 opacity-50 hover:opacity-100"
+                  >
+                    <HelpCircle className="w-3.5 h-3.5" />
+                  </button>
+                </div>
+                <AnimatePresence>
+                  {activeTooltip === 'terminal' && (
+                    <motion.div 
+                      initial={{ opacity: 0, y: -5 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: -5 }}
+                      className="absolute top-full left-1/2 -translate-x-1/2 mt-2 w-48 p-2.5 bg-black text-white text-[10px] rounded-xl shadow-xl z-50 leading-relaxed text-center"
+                    >
+                      <strong className="block text-blue-400 mb-1">Terminal de Execução</strong>
+                      Acompanhe o raciocínio e as ações dos agentes em tempo real.
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </div>
+              
+              <div className="relative">
+                <div className={cn(
+                  "flex items-center rounded-xl transition-all shadow-sm border",
+                  isWorkspaceOpen 
+                    ? "bg-black text-white border-black" 
+                    : "bg-white hover:bg-black/5 text-black/60 border-black/5"
+                )}>
+                  <button 
+                    onClick={() => setIsWorkspaceOpen(!isWorkspaceOpen)}
+                    className="p-2.5"
+                  >
+                    <LayoutDashboard className="w-5 h-5" />
+                  </button>
+                  <button
+                    onClick={(e) => { e.stopPropagation(); setActiveTooltip(activeTooltip === 'workspace' ? null : 'workspace'); }}
+                    className="pr-2.5 pl-1 py-2.5 opacity-50 hover:opacity-100"
+                  >
+                    <HelpCircle className="w-3.5 h-3.5" />
+                  </button>
+                </div>
+                <AnimatePresence>
+                  {activeTooltip === 'workspace' && (
+                    <motion.div 
+                      initial={{ opacity: 0, y: -5 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: -5 }}
+                      className="absolute top-full left-1/2 -translate-x-1/2 mt-2 w-48 p-2.5 bg-black text-white text-[10px] rounded-xl shadow-xl z-50 leading-relaxed text-center"
+                    >
+                      <strong className="block text-gray-400 mb-1">Workspace</strong>
+                      Abre o espaço de trabalho com os artefatos gerados.
+                    </motion.div>
+                  )}
+                </AnimatePresence>
               </div>
             </div>
           </div>
@@ -1407,6 +1706,7 @@ export default function App() {
         <AnimatePresence>
           {isBrainOpen && (
             <AgentBrain 
+              key="agent-brain"
               agent={selectedSkill} 
               onClose={() => setIsBrainOpen(false)} 
             />
@@ -1416,7 +1716,13 @@ export default function App() {
         {/* Custom Agent Modal */}
         <AnimatePresence>
           {isCustomAgentModalOpen && (
-            <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm">
+            <motion.div 
+              key="custom-agent-modal"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm"
+            >
               <motion.div 
                 initial={{ opacity: 0, scale: 0.95, y: 20 }}
                 animate={{ opacity: 1, scale: 1, y: 0 }}
@@ -1428,133 +1734,246 @@ export default function App() {
                   onSave={handleSaveCustomAgent} 
                 />
               </motion.div>
-            </div>
+            </motion.div>
           )}
         </AnimatePresence>
 
         {/* Brand Modal */}
         <AnimatePresence>
           {isBrandModalOpen && (
-            <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm">
+            <motion.div 
+              key="brand-modal"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm"
+            >
               <motion.div 
                 initial={{ opacity: 0, scale: 0.95, y: 20 }}
                 animate={{ opacity: 1, scale: 1, y: 0 }}
                 exit={{ opacity: 0, scale: 0.95, y: 20 }}
                 className="bg-white rounded-[2.5rem] shadow-[0_30px_100px_rgba(0,0,0,0.2)] w-full max-w-2xl overflow-hidden border border-black/5"
               >
-                <div className="p-8 border-b border-black/5 flex items-center justify-between bg-black text-white">
-                  <div className="flex items-center gap-4">
-                    <div className="w-10 h-10 bg-blue-600 rounded-xl flex items-center justify-center shadow-lg shadow-blue-500/20">
-                      <Target className="w-5 h-5 text-white" />
+                <div className="p-6 md:p-8 border-b border-black/5 flex items-center justify-between bg-black text-white">
+                  <div className="flex items-center gap-3 md:gap-4">
+                    <div className="w-8 h-8 md:w-10 md:h-10 bg-blue-600 rounded-xl flex items-center justify-center shadow-lg shadow-blue-500/20 shrink-0">
+                      <Target className="w-4 h-4 md:w-5 md:h-5 text-white" />
                     </div>
                     <div>
-                      <h3 className="font-black text-sm uppercase tracking-widest">Perfil Estratégico da Marca</h3>
-                      <p className="text-[9px] font-black text-white/40 uppercase tracking-tighter">Contexto para os Agentes</p>
+                      <h3 className="font-black text-xs md:text-sm uppercase tracking-widest">
+                        {editingProfile ? 'Editar Perfil Estratégico' : 'Perfis de Marca'}
+                      </h3>
+                      <p className="text-[8px] md:text-[9px] font-black text-white/40 uppercase tracking-tighter">
+                        {editingProfile ? 'Contexto para os Agentes' : 'Gerencie suas empresas'}
+                      </p>
                     </div>
                   </div>
-                  <button 
-                    onClick={() => setIsBrandModalOpen(false)}
-                    className="p-2 hover:bg-white/10 rounded-xl transition-colors"
-                  >
-                    <X className="w-6 h-6" />
-                  </button>
+                  <div className="flex items-center gap-1 md:gap-2">
+                    {editingProfile && (
+                      <button 
+                        onClick={() => setEditingProfile(null)}
+                        className="px-3 py-2 md:px-4 md:py-2 bg-white/10 hover:bg-white/20 rounded-xl transition-colors text-[9px] md:text-[10px] font-black uppercase tracking-wider"
+                      >
+                        Voltar
+                      </button>
+                    )}
+                    <button 
+                      onClick={() => {
+                        setIsBrandModalOpen(false);
+                        setEditingProfile(null);
+                      }}
+                      className="p-2 hover:bg-white/10 rounded-xl transition-colors"
+                    >
+                      <X className="w-5 h-5 md:w-6 md:h-6" />
+                    </button>
+                  </div>
                 </div>
-                <div className="p-10 space-y-8 max-h-[70vh] overflow-y-auto custom-scrollbar">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                    <div className="space-y-2">
-                      <label className="text-[10px] font-black uppercase tracking-[0.2em] text-black/30">Nome da Marca</label>
-                      <input 
-                        type="text" 
-                        value={brandProfile.name}
-                        onChange={(e) => setBrandProfile({...brandProfile, name: e.target.value})}
-                        placeholder="ex: Acme SaaS"
-                        className="w-full p-4 bg-black/5 border border-transparent rounded-2xl focus:bg-white focus:border-blue-500/20 outline-none text-sm font-medium transition-all"
-                      />
+                
+                {!editingProfile ? (
+                  <div className="p-6 md:p-10 space-y-6 max-h-[70vh] overflow-y-auto custom-scrollbar">
+                    <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 mb-6">
+                      <h4 className="text-xs font-black uppercase tracking-widest text-black/50">Seus Perfis</h4>
+                      <button
+                        onClick={() => setEditingProfile({
+                          id: "", name: "", audience: "", tone: "", messaging: "", productDetails: "", competitors: "", dataSources: ""
+                        })}
+                        className="flex items-center justify-center gap-2 px-4 py-3 sm:py-2 bg-blue-50 text-blue-600 rounded-xl hover:bg-blue-100 transition-colors text-[10px] font-black uppercase tracking-wider w-full sm:w-auto"
+                      >
+                        <Plus className="w-3 h-3" />
+                        Novo Perfil
+                      </button>
                     </div>
-                    <div className="space-y-2">
-                      <label className="text-[10px] font-black uppercase tracking-[0.2em] text-black/30">Público-Alvo</label>
-                      <input 
-                        type="text"
-                        value={brandProfile.audience}
-                        onChange={(e) => setBrandProfile({...brandProfile, audience: e.target.value})}
-                        placeholder="ex: Gerentes de marketing..."
-                        className="w-full p-4 bg-black/5 border border-transparent rounded-2xl focus:bg-white focus:border-blue-500/20 outline-none text-sm font-medium transition-all"
-                      />
-                    </div>
+                    
+                    {brandProfiles.length === 0 ? (
+                      <div className="text-center py-12 bg-black/5 rounded-3xl border border-black/5 border-dashed">
+                        <Target className="w-12 h-12 text-black/20 mx-auto mb-4" />
+                        <p className="text-sm font-medium text-black/40">Nenhum perfil de marca criado ainda.</p>
+                      </div>
+                    ) : (
+                      <div className="grid grid-cols-1 gap-4">
+                        {brandProfiles.map(profile => (
+                          <div 
+                            key={profile.id} 
+                            className={cn(
+                              "p-4 md:p-6 rounded-2xl border transition-all flex flex-col sm:flex-row sm:items-center justify-between group gap-4",
+                              activeBrandProfileId === profile.id 
+                                ? "bg-blue-50 border-blue-200 shadow-sm" 
+                                : "bg-white border-black/5 hover:border-black/10 hover:shadow-md"
+                            )}
+                          >
+                            <div className="flex items-center gap-3 md:gap-4">
+                              <div className={cn(
+                                "w-10 h-10 md:w-12 md:h-12 rounded-xl flex items-center justify-center font-black text-base md:text-lg shrink-0",
+                                activeBrandProfileId === profile.id ? "bg-blue-600 text-white" : "bg-black/5 text-black/40"
+                              )}>
+                                {profile.name.charAt(0).toUpperCase() || "B"}
+                              </div>
+                              <div className="min-w-0">
+                                <h5 className="font-bold text-black truncate">{profile.name || "Perfil sem nome"}</h5>
+                                <p className="text-xs text-black/50 line-clamp-1">{profile.audience || "Público não definido"}</p>
+                              </div>
+                            </div>
+                            
+                            <div className="flex items-center gap-2 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity w-full sm:w-auto justify-end">
+                              {activeBrandProfileId !== profile.id && (
+                                <button
+                                  onClick={() => setActiveBrandProfileId(profile.id || null)}
+                                  className="flex-1 sm:flex-none px-4 py-2.5 sm:py-2 bg-black text-white rounded-xl text-[10px] font-black uppercase tracking-wider hover:scale-105 transition-transform text-center"
+                                >
+                                  Selecionar
+                                </button>
+                              )}
+                              {activeBrandProfileId === profile.id && (
+                                <span className="flex-1 sm:flex-none px-4 py-2.5 sm:py-2 bg-blue-100 text-blue-700 rounded-xl text-[10px] font-black uppercase tracking-wider flex items-center justify-center gap-1">
+                                  <Check className="w-3 h-3" /> Ativo
+                                </span>
+                              )}
+                              <button
+                                onClick={() => setEditingProfile(profile)}
+                                className="p-2.5 sm:p-2 bg-black/5 hover:bg-black/10 text-black/60 rounded-xl transition-colors shrink-0"
+                                title="Editar"
+                              >
+                                <Settings className="w-4 h-4" />
+                              </button>
+                              <button
+                                onClick={() => profile.id && handleDeleteBrandProfile(profile.id)}
+                                className="p-2.5 sm:p-2 bg-red-50 hover:bg-red-100 text-red-500 rounded-xl transition-colors shrink-0"
+                                title="Excluir"
+                              >
+                                <Trash2 className="w-4 h-4" />
+                              </button>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
                   </div>
-                  
-                  <div className="space-y-2">
-                    <label className="text-[10px] font-black uppercase tracking-[0.2em] text-black/30">Tom de Voz</label>
-                    <input 
-                      type="text" 
-                      value={brandProfile.tone}
-                      onChange={(e) => setBrandProfile({...brandProfile, tone: e.target.value})}
-                      placeholder="ex: Profissional, autoritário, mas acessível"
-                      className="w-full p-4 bg-black/5 border border-transparent rounded-2xl focus:bg-white focus:border-blue-500/20 outline-none text-sm font-medium transition-all"
-                    />
-                  </div>
-                  
-                  <div className="space-y-2">
-                    <label className="text-[10px] font-black uppercase tracking-[0.2em] text-black/30">Mensagem Principal</label>
-                    <textarea 
-                      value={brandProfile.messaging}
-                      onChange={(e) => setBrandProfile({...brandProfile, messaging: e.target.value})}
-                      placeholder="ex: Ajudamos equipes a automatizar fluxos de marketing..."
-                      className="w-full p-4 bg-black/5 border border-transparent rounded-2xl focus:bg-white focus:border-blue-500/20 outline-none text-sm font-medium min-h-[100px] resize-none transition-all"
-                    />
-                  </div>
-                  
-                  <div className="space-y-2">
-                    <label className="text-[10px] font-black uppercase tracking-[0.2em] text-black/30">Detalhes do Produto/Serviço</label>
-                    <textarea 
-                      value={brandProfile.productDetails}
-                      onChange={(e) => setBrandProfile({...brandProfile, productDetails: e.target.value})}
-                      placeholder="Descreva o que você vende, preços, diferenciais..."
-                      className="w-full p-4 bg-black/5 border border-transparent rounded-2xl focus:bg-white focus:border-blue-500/20 outline-none text-sm font-medium min-h-[100px] resize-none transition-all"
-                    />
-                  </div>
-                  
-                  <div className="space-y-2">
-                    <label className="text-[10px] font-black uppercase tracking-[0.2em] text-black/30">Concorrentes</label>
-                    <input 
-                      type="text"
-                      value={brandProfile.competitors}
-                      onChange={(e) => setBrandProfile({...brandProfile, competitors: e.target.value})}
-                      placeholder="ex: Empresa A, Empresa B..."
-                      className="w-full p-4 bg-black/5 border border-transparent rounded-2xl focus:bg-white focus:border-blue-500/20 outline-none text-sm font-medium transition-all"
-                    />
-                  </div>
+                ) : (
+                  <>
+                    <div className="p-6 md:p-10 space-y-6 md:space-y-8 max-h-[70vh] overflow-y-auto custom-scrollbar">
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8">
+                        <div className="space-y-2">
+                          <label className="text-[10px] font-black uppercase tracking-[0.2em] text-black/30">Nome da Marca</label>
+                          <input 
+                            type="text" 
+                            value={editingProfile.name}
+                            onChange={(e) => setEditingProfile({...editingProfile, name: e.target.value})}
+                            placeholder="ex: Acme SaaS"
+                            className="w-full p-4 bg-black/5 border border-transparent rounded-2xl focus:bg-white focus:border-blue-500/20 outline-none text-sm font-medium transition-all"
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <label className="text-[10px] font-black uppercase tracking-[0.2em] text-black/30">Público-Alvo</label>
+                          <input 
+                            type="text"
+                            value={editingProfile.audience}
+                            onChange={(e) => setEditingProfile({...editingProfile, audience: e.target.value})}
+                            placeholder="ex: Gerentes de marketing..."
+                            className="w-full p-4 bg-black/5 border border-transparent rounded-2xl focus:bg-white focus:border-blue-500/20 outline-none text-sm font-medium transition-all"
+                          />
+                        </div>
+                      </div>
+                      
+                      <div className="space-y-2">
+                        <label className="text-[10px] font-black uppercase tracking-[0.2em] text-black/30">Tom de Voz</label>
+                        <input 
+                          type="text" 
+                          value={editingProfile.tone}
+                          onChange={(e) => setEditingProfile({...editingProfile, tone: e.target.value})}
+                          placeholder="ex: Profissional, autoritário, mas acessível"
+                          className="w-full p-4 bg-black/5 border border-transparent rounded-2xl focus:bg-white focus:border-blue-500/20 outline-none text-sm font-medium transition-all"
+                        />
+                      </div>
+                      
+                      <div className="space-y-2">
+                        <label className="text-[10px] font-black uppercase tracking-[0.2em] text-black/30">Mensagem Principal</label>
+                        <textarea 
+                          value={editingProfile.messaging}
+                          onChange={(e) => setEditingProfile({...editingProfile, messaging: e.target.value})}
+                          placeholder="ex: Ajudamos equipes a automatizar fluxos de marketing..."
+                          className="w-full p-4 bg-black/5 border border-transparent rounded-2xl focus:bg-white focus:border-blue-500/20 outline-none text-sm font-medium min-h-[100px] resize-none transition-all"
+                        />
+                      </div>
+                      
+                      <div className="space-y-2">
+                        <label className="text-[10px] font-black uppercase tracking-[0.2em] text-black/30">Detalhes do Produto/Serviço</label>
+                        <textarea 
+                          value={editingProfile.productDetails}
+                          onChange={(e) => setEditingProfile({...editingProfile, productDetails: e.target.value})}
+                          placeholder="Descreva o que você vende, preços, diferenciais..."
+                          className="w-full p-4 bg-black/5 border border-transparent rounded-2xl focus:bg-white focus:border-blue-500/20 outline-none text-sm font-medium min-h-[100px] resize-none transition-all"
+                        />
+                      </div>
+                      
+                      <div className="space-y-2">
+                        <label className="text-[10px] font-black uppercase tracking-[0.2em] text-black/30">Concorrentes</label>
+                        <input 
+                          type="text"
+                          value={editingProfile.competitors}
+                          onChange={(e) => setEditingProfile({...editingProfile, competitors: e.target.value})}
+                          placeholder="ex: Empresa A, Empresa B..."
+                          className="w-full p-4 bg-black/5 border border-transparent rounded-2xl focus:bg-white focus:border-blue-500/20 outline-none text-sm font-medium transition-all"
+                        />
+                      </div>
 
-                  <div className="space-y-2">
-                    <label className="text-[10px] font-black uppercase tracking-[0.2em] text-black/30 flex items-center gap-2">
-                      <Globe className="w-3 h-3" />
-                      Fontes de Dados & Integrações (Links, APIs, Documentos)
-                    </label>
-                    <textarea 
-                      value={brandProfile.dataSources || ""}
-                      onChange={(e) => setBrandProfile({...brandProfile, dataSources: e.target.value})}
-                      placeholder="Cole aqui links do Google Drive, NotebookLM, sites, documentação de API (ex: API do sistema de agendamento), ou qualquer outra fonte de dados que o Enxame deva consultar."
-                      className="w-full p-4 bg-black/5 border border-transparent rounded-2xl focus:bg-white focus:border-blue-500/20 outline-none text-sm font-medium min-h-[120px] resize-none transition-all font-mono"
-                    />
-                  </div>
-                </div>
-                <div className="p-8 bg-black/5 border-t border-black/5 flex justify-end gap-3">
-                  <button 
-                    onClick={handleSaveBrandProfile}
-                    className="px-8 py-4 bg-black text-white rounded-2xl font-black text-[10px] uppercase tracking-[0.2em] hover:scale-105 active:scale-95 transition-all shadow-xl shadow-black/10"
-                  >
-                    Salvar Perfil Estratégico
-                  </button>
-                </div>
+                      <div className="space-y-2">
+                        <label className="text-[10px] font-black uppercase tracking-[0.2em] text-black/30 flex items-center gap-2">
+                          <Globe className="w-3 h-3" />
+                          Fontes de Dados & Integrações (Links, APIs, Documentos)
+                        </label>
+                        <textarea 
+                          value={editingProfile.dataSources || ""}
+                          onChange={(e) => setEditingProfile({...editingProfile, dataSources: e.target.value})}
+                          placeholder="Cole aqui links do Google Drive, NotebookLM, sites, documentação de API (ex: API do sistema de agendamento), ou qualquer outra fonte de dados que o Enxame deva consultar."
+                          className="w-full p-4 bg-black/5 border border-transparent rounded-2xl focus:bg-white focus:border-blue-500/20 outline-none text-sm font-medium min-h-[120px] resize-none transition-all font-mono"
+                        />
+                      </div>
+                    </div>
+                    <div className="p-6 md:p-8 bg-black/5 border-t border-black/5 flex justify-end gap-3">
+                      <button 
+                        onClick={handleSaveBrandProfile}
+                        className="w-full sm:w-auto px-8 py-4 bg-black text-white rounded-2xl font-black text-[10px] uppercase tracking-[0.2em] hover:scale-105 active:scale-95 transition-all shadow-xl shadow-black/10"
+                      >
+                        Salvar Perfil Estratégico
+                      </button>
+                    </div>
+                  </>
+                )}
               </motion.div>
-            </div>
+            </motion.div>
           )}
         </AnimatePresence>
 
         {/* Calculator Modal */}
         <AnimatePresence>
           {isCalculatorOpen && (
-            <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm">
+            <motion.div 
+              key="calculator-modal"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm"
+            >
               <motion.div 
                 initial={{ opacity: 0, scale: 0.95 }}
                 animate={{ opacity: 1, scale: 1 }}
@@ -1578,8 +1997,8 @@ export default function App() {
                     <X className="w-5 h-5" />
                   </button>
                 </div>
-                <div className="p-8 space-y-6">
-                  <div className="grid grid-cols-2 gap-4">
+                <div className="p-6 md:p-8 space-y-6">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div className="space-y-2">
                       <label className="text-[9px] font-black uppercase tracking-[0.2em] text-black/30">Investimento</label>
                       <div className="relative">
@@ -1632,7 +2051,7 @@ export default function App() {
                   </button>
                 </div>
               </motion.div>
-            </div>
+            </motion.div>
           )}
         </AnimatePresence>
 
@@ -1641,7 +2060,7 @@ export default function App() {
           {/* Chat Area */}
           <div className={cn(
             "flex-1 flex flex-col transition-all duration-500",
-            isWorkspaceOpen ? "w-1/2" : "w-full"
+            isWorkspaceOpen ? "hidden md:flex md:w-1/2" : "w-full"
           )}>
             <div className="flex-1 overflow-y-auto p-6 space-y-10 custom-scrollbar bg-[#F8F9FA]">
               {messages.length === 0 ? (
@@ -1706,135 +2125,17 @@ export default function App() {
               ) : (
             <div className="max-w-4xl mx-auto w-full space-y-12">
               {messages.map((msg, i) => (
-                <motion.div 
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  key={i} 
-                  className={cn(
-                    "flex gap-6 group",
-                    msg.role === "user" ? "flex-row-reverse" : "flex-row"
-                  )}
-                >
-                  <div className={cn(
-                    "w-10 h-10 rounded-2xl flex items-center justify-center flex-shrink-0 mt-1 shadow-lg transition-transform group-hover:scale-110",
-                    msg.role === "user" ? "bg-black text-white" : "bg-white text-black border border-black/5"
-                  )}>
-                    {msg.role === "user" ? <User className="w-5 h-5" /> : <Bot className="w-5 h-5" />}
-                  </div>
-                  <div className={cn(
-                    "max-w-[85%] min-w-0 space-y-3",
-                    msg.role === "user" ? "text-right items-end" : "text-left items-start"
-                  )}>
-                    {msg.role === "ai" && (
-                      <div className="flex items-center gap-3 mb-1">
-                        <span className="text-[10px] font-black uppercase tracking-[0.2em] text-blue-600">
-                          {msg.agentName}
-                        </span>
-                        {msg.agentTier && (
-                          <span className="text-[8px] px-2 py-0.5 bg-blue-50 text-blue-700 rounded-full uppercase font-black tracking-widest border border-blue-100">
-                            {msg.agentTier}
-                          </span>
-                        )}
-                        {isSwarmMode && msg.role === "ai" && (
-                          <div className="flex items-center gap-2 ml-auto bg-black/5 px-2 py-1 rounded-full border border-black/5">
-                            <div className="flex -space-x-1.5 overflow-hidden">
-                              {[1, 2, 3].map((i) => (
-                                <div key={i} className="inline-block h-3.5 w-3.5 rounded-full ring-2 ring-white bg-blue-500 flex items-center justify-center">
-                                  <Bot className="w-2 h-2 text-white" />
-                                </div>
-                              ))}
-                            </div>
-                            <span className="text-[8px] font-black text-black/30 uppercase tracking-tighter">Enxame Ativo</span>
-                          </div>
-                        )}
-                      </div>
-                    )}
-                    <div className={cn(
-                      "p-6 rounded-[2rem] shadow-sm relative transition-all group-hover:shadow-md overflow-hidden break-words",
-                      msg.role === "user" 
-                        ? "bg-black text-white rounded-tr-none" 
-                        : "bg-white border border-black/5 text-black/80 rounded-tl-none"
-                    )}>
-                      <div className={cn(
-                        "prose prose-sm max-w-none prose-headings:font-black prose-headings:tracking-tighter prose-a:text-blue-500 prose-strong:text-inherit prose-pre:bg-black/5 prose-pre:text-black/80 prose-code:text-blue-600",
-                        msg.role === "user" ? "prose-invert prose-pre:bg-white/10 prose-pre:text-white prose-code:text-blue-300" : ""
-                      )}>
-                        <ReactMarkdown>{msg.content}</ReactMarkdown>
-                      </div>
-                      
-                      {msg.artifacts && msg.artifacts.length > 0 && (
-                        <div className="mt-6 pt-6 border-t border-black/5 space-y-3">
-                          <p className="text-[9px] font-black uppercase tracking-[0.3em] text-black/30">Artefatos Gerados</p>
-                          <div className="flex flex-wrap gap-2">
-                            {msg.artifacts.map((art) => (
-                              <button 
-                                key={art.id}
-                                onClick={() => {
-                                  setActiveArtifact(art);
-                                  setIsWorkspaceOpen(true);
-                                }}
-                                className="flex items-center gap-3 px-4 py-2.5 bg-blue-50 text-blue-700 border border-blue-100 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-blue-600 hover:text-white transition-all shadow-sm active:scale-95 group/art"
-                              >
-                                <FileText className="w-3.5 h-3.5 group-hover/art:rotate-12 transition-transform" />
-                                {art.title}
-                              </button>
-                            ))}
-                          </div>
-                        </div>
-                      )}
-                      
-                      {msg.images && msg.images.length > 0 && (
-                        <div className="mt-6 flex flex-wrap gap-3">
-                          {msg.images.map((img, idx) => (
-                            <div key={idx} className="relative group/img overflow-hidden rounded-2xl border border-black/5 shadow-md">
-                              <img 
-                                src={img} 
-                                alt="Context" 
-                                className="w-40 h-40 object-cover transition-transform duration-500 group-hover/img:scale-110" 
-                                referrerPolicy="no-referrer"
-                              />
-                            </div>
-                          ))}
-                        </div>
-                      )}
-                      
-                      {msg.role === "ai" && (
-                        <div className="absolute top-4 right-4 flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-all">
-                          <div className="relative group/btn">
-                            <button 
-                              onClick={() => handleTTS(msg.content)}
-                              className={cn(
-                                "p-2 hover:bg-black/5 rounded-xl active:scale-90 transition-all",
-                                isSpeaking ? "text-amber-600 animate-pulse" : "text-black/20 hover:text-amber-600"
-                              )}
-                            >
-                              <Volume2 className="w-4 h-4" />
-                            </button>
-                            <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 hidden group-hover/btn:block w-32 p-2 bg-black text-white text-[10px] rounded-xl shadow-xl z-50 pointer-events-none leading-relaxed text-center">
-                              <strong className="block text-amber-400 mb-1">Ouvir Resposta</strong>
-                              Lê o texto em voz alta.
-                            </div>
-                          </div>
-                          <div className="relative group/btn">
-                            <button 
-                              onClick={() => copyToClipboard(msg.content, `msg-${i}`)}
-                              className="p-2 hover:bg-black/5 rounded-xl active:scale-90 transition-all"
-                            >
-                              {copiedId === `msg-${i}` ? <Check className="w-4 h-4 text-green-600" /> : <Copy className="w-4 h-4 text-black/20" />}
-                            </button>
-                            <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 hidden group-hover/btn:block w-32 p-2 bg-black text-white text-[10px] rounded-xl shadow-xl z-50 pointer-events-none leading-relaxed text-center">
-                              <strong className="block text-gray-400 mb-1">Copiar Resposta</strong>
-                              Copia o texto para a área de transferência.
-                            </div>
-                          </div>
-                        </div>
-                      )}
-                    </div>
-                    <span className="text-[10px] font-medium text-black/40 uppercase tracking-wider px-2">
-                      {msg.role === "user" ? "Sua mensagem" : "Resposta do Agente"}
-                    </span>
-                  </div>
-                </motion.div>
+                <ChatMessage
+                  key={i}
+                  msg={msg}
+                  index={i}
+                  isSwarmMode={isSwarmMode}
+                  isSpeaking={isSpeaking}
+                  copiedId={copiedId}
+                  onArtifactClick={handleArtifactClick}
+                  onTTSClick={handleTTS}
+                  onCopyClick={copyToClipboard}
+                />
               ))}
               {isLoading && (
                 <div className="flex gap-4">
@@ -1854,7 +2155,7 @@ export default function App() {
         </div>
 
             {/* Input Area */}
-            <div className="p-8 bg-white/80 backdrop-blur-3xl border-t border-black/5 relative z-20">
+            <div className="p-4 md:p-8 bg-white/80 backdrop-blur-3xl border-t border-black/5 relative z-20">
               <div className="max-w-4xl mx-auto relative">
                 <div className="absolute -top-12 left-0 flex gap-2 overflow-x-auto pb-3 no-scrollbar max-w-full">
                   {selectedSkill && (
@@ -1888,7 +2189,7 @@ export default function App() {
                   ))}
                 </div>
                 
-                <div className="group bg-white rounded-[2.5rem] shadow-[0_10px_40px_rgba(0,0,0,0.08)] border border-black/5 p-2 transition-all focus-within:shadow-[0_20px_60px_rgba(0,0,0,0.12)] focus-within:border-blue-500/20 flex items-end gap-2 relative">
+                <div className="group bg-white rounded-[2.5rem] shadow-[0_10px_40px_rgba(0,0,0,0.08)] border border-black/5 p-2 transition-all focus-within:shadow-[0_20px_60px_rgba(0,0,0,0.12)] focus-within:border-blue-500/20 flex flex-col md:flex-row items-end gap-2 relative">
                   
                   <AnimatePresence>
                     {showCommandMenu && filteredCommands.length > 0 && (
@@ -1924,91 +2225,198 @@ export default function App() {
                     onPaste={handlePaste}
                     onKeyDown={handleInputKeyDown}
                     placeholder={selectedSkill ? `Pergunte sobre ${selectedSkill.name.toLowerCase()}...` : "Qual é o seu desafio de marketing hoje? (Digite '/' para comandos)"}
-                    className="w-full bg-transparent rounded-[2rem] p-5 focus:outline-none transition-all min-h-[80px] max-h-[300px] resize-none font-medium text-black/70 placeholder:text-black/20"
+                    className="flex-1 w-full bg-transparent rounded-[2rem] p-5 focus:outline-none transition-all min-h-[80px] max-h-[300px] resize-none font-medium text-black/70 placeholder:text-black/20"
                   />
-                  <div className="flex gap-2 pb-2 pr-2">
-                    <input 
-                      type="file" 
-                      ref={fileInputRef} 
-                      onChange={handleImageUpload} 
-                      className="hidden" 
-                      multiple 
-                      accept="image/*" 
-                    />
-                    <div className="relative group/tooltip">
-                      <button
-                        onClick={() => setMessages([])}
-                        className="p-4 bg-red-50 text-red-500 rounded-2xl hover:bg-red-100 transition-all"
-                      >
-                        <Trash2 className="w-5 h-5" />
-                      </button>
-                      <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 hidden group-hover/tooltip:block w-48 p-2.5 bg-black text-white text-[10px] rounded-xl shadow-xl z-50 pointer-events-none leading-relaxed text-center">
-                        <strong className="block text-red-400 mb-1">Limpar Chat</strong>
-                        Apaga todo o histórico da conversa atual.
-                      </div>
+                    <div className="flex gap-1.5 md:gap-2 pb-2 pr-2 w-full md:w-auto overflow-x-auto custom-scrollbar justify-end">
+                      <input 
+                        type="file" 
+                        ref={fileInputRef} 
+                        onChange={handleImageUpload} 
+                        className="hidden" 
+                        multiple 
+                        accept="image/*" 
+                      />
+                      <div className="relative">
+                        <div className="flex items-center bg-red-50 text-red-500 rounded-2xl transition-all">
+                          <button
+                            onClick={() => setMessages([])}
+                            className="p-3 md:p-4 hover:bg-red-100 rounded-l-2xl"
+                          >
+                            <Trash2 className="w-4 h-4 md:w-5 md:h-5" />
+                          </button>
+                          <button
+                            onClick={(e) => { e.stopPropagation(); setActiveTooltip(activeTooltip === 'limpar_chat' ? null : 'limpar_chat'); }}
+                            className="pr-2 pl-1 py-3 md:pr-3 md:py-4 opacity-50 hover:opacity-100 rounded-r-2xl hover:bg-red-100"
+                          >
+                            <HelpCircle className="w-3 h-3 md:w-3.5 md:h-3.5" />
+                          </button>
+                        </div>
+                      <AnimatePresence>
+                        {activeTooltip === 'limpar_chat' && (
+                          <motion.div 
+                            initial={{ opacity: 0, y: 5 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            exit={{ opacity: 0, y: 5 }}
+                            className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-48 p-2.5 bg-black text-white text-[10px] rounded-xl shadow-xl z-50 leading-relaxed text-center"
+                          >
+                            <strong className="block text-red-400 mb-1">Limpar Chat</strong>
+                            Apaga todo o histórico da conversa atual.
+                          </motion.div>
+                        )}
+                      </AnimatePresence>
                     </div>
-                    <div className="relative group/tooltip">
-                      <button
-                        onClick={() => fileInputRef.current?.click()}
-                        className="p-4 bg-black/5 text-black/40 rounded-2xl hover:bg-black/10 hover:text-black transition-all active:scale-90"
-                      >
-                        <Paperclip className="w-5 h-5" />
-                      </button>
-                      <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 hidden group-hover/tooltip:block w-48 p-2.5 bg-black text-white text-[10px] rounded-xl shadow-xl z-50 pointer-events-none leading-relaxed text-center">
-                        <strong className="block text-gray-400 mb-1">Anexar Imagem</strong>
-                        Adiciona uma imagem como contexto para a IA.
-                      </div>
+                    
+                      <div className="relative">
+                        <div className="flex items-center bg-black/5 text-black/40 rounded-2xl transition-all">
+                          <button
+                            onClick={() => fileInputRef.current?.click()}
+                            className="p-3 md:p-4 hover:bg-black/10 hover:text-black rounded-l-2xl active:scale-90"
+                          >
+                            <Paperclip className="w-4 h-4 md:w-5 md:h-5" />
+                          </button>
+                          <button
+                            onClick={(e) => { e.stopPropagation(); setActiveTooltip(activeTooltip === 'anexar' ? null : 'anexar'); }}
+                            className="pr-2 pl-1 py-3 md:pr-3 md:py-4 opacity-50 hover:opacity-100 hover:bg-black/10 hover:text-black rounded-r-2xl"
+                          >
+                            <HelpCircle className="w-3 h-3 md:w-3.5 md:h-3.5" />
+                          </button>
+                        </div>
+                      <AnimatePresence>
+                        {activeTooltip === 'anexar' && (
+                          <motion.div 
+                            initial={{ opacity: 0, y: 5 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            exit={{ opacity: 0, y: 5 }}
+                            className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-48 p-2.5 bg-black text-white text-[10px] rounded-xl shadow-xl z-50 leading-relaxed text-center"
+                          >
+                            <strong className="block text-gray-400 mb-1">Anexar Imagem</strong>
+                            Adiciona uma imagem como contexto para a IA.
+                          </motion.div>
+                        )}
+                      </AnimatePresence>
                     </div>
-                    <div className="relative group/tooltip">
-                      <button
-                        onClick={handleGenerateImage}
-                        disabled={!input.trim() || isLoading}
-                        className="p-4 bg-white border border-black/5 text-black/40 rounded-2xl hover:scale-105 active:scale-95 disabled:opacity-50 disabled:scale-100 transition-all shadow-sm hover:shadow-md flex items-center gap-2 group"
-                      >
-                        <ImageIcon className="w-5 h-5 group-hover:text-blue-600 transition-colors" />
-                      </button>
-                      <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 hidden group-hover/tooltip:block w-48 p-2.5 bg-black text-white text-[10px] rounded-xl shadow-xl z-50 pointer-events-none leading-relaxed text-center">
-                        <strong className="block text-blue-400 mb-1">Gerar Imagem</strong>
-                        Cria uma imagem baseada no seu texto.
+                    
+                    <div className="relative">
+                      <div className="flex items-center bg-white border border-black/5 text-black/40 rounded-2xl transition-all shadow-sm hover:shadow-md group">
+                        <button
+                          onClick={handleGenerateImage}
+                          disabled={!input.trim() || isLoading}
+                          className="p-3 md:p-4 hover:scale-105 active:scale-95 disabled:opacity-50 disabled:scale-100 rounded-l-2xl"
+                        >
+                          <ImageIcon className="w-4 h-4 md:w-5 md:h-5 group-hover:text-blue-600 transition-colors" />
+                        </button>
+                        <button
+                          onClick={(e) => { e.stopPropagation(); setActiveTooltip(activeTooltip === 'gerar_imagem' ? null : 'gerar_imagem'); }}
+                          className="pr-2 pl-1 py-3 md:pr-3 md:py-4 opacity-50 hover:opacity-100 rounded-r-2xl"
+                        >
+                          <HelpCircle className="w-3 h-3 md:w-3.5 md:h-3.5" />
+                        </button>
                       </div>
+                      <AnimatePresence>
+                        {activeTooltip === 'gerar_imagem' && (
+                          <motion.div 
+                            initial={{ opacity: 0, y: 5 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            exit={{ opacity: 0, y: 5 }}
+                            className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-48 p-2.5 bg-black text-white text-[10px] rounded-xl shadow-xl z-50 leading-relaxed text-center"
+                          >
+                            <strong className="block text-blue-400 mb-1">Gerar Imagem</strong>
+                            Cria uma imagem baseada no seu texto.
+                          </motion.div>
+                        )}
+                      </AnimatePresence>
                     </div>
-                    <div className="relative group/tooltip">
-                      <button
-                        onClick={handleGenerateVideo}
-                        disabled={(!input.trim() && selectedImages.length === 0) || isLoading}
-                        className="p-4 bg-white border border-black/5 text-black/40 rounded-2xl hover:scale-105 active:scale-95 disabled:opacity-50 disabled:scale-100 transition-all shadow-sm hover:shadow-md flex items-center gap-2 group"
-                      >
-                        <Video className="w-5 h-5 group-hover:text-indigo-600 transition-colors" />
-                      </button>
-                      <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 hidden group-hover/tooltip:block w-48 p-2.5 bg-black text-white text-[10px] rounded-xl shadow-xl z-50 pointer-events-none leading-relaxed text-center">
-                        <strong className="block text-indigo-400 mb-1">Gerar Vídeo</strong>
-                        Cria vídeos curtos usando o modelo Veo.
+                    
+                    <div className="relative">
+                      <div className="flex items-center bg-white border border-black/5 text-black/40 rounded-2xl transition-all shadow-sm hover:shadow-md group">
+                        <button
+                          onClick={handleGenerateVideo}
+                          disabled={(!input.trim() && selectedImages.length === 0) || isLoading}
+                          className="p-3 md:p-4 hover:scale-105 active:scale-95 disabled:opacity-50 disabled:scale-100 rounded-l-2xl"
+                        >
+                          <Video className="w-4 h-4 md:w-5 md:h-5 group-hover:text-indigo-600 transition-colors" />
+                        </button>
+                        <button
+                          onClick={(e) => { e.stopPropagation(); setActiveTooltip(activeTooltip === 'gerar_video' ? null : 'gerar_video'); }}
+                          className="pr-2 pl-1 py-3 md:pr-3 md:py-4 opacity-50 hover:opacity-100 rounded-r-2xl"
+                        >
+                          <HelpCircle className="w-3 h-3 md:w-3.5 md:h-3.5" />
+                        </button>
                       </div>
+                      <AnimatePresence>
+                        {activeTooltip === 'gerar_video' && (
+                          <motion.div 
+                            initial={{ opacity: 0, y: 5 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            exit={{ opacity: 0, y: 5 }}
+                            className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-48 p-2.5 bg-black text-white text-[10px] rounded-xl shadow-xl z-50 leading-relaxed text-center"
+                          >
+                            <strong className="block text-indigo-400 mb-1">Gerar Vídeo</strong>
+                            Cria vídeos curtos usando o modelo Veo.
+                          </motion.div>
+                        )}
+                      </AnimatePresence>
                     </div>
-                    <div className="relative group/tooltip">
-                      <button
-                        onClick={() => setIsLiveMode(true)}
-                        className="p-4 bg-rose-50 border border-rose-100 text-rose-600 rounded-2xl hover:scale-105 active:scale-95 transition-all shadow-sm hover:shadow-md flex items-center gap-2 group"
-                      >
-                        <Mic className="w-5 h-5" />
-                      </button>
-                      <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 hidden group-hover/tooltip:block w-48 p-2.5 bg-black text-white text-[10px] rounded-xl shadow-xl z-50 pointer-events-none leading-relaxed text-center">
-                        <strong className="block text-rose-400 mb-1">Conversa em Tempo Real</strong>
-                        Ativa o modo de voz para conversar com o agente ao vivo.
+                    
+                    <div className="relative">
+                      <div className="flex items-center bg-rose-50 border border-rose-100 text-rose-600 rounded-2xl transition-all shadow-sm hover:shadow-md group">
+                        <button
+                          onClick={() => setIsLiveMode(true)}
+                          className="p-3 md:p-4 hover:scale-105 active:scale-95 rounded-l-2xl"
+                        >
+                          <Mic className="w-4 h-4 md:w-5 md:h-5" />
+                        </button>
+                        <button
+                          onClick={(e) => { e.stopPropagation(); setActiveTooltip(activeTooltip === 'voz' ? null : 'voz'); }}
+                          className="pr-2 pl-1 py-3 md:pr-3 md:py-4 opacity-50 hover:opacity-100 rounded-r-2xl"
+                        >
+                          <HelpCircle className="w-3 h-3 md:w-3.5 md:h-3.5" />
+                        </button>
                       </div>
+                      <AnimatePresence>
+                        {activeTooltip === 'voz' && (
+                          <motion.div 
+                            initial={{ opacity: 0, y: 5 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            exit={{ opacity: 0, y: 5 }}
+                            className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-48 p-2.5 bg-black text-white text-[10px] rounded-xl shadow-xl z-50 leading-relaxed text-center"
+                          >
+                            <strong className="block text-rose-400 mb-1">Conversa em Tempo Real</strong>
+                            Ativa o modo de voz para conversar com o agente ao vivo.
+                          </motion.div>
+                        )}
+                      </AnimatePresence>
                     </div>
-                    <div className="relative group/tooltip">
-                      <button
-                        onClick={handleSend}
-                        disabled={(!input.trim() && selectedImages.length === 0) || isLoading}
-                        className="p-4 bg-blue-600 text-white rounded-2xl hover:scale-105 active:scale-95 disabled:opacity-50 disabled:scale-100 transition-all shadow-lg shadow-blue-200"
-                      >
-                        {isLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : <Send className="w-5 h-5" />}
-                      </button>
-                      <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 hidden group-hover/tooltip:block w-48 p-2.5 bg-black text-white text-[10px] rounded-xl shadow-xl z-50 pointer-events-none leading-relaxed text-center">
-                        <strong className="block text-blue-400 mb-1">Enviar Mensagem</strong>
-                        Envia sua mensagem para o agente.
+                    
+                    <div className="relative">
+                      <div className="flex items-center bg-blue-600 text-white rounded-2xl transition-all shadow-lg shadow-blue-200">
+                        <button
+                          onClick={handleSend}
+                          disabled={(!input.trim() && selectedImages.length === 0) || isLoading}
+                          className="p-3 md:p-4 hover:scale-105 active:scale-95 disabled:opacity-50 disabled:scale-100 rounded-l-2xl"
+                        >
+                          {isLoading ? <Loader2 className="w-4 h-4 md:w-5 md:h-5 animate-spin" /> : <Send className="w-4 h-4 md:w-5 md:h-5" />}
+                        </button>
+                        <button
+                          onClick={(e) => { e.stopPropagation(); setActiveTooltip(activeTooltip === 'enviar' ? null : 'enviar'); }}
+                          className="pr-2 pl-1 py-3 md:pr-3 md:py-4 opacity-50 hover:opacity-100 rounded-r-2xl"
+                        >
+                          <HelpCircle className="w-3 h-3 md:w-3.5 md:h-3.5" />
+                        </button>
                       </div>
+                      <AnimatePresence>
+                        {activeTooltip === 'enviar' && (
+                          <motion.div 
+                            initial={{ opacity: 0, y: 5 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            exit={{ opacity: 0, y: 5 }}
+                            className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-48 p-2.5 bg-black text-white text-[10px] rounded-xl shadow-xl z-50 leading-relaxed text-center"
+                          >
+                            <strong className="block text-blue-400 mb-1">Enviar Mensagem</strong>
+                            Envia sua mensagem para o agente.
+                          </motion.div>
+                        )}
+                      </AnimatePresence>
                     </div>
                   </div>
                 </div>
@@ -2029,7 +2437,7 @@ export default function App() {
                 animate={{ y: 0, opacity: 1 }}
                 exit={{ y: "100%", opacity: 0 }}
                 transition={{ type: "spring", damping: 25, stiffness: 200 }}
-                className="absolute bottom-24 left-8 w-96 h-64 bg-[#0A0A0A]/95 backdrop-blur-xl border border-white/10 rounded-2xl flex flex-col shadow-[0_20px_50px_rgba(0,0,0,0.5)] z-50 font-mono overflow-hidden"
+                className="absolute bottom-24 left-4 right-4 md:left-8 md:right-auto md:w-96 h-64 bg-[#0A0A0A]/95 backdrop-blur-xl border border-white/10 rounded-2xl flex flex-col shadow-[0_20px_50px_rgba(0,0,0,0.5)] z-50 font-mono overflow-hidden"
               >
                 <div className="h-10 border-b border-white/10 flex items-center justify-between px-4 bg-white/5 sticky top-0 z-10">
                   <div className="flex items-center gap-2 text-white/50 text-xs">
@@ -2082,9 +2490,9 @@ export default function App() {
                 animate={{ x: 0 }}
                 exit={{ x: "100%" }}
                 transition={{ type: "spring", damping: 25, stiffness: 200 }}
-                className="w-1/2 border-l border-black/5 bg-[#F8F9FA] flex flex-col shadow-[-20px_0_50px_rgba(0,0,0,0.05)] z-40"
+                className="absolute md:relative inset-0 md:inset-auto w-full md:w-1/2 border-l border-black/5 bg-[#F8F9FA] flex flex-col shadow-[-20px_0_50px_rgba(0,0,0,0.05)] z-40"
               >
-                <div className="h-20 border-b border-black/5 flex items-center justify-between px-8 bg-white/80 backdrop-blur-xl sticky top-0 z-10">
+                <div className="h-20 border-b border-black/5 flex items-center justify-between px-4 md:px-8 bg-white/80 backdrop-blur-xl sticky top-0 z-10">
                   <div className="flex items-center gap-4">
                     <div className="w-10 h-10 bg-blue-600 rounded-xl flex items-center justify-center shadow-lg shadow-blue-200">
                       <LayoutDashboard className="w-5 h-5 text-white" />
@@ -2102,7 +2510,7 @@ export default function App() {
                   </button>
                 </div>
                 
-                <div className="flex-1 overflow-y-auto p-10 custom-scrollbar">
+                <div className="flex-1 overflow-y-auto p-4 md:p-10 custom-scrollbar">
                   {isSwarmView ? (
                     <SwarmWorld agents={agents} knowledgeBase={knowledgeBase} />
                   ) : activeArtifact ? (
@@ -2134,7 +2542,7 @@ export default function App() {
                       <motion.div 
                         initial={{ opacity: 0, y: 20 }}
                         animate={{ opacity: 1, y: 0 }}
-                        className="bg-white p-10 rounded-[2.5rem] shadow-xl shadow-black/5 border border-black/5 min-h-[600px] relative overflow-hidden"
+                        className="bg-white p-6 md:p-10 rounded-[2.5rem] shadow-xl shadow-black/5 border border-black/5 min-h-[600px] relative overflow-hidden"
                       >
                         <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-blue-600 to-indigo-600" />
                         <ArtifactRenderer artifact={activeArtifact} />
@@ -2167,15 +2575,15 @@ export default function App() {
           onClose={() => setIsLiveMode(false)} 
         />
         {isMetisOpen && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-6" onClick={() => setIsMetisOpen(false)}>
-            <div className="w-full max-w-4xl" onClick={e => e.stopPropagation()}>
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4 md:p-6" onClick={() => setIsMetisOpen(false)}>
+            <div className="w-full max-w-4xl max-h-[90vh] overflow-y-auto custom-scrollbar rounded-2xl" onClick={e => e.stopPropagation()}>
               <MetisDashboard onClose={() => setIsMetisOpen(false)} />
             </div>
           </div>
         )}
         {isClawWorkOpen && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-6" onClick={() => setIsClawWorkOpen(false)}>
-            <div className="w-full max-w-6xl h-[80vh]" onClick={e => e.stopPropagation()}>
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4 md:p-6" onClick={() => setIsClawWorkOpen(false)}>
+            <div className="w-full max-w-6xl h-[90vh] md:h-[80vh] rounded-2xl overflow-hidden" onClick={e => e.stopPropagation()}>
               <ClawWorkArena onClose={() => setIsClawWorkOpen(false)} />
             </div>
           </div>

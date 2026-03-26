@@ -23,7 +23,7 @@ interface VisualProps {
 
 export const FunnelBuilder: React.FC<{ steps: FunnelStep[] }> = ({ steps }) => {
   return (
-    <div className="space-y-8 p-10 bg-white rounded-[2.5rem] border border-black/5 shadow-xl shadow-black/5">
+    <div className="space-y-8 p-6 md:p-10 bg-white rounded-[2.5rem] border border-black/5 shadow-xl shadow-black/5">
       <div className="flex items-center gap-3 border-b border-black/5 pb-6">
         <div className="w-10 h-10 bg-blue-600 rounded-xl flex items-center justify-center shadow-lg shadow-blue-200">
           <Target className="w-5 h-5 text-white" />
@@ -42,20 +42,20 @@ export const FunnelBuilder: React.FC<{ steps: FunnelStep[] }> = ({ steps }) => {
               animate={{ width: `${step.percentage}%`, opacity: 1, scale: 1 }}
               transition={{ delay: i * 0.1, type: "spring", stiffness: 100 }}
               className={cn(
-                "h-20 flex items-center justify-between px-8 rounded-[1.5rem] shadow-lg relative group cursor-default transition-all hover:scale-[1.02]",
+                "h-20 flex items-center justify-between px-4 md:px-8 rounded-[1.5rem] shadow-lg relative group cursor-default transition-all hover:scale-[1.02]",
                 step.color || "bg-blue-600"
               )}
               style={{ minWidth: '280px' }}
             >
-              <div className="flex items-center gap-4">
-                <div className="w-8 h-8 bg-white/20 rounded-lg flex items-center justify-center backdrop-blur-sm">
-                  <span className="text-white font-black text-xs">{i + 1}</span>
+              <div className="flex items-center gap-2 md:gap-4">
+                <div className="w-6 h-6 md:w-8 md:h-8 bg-white/20 rounded-lg flex items-center justify-center backdrop-blur-sm shrink-0">
+                  <span className="text-white font-black text-[10px] md:text-xs">{i + 1}</span>
                 </div>
-                <span className="text-white font-black text-sm uppercase tracking-widest">{step.label}</span>
+                <span className="text-white font-black text-[10px] md:text-sm uppercase tracking-widest truncate max-w-[100px] md:max-w-none">{step.label}</span>
               </div>
-              <div className="text-right">
-                <div className="text-white font-black text-lg leading-none">{step.value.toLocaleString()}</div>
-                <div className="text-white/60 text-[9px] uppercase font-black tracking-widest mt-1">{step.percentage}% do Topo</div>
+              <div className="text-right shrink-0">
+                <div className="text-white font-black text-sm md:text-lg leading-none">{step.value.toLocaleString()}</div>
+                <div className="text-white/60 text-[8px] md:text-[9px] uppercase font-black tracking-widest mt-1">{step.percentage}% do Topo</div>
               </div>
               
               {/* Glow effect */}
@@ -88,7 +88,7 @@ export const SocialMediaPreview: React.FC<{
   image?: string;
 }> = ({ platform, content, handle = "SuaMarca", image }) => {
   return (
-    <div className="p-10 bg-[#F8F9FA] rounded-[2.5rem] border border-black/5 flex justify-center shadow-inner">
+    <div className="p-6 md:p-10 bg-[#F8F9FA] rounded-[2.5rem] border border-black/5 flex justify-center shadow-inner">
       <div className="w-full max-w-[380px] bg-white border border-black/5 rounded-[2.5rem] overflow-hidden shadow-[0_30px_60px_rgba(0,0,0,0.12)] relative">
         {/* Header */}
         <div className="p-5 flex items-center justify-between border-b border-black/5">
@@ -170,7 +170,7 @@ export const ChartRenderer: React.FC<{
   const COLORS = ['#2563EB', '#F59E0B', '#10B981', '#EF4444', '#8B5CF6', '#06B6D4'];
 
   return (
-    <div className="p-10 bg-white rounded-[2.5rem] border border-black/5 shadow-xl shadow-black/5 h-[500px] flex flex-col">
+    <div className="p-6 md:p-10 bg-white rounded-[2.5rem] border border-black/5 shadow-xl shadow-black/5 h-[500px] flex flex-col">
       <div className="flex items-center justify-between mb-10">
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 bg-blue-600 rounded-xl flex items-center justify-center shadow-lg shadow-blue-200">
@@ -270,7 +270,7 @@ export const DesignSystemRenderer: React.FC<{
   spacing: { name: string; size: string; value: string }[];
 }> = ({ colors, typography, spacing }) => {
   return (
-    <div className="space-y-8 p-8 bg-white rounded-xl border border-black/5 shadow-sm">
+    <div className="space-y-8 p-6 md:p-8 bg-white rounded-xl border border-black/5 shadow-sm">
       <div className="flex items-center justify-between border-b border-black/5 pb-4">
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 bg-blue-600 rounded-xl flex items-center justify-center shadow-lg shadow-blue-200">
@@ -377,7 +377,7 @@ export const DesignSystemRenderer: React.FC<{
 
 export const ResearchRenderer: React.FC<{ findings: { topic: string; insight: string; confidence: number }[] }> = ({ findings }) => {
   return (
-    <div className="space-y-6 p-8 bg-white rounded-xl border border-black/5 shadow-sm">
+    <div className="space-y-6 p-6 md:p-8 bg-white rounded-xl border border-black/5 shadow-sm">
       <div className="flex items-center gap-3 border-b border-black/5 pb-4">
         <div className="w-10 h-10 bg-emerald-600 rounded-xl flex items-center justify-center shadow-lg shadow-emerald-200">
           <Microscope className="w-5 h-5 text-white" />
@@ -415,7 +415,7 @@ export const ResearchRenderer: React.FC<{ findings: { topic: string; insight: st
 
 export const AutomationRenderer: React.FC<{ workflow: { step: string; action: string; tool: string }[] }> = ({ workflow }) => {
   return (
-    <div className="space-y-6 p-8 bg-white rounded-xl border border-black/5 shadow-sm">
+    <div className="space-y-6 p-6 md:p-8 bg-white rounded-xl border border-black/5 shadow-sm">
       <div className="flex items-center gap-3 border-b border-black/5 pb-4">
         <div className="w-10 h-10 bg-purple-600 rounded-xl flex items-center justify-center shadow-lg shadow-purple-200">
           <Workflow className="w-5 h-5 text-white" />
@@ -451,9 +451,9 @@ export const AutomationRenderer: React.FC<{ workflow: { step: string; action: st
 export const ArchitectureRenderer: React.FC<{ 
   nodes: { id: string; label: string; type: string }[];
   links: { source: string; target: string; label: string }[];
-}> = ({ nodes, links }) => {
+}> = ({ nodes = [], links = [] }) => {
   return (
-    <div className="space-y-6 p-8 bg-[#0a0a0a] rounded-xl border border-white/5 shadow-2xl">
+    <div className="space-y-6 p-6 md:p-8 bg-[#0a0a0a] rounded-xl border border-white/5 shadow-2xl">
       <div className="flex items-center gap-3 border-b border-white/5 pb-4">
         <div className="w-10 h-10 bg-blue-600 rounded-xl flex items-center justify-center shadow-lg shadow-blue-500/20">
           <Layers className="w-5 h-5 text-white" />
@@ -467,7 +467,7 @@ export const ArchitectureRenderer: React.FC<{
         <div className="space-y-4">
           <h4 className="text-[10px] font-black uppercase tracking-[0.2em] text-white/20">Componentes do Sistema</h4>
           <div className="space-y-2">
-            {nodes.map((node, i) => (
+            {nodes?.map((node, i) => (
               <div key={i} className="p-3 bg-white/5 border border-white/10 rounded-lg flex items-center gap-3">
                 <div className={cn(
                   "w-2 h-2 rounded-full",
@@ -478,12 +478,17 @@ export const ArchitectureRenderer: React.FC<{
                 <span className="ml-auto text-[8px] font-black uppercase tracking-widest text-white/20">{node.type}</span>
               </div>
             ))}
+            {(!nodes || nodes.length === 0) && (
+              <div className="p-4 bg-white/5 border border-white/10 rounded-lg text-center">
+                <span className="text-xs font-medium text-white/40">Nenhum componente definido</span>
+              </div>
+            )}
           </div>
         </div>
         <div className="space-y-4">
           <h4 className="text-[10px] font-black uppercase tracking-[0.2em] text-white/20">Fluxo de Dados</h4>
           <div className="space-y-2">
-            {links.map((link, i) => (
+            {links?.map((link, i) => (
               <div key={i} className="p-3 bg-blue-500/5 border border-blue-500/10 rounded-lg flex items-center gap-3">
                 <span className="text-[10px] font-bold text-blue-400">{link.source}</span>
                 <ArrowDown className="w-3 h-3 text-white/20 -rotate-90" />
@@ -491,6 +496,11 @@ export const ArchitectureRenderer: React.FC<{
                 <span className="ml-auto text-[8px] font-black uppercase tracking-widest text-white/20 italic">{link.label}</span>
               </div>
             ))}
+            {(!links || links.length === 0) && (
+              <div className="p-4 bg-white/5 border border-white/10 rounded-lg text-center">
+                <span className="text-xs font-medium text-white/40">Nenhum fluxo definido</span>
+              </div>
+            )}
           </div>
         </div>
       </div>
@@ -538,7 +548,7 @@ export const VideoRenderer: React.FC<{ url: string; title: string }> = ({ url, t
   }, [url]);
 
   return (
-    <div className="space-y-6 p-8 bg-black rounded-xl border border-white/10 shadow-2xl">
+    <div className="space-y-6 p-6 md:p-8 bg-black rounded-xl border border-white/10 shadow-2xl">
       <div className="flex items-center gap-3 border-b border-white/5 pb-4">
         <div className="w-10 h-10 bg-rose-600 rounded-xl flex items-center justify-center shadow-lg shadow-rose-500/20">
           <VideoIcon className="w-5 h-5 text-white" />
@@ -570,7 +580,7 @@ export const VideoRenderer: React.FC<{ url: string; title: string }> = ({ url, t
 
 export const AudioRenderer: React.FC<{ url: string; title: string }> = ({ url, title }) => {
   return (
-    <div className="space-y-6 p-8 bg-white rounded-xl border border-black/5 shadow-sm">
+    <div className="space-y-6 p-6 md:p-8 bg-white rounded-xl border border-black/5 shadow-sm">
       <div className="flex items-center gap-3 border-b border-black/5 pb-4">
         <div className="w-10 h-10 bg-amber-500 rounded-xl flex items-center justify-center shadow-lg shadow-amber-200">
           <Volume2 className="w-5 h-5 text-white" />
@@ -580,11 +590,11 @@ export const AudioRenderer: React.FC<{ url: string; title: string }> = ({ url, t
           <p className="text-[10px] text-black/40 font-bold uppercase tracking-tighter">Gemini 2.5 TTS Engine</p>
         </div>
       </div>
-      <div className="p-6 bg-amber-50 rounded-2xl border border-amber-100 flex items-center gap-6">
-        <div className="w-16 h-16 bg-amber-500 rounded-full flex items-center justify-center shadow-lg shadow-amber-200 animate-pulse">
+      <div className="p-4 md:p-6 bg-amber-50 rounded-2xl border border-amber-100 flex flex-col md:flex-row items-center gap-4 md:gap-6">
+        <div className="w-16 h-16 bg-amber-500 rounded-full flex items-center justify-center shadow-lg shadow-amber-200 animate-pulse shrink-0">
           <Volume2 className="w-8 h-8 text-white" />
         </div>
-        <div className="flex-1 space-y-3">
+        <div className="flex-1 space-y-3 w-full">
           <div className="h-1 bg-amber-200 rounded-full overflow-hidden">
             <div className="h-full bg-amber-500 w-1/3 animate-progress" />
           </div>
@@ -605,7 +615,7 @@ export const ArtifactRenderer: React.FC<VisualProps> = ({ artifact }) => {
         return <AudioRenderer url={artifact.metadata.audioUrl} title={artifact.title} />;
       }
       return (
-        <div className="p-10 bg-white rounded-[2.5rem] border border-black/5 shadow-xl shadow-black/5">
+        <div className="p-6 md:p-10 bg-white rounded-[2.5rem] border border-black/5 shadow-xl shadow-black/5">
           <img src={artifact.metadata?.imageUrl || artifact.content} alt={artifact.title} className="w-full rounded-2xl shadow-lg" referrerPolicy="no-referrer" />
         </div>
       );

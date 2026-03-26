@@ -125,17 +125,17 @@ export const CustomAgentModal: React.FC<CustomAgentModalProps> = ({ onClose, onS
         </div>
       </div>
 
-      <div className="p-6 border-t border-white/10 bg-white/5 flex justify-end gap-4">
+      <div className="p-6 border-t border-white/10 bg-white/5 flex flex-col sm:flex-row justify-end gap-3 sm:gap-4">
         <button
           onClick={onClose}
-          className="px-6 py-3 rounded-xl text-sm font-bold text-white/70 hover:text-white hover:bg-white/5 transition-all"
+          className="w-full sm:w-auto px-6 py-3 rounded-xl text-sm font-bold text-white/70 hover:text-white hover:bg-white/5 transition-all text-center"
         >
           Cancelar
         </button>
         <button
           onClick={handleSave}
           disabled={!name || !persona || !description || !prompt}
-          className="px-6 py-3 bg-blue-600 hover:bg-blue-500 disabled:bg-white/10 disabled:text-white/30 text-white rounded-xl text-sm font-bold transition-all flex items-center gap-2 shadow-lg shadow-blue-500/20 disabled:shadow-none"
+          className="w-full sm:w-auto px-6 py-3 bg-blue-600 hover:bg-blue-500 disabled:bg-white/10 disabled:text-white/30 text-white rounded-xl text-sm font-bold transition-all flex items-center justify-center gap-2 shadow-lg shadow-blue-500/20 disabled:shadow-none"
         >
           <Save className="w-4 h-4" />
           Salvar Agente

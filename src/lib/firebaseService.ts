@@ -13,7 +13,7 @@ import {
   Timestamp
 } from 'firebase/firestore';
 import { db, auth, handleFirestoreError, OperationType } from '../firebase';
-import { BrainMemory, Message, BrandProfile, KnowledgeItem } from '../types';
+import { BrainMemory, Message, BrandProfile, KnowledgeItem, ChatSession } from '../types';
 import { generateEmbedding, cosineSimilarity } from '../services/embeddingService';
 
 export const firebaseService = {
@@ -97,6 +97,67 @@ export const firebaseService = {
     }
   },
 
+  // Chats
+  async createChat(title: string) {
+    if (!auth.currentUser) return { error: 'User not authenticated' };
+    const path = `users/${auth.currentUser.uid}/chats`;
+    try {
+      const docRef = await addDoc(collection(db, path), {
+        title,
+        createdAt: serverTimestamp(),
+        updatedAt: serverTimestamp()
+      });
+      return { data: { id: docRef.id, title, createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() }, error: null };
+    } catch (error) {
+      handleFirestoreError(error, OperationType.WRITE, path);
+      return { data: null, error };
+    }
+  },
+
+  async getChats() {
+    if (!auth.currentUser) return { data: [], error: 'User not authenticated' };
+    const path = `users/${auth.currentUser.uid}/chats`;
+    try {
+      const q = query(collection(db, path), orderBy('updatedAt', 'desc'));
+      const snapshot = await getDocs(q);
+      const chats = snapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data(),
+        createdAt: (doc.data().createdAt as Timestamp)?.toDate().toISOString() || new Date().toISOString(),
+        updatedAt: (doc.data().updatedAt as Timestamp)?.toDate().toISOString() || new Date().toISOString()
+      })) as ChatSession[];
+      return { data: chats, error: null };
+    } catch (error) {
+      handleFirestoreError(error, OperationType.GET, path);
+      return { data: [], error };
+    }
+  },
+
+  async updateChat(chatId: string, data: Partial<ChatSession>) {
+    if (!auth.currentUser) return { error: 'User not authenticated' };
+    const path = `users/${auth.currentUser.uid}/chats/${chatId}`;
+    try {
+      await setDoc(doc(db, path), { ...data, updatedAt: serverTimestamp() }, { merge: true });
+      return { error: null };
+    } catch (error) {
+      handleFirestoreError(error, OperationType.UPDATE, path);
+      return { error };
+    }
+  },
+
+  async deleteChat(chatId: string) {
+    if (!auth.currentUser) return { error: 'User not authenticated' };
+    const path = `users/${auth.currentUser.uid}/chats/${chatId}`;
+    try {
+      const { deleteDoc } = await import('firebase/firestore');
+      await deleteDoc(doc(db, path));
+      return { error: null };
+    } catch (error) {
+      handleFirestoreError(error, OperationType.DELETE, path);
+      return { error };
+    }
+  },
+
   // Messages
   async saveMessage(chatId: string, message: Omit<Message, 'createdAt'>) {
     if (!auth.currentUser) return { error: 'User not authenticated' };
@@ -134,32 +195,50 @@ export const firebaseService = {
     }
   },
 
-  // Brand Profile
+  // Brand Profiles
   async saveBrandProfile(profile: BrandProfile) {
     if (!auth.currentUser) return { error: 'User not authenticated' };
-    const path = `users/${auth.currentUser.uid}/brandProfile/current`;
+    
+    // Use the provided ID or generate a new one
+    const profileId = profile.id || crypto.randomUUID();
+    const path = `users/${auth.currentUser.uid}/brandProfiles/${profileId}`;
+    
     try {
-      const cleanProfile = JSON.parse(JSON.stringify(profile));
+      const cleanProfile = JSON.parse(JSON.stringify({ ...profile, id: profileId }));
       await setDoc(doc(db, path), cleanProfile);
-      return { error: null };
+      return { data: cleanProfile, error: null };
     } catch (error) {
       handleFirestoreError(error, OperationType.WRITE, path);
-      return { error };
+      return { data: null, error };
     }
   },
 
-  async getBrandProfile() {
-    if (!auth.currentUser) return { data: null, error: 'User not authenticated' };
-    const path = `users/${auth.currentUser.uid}/brandProfile/current`;
+  async getBrandProfiles() {
+    if (!auth.currentUser) return { data: [], error: 'User not authenticated' };
+    const path = `users/${auth.currentUser.uid}/brandProfiles`;
     try {
-      const snapshot = await getDoc(doc(db, path));
-      if (snapshot.exists()) {
-        return { data: snapshot.data() as BrandProfile, error: null };
-      }
-      return { data: null, error: null };
+      const snapshot = await getDocs(collection(db, path));
+      const profiles = snapshot.docs.map(doc => ({
+        ...doc.data(),
+        id: doc.id
+      })) as BrandProfile[];
+      return { data: profiles, error: null };
     } catch (error) {
       handleFirestoreError(error, OperationType.GET, path);
-      return { data: null, error };
+      return { data: [], error };
+    }
+  },
+
+  async deleteBrandProfile(profileId: string) {
+    if (!auth.currentUser) return { error: 'User not authenticated' };
+    const path = `users/${auth.currentUser.uid}/brandProfiles/${profileId}`;
+    try {
+      const { deleteDoc } = await import('firebase/firestore');
+      await deleteDoc(doc(db, path));
+      return { error: null };
+    } catch (error) {
+      handleFirestoreError(error, OperationType.DELETE, path);
+      return { error };
     }
   },
 

@@ -34,6 +34,7 @@ export interface MarketingSkill {
 }
 
 export interface BrandProfile {
+  id: string;
   name: string;
   audience: string;
   tone: string;
@@ -41,6 +42,13 @@ export interface BrandProfile {
   productDetails: string;
   competitors: string;
   dataSources?: string;
+}
+
+export interface ChatSession {
+  id: string;
+  title: string;
+  createdAt: string;
+  updatedAt: string;
 }
 
 export interface Message {

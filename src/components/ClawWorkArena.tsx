@@ -85,33 +85,39 @@ export const ClawWorkArena: React.FC<{ onClose: () => void }> = ({ onClose }) =>
 
   return (
     <div className="flex flex-col h-full bg-[#0A0A0A] text-white rounded-3xl overflow-hidden border border-white/10 shadow-2xl">
-      <div className="flex items-center justify-between p-6 border-b border-white/10 bg-white/5">
-        <div className="flex items-center gap-4">
-          <div className="w-12 h-12 bg-gradient-to-br from-emerald-500 to-teal-600 rounded-xl flex items-center justify-center shadow-lg shadow-emerald-500/20">
-            <Trophy className="w-6 h-6 text-white" />
+      <div className="flex flex-col md:flex-row items-start md:items-center justify-between p-4 md:p-6 border-b border-white/10 bg-white/5 gap-4 md:gap-0">
+        <div className="flex items-center gap-4 w-full md:w-auto justify-between md:justify-start">
+          <div className="flex items-center gap-3 md:gap-4">
+            <div className="w-10 h-10 md:w-12 md:h-12 bg-gradient-to-br from-emerald-500 to-teal-600 rounded-xl flex items-center justify-center shadow-lg shadow-emerald-500/20 shrink-0">
+              <Trophy className="w-5 h-5 md:w-6 md:h-6 text-white" />
+            </div>
+            <div>
+              <h2 className="text-lg md:text-xl font-black tracking-tight">ClawWork Arena</h2>
+              <p className="text-[9px] md:text-xs text-white/50 font-medium tracking-widest uppercase">AI Coworker Survival & Earning Simulation</p>
+            </div>
           </div>
-          <div>
-            <h2 className="text-xl font-black tracking-tight">ClawWork Arena</h2>
-            <p className="text-xs text-white/50 font-medium tracking-widest uppercase">AI Coworker Survival & Earning Simulation</p>
-          </div>
+          <button onClick={onClose} className="md:hidden p-2.5 bg-white/10 hover:bg-white/20 rounded-xl transition-colors shrink-0">
+            <span className="sr-only">Close</span>
+            <X className="w-5 h-5" />
+          </button>
         </div>
-        <div className="flex items-center gap-6">
-          <div className="text-right">
-            <p className="text-[10px] text-white/40 font-bold uppercase tracking-widest mb-1">Total Network Earnings</p>
-            <div className="text-3xl font-black text-emerald-400 flex items-center gap-1">
-              <DollarSign className="w-6 h-6" />
+        <div className="flex items-center justify-between md:justify-end gap-6 w-full md:w-auto">
+          <div className="text-left md:text-right">
+            <p className="text-[9px] md:text-[10px] text-white/40 font-bold uppercase tracking-widest mb-1">Total Network Earnings</p>
+            <div className="text-2xl md:text-3xl font-black text-emerald-400 flex items-center gap-1">
+              <DollarSign className="w-5 h-5 md:w-6 md:h-6" />
               {totalEarnings.toLocaleString()}
             </div>
           </div>
-          <button onClick={onClose} className="p-3 bg-white/10 hover:bg-white/20 rounded-xl transition-colors">
+          <button onClick={onClose} className="hidden md:block p-3 bg-white/10 hover:bg-white/20 rounded-xl transition-colors">
             <span className="sr-only">Close</span>
             <X className="w-6 h-6" />
           </button>
         </div>
       </div>
 
-      <div className="flex-1 grid grid-cols-3 gap-6 p-6 overflow-hidden">
-        <div className="col-span-2 flex flex-col gap-4 overflow-hidden">
+      <div className="flex-1 grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6 p-4 md:p-6 overflow-y-auto md:overflow-hidden custom-scrollbar">
+        <div className="col-span-1 md:col-span-2 flex flex-col gap-4 overflow-hidden min-h-[400px] md:min-h-0">
           <h3 className="text-sm font-bold text-white/70 flex items-center gap-2">
             <TrendingUp className="w-4 h-4 text-emerald-400" />
             Top Earning Coworkers
@@ -124,49 +130,52 @@ export const ClawWorkArena: React.FC<{ onClose: () => void }> = ({ onClose }) =>
                   layout
                   initial={{ opacity: 0, scale: 0.9 }}
                   animate={{ opacity: 1, scale: 1 }}
-                  className="bg-white/5 border border-white/10 rounded-2xl p-4 flex items-center gap-4 relative overflow-hidden group"
+                  className="bg-white/5 border border-white/10 rounded-2xl p-4 flex flex-col sm:flex-row items-start sm:items-center gap-4 relative overflow-hidden group"
                 >
                   <div className={cn(
                     "absolute left-0 top-0 bottom-0 w-1",
                     worker.status === 'working' ? "bg-blue-500" : worker.status === 'resting' ? "bg-amber-500" : "bg-white/20"
                   )} />
                   
-                  <div className="w-8 text-center font-black text-white/20 text-xl">
-                    #{index + 1}
+                  <div className="flex items-center gap-4 w-full sm:w-auto">
+                    <div className="w-8 text-center font-black text-white/20 text-xl">
+                      #{index + 1}
+                    </div>
+                    
+                    <div className="w-12 h-12 bg-white/10 rounded-full flex items-center justify-center text-2xl shrink-0">
+                      {worker.avatar}
+                    </div>
                   </div>
                   
-                  <div className="w-12 h-12 bg-white/10 rounded-full flex items-center justify-center text-2xl">
-                    {worker.avatar}
-                  </div>
-                  
-                  <div className="flex-1">
-                    <div className="flex items-center gap-2">
+                  <div className="flex-1 w-full sm:w-auto">
+                    <div className="flex flex-wrap items-center gap-2">
                       <h4 className="font-bold text-white">{worker.name}</h4>
                       <span className="px-2 py-0.5 rounded-full bg-white/10 text-[9px] font-bold uppercase tracking-wider text-white/60 flex items-center gap-1">
                         {getCategoryIcon(worker.category)}
                         {worker.profession}
                       </span>
                     </div>
-                    <div className="flex items-center gap-4 mt-1 text-xs text-white/40">
-                      <span className="flex items-center gap-1">
+                    <div className="flex flex-wrap items-center gap-2 sm:gap-4 mt-1 text-xs text-white/40">
+                      <span className="flex items-center gap-1 shrink-0">
                         <CheckCircle2 className="w-3 h-3" /> {worker.tasksCompleted} tasks
                       </span>
                       {worker.status === 'working' && (
                         <span className="flex items-center gap-1 text-blue-400">
-                          <Activity className="w-3 h-3 animate-pulse" /> {worker.currentTask}
+                          <Activity className="w-3 h-3 animate-pulse shrink-0" /> <span className="truncate max-w-[150px] sm:max-w-none">{worker.currentTask}</span>
                         </span>
                       )}
                       {worker.status === 'resting' && (
-                        <span className="flex items-center gap-1 text-amber-400">
+                        <span className="flex items-center gap-1 text-amber-400 shrink-0">
                           <Clock className="w-3 h-3" /> Resting...
                         </span>
                       )}
                     </div>
                   </div>
                   
-                  <div className="text-right">
+                  <div className="text-left sm:text-right w-full sm:w-auto mt-2 sm:mt-0 flex sm:block justify-between items-center sm:items-end border-t sm:border-t-0 border-white/10 pt-2 sm:pt-0">
+                    <div className="text-[10px] text-white/30 uppercase tracking-widest sm:hidden">Earned</div>
                     <div className="text-xl font-black text-emerald-400">${worker.earnings.toLocaleString()}</div>
-                    <div className="text-[10px] text-white/30 uppercase tracking-widest">Earned</div>
+                    <div className="text-[10px] text-white/30 uppercase tracking-widest hidden sm:block">Earned</div>
                   </div>
                 </motion.div>
               ))}
@@ -174,7 +183,7 @@ export const ClawWorkArena: React.FC<{ onClose: () => void }> = ({ onClose }) =>
           </div>
         </div>
 
-        <div className="flex flex-col gap-4 overflow-hidden bg-black/40 rounded-2xl border border-white/5 p-4">
+        <div className="flex flex-col gap-4 overflow-hidden bg-black/40 rounded-2xl border border-white/5 p-4 min-h-[300px] md:min-h-0">
           <h3 className="text-sm font-bold text-white/70 flex items-center gap-2">
             <Activity className="w-4 h-4 text-blue-400" />
             Live Network Feed

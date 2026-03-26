@@ -1,3 +1,4 @@
+import React, { memo } from 'react';
 import { motion } from "motion/react";
 import { Bot, Brain, FileText, Search, Megaphone, BarChart3, Users, Target, DollarSign } from "lucide-react";
 import { cn } from "../lib/utils";
@@ -32,29 +33,29 @@ export function SwarmWorld({ agents, knowledgeBase }: {
   const latestInsights = knowledgeBase.slice(-5).reverse();
 
   return (
-    <div className="relative w-full h-[700px] bg-black rounded-2xl border border-white/10 p-6 grid grid-cols-4 gap-6 overflow-hidden">
+    <div className="relative w-full h-[700px] bg-black rounded-2xl border border-white/10 p-4 md:p-6 flex flex-col md:grid md:grid-cols-4 gap-6 overflow-hidden md:overflow-y-auto custom-scrollbar">
       {/* Background Glow */}
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,_var(--tw-gradient-stops))] from-blue-900/20 via-black to-black" />
 
       {/* Left Column: Swarm (3/4 width) */}
-      <div className="col-span-3 flex flex-col gap-6 z-10">
+      <div className="md:col-span-3 flex flex-col gap-6 z-10 shrink-0">
         <div className="flex justify-end">
           <TestKnowledgeBase />
         </div>
         {/* Orchestrator & Agents (Tree) */}
         <div className="flex flex-col items-center z-10">
           <motion.div 
-            className="w-20 h-20 bg-blue-600 rounded-full flex flex-col items-center justify-center shadow-[0_0_40px_rgba(37,99,235,0.5)] border-4 border-blue-400/30"
+            className="w-16 h-16 md:w-20 md:h-20 bg-blue-600 rounded-full flex flex-col items-center justify-center shadow-[0_0_40px_rgba(37,99,235,0.5)] border-4 border-blue-400/30"
             animate={{ scale: [1, 1.05, 1] }}
             transition={{ duration: 4, repeat: Infinity }}
           >
-            <Brain className="w-8 h-8 text-white mb-1" />
-            <span className="text-[8px] font-bold text-white uppercase tracking-widest">Orquestrador</span>
+            <Brain className="w-6 h-6 md:w-8 md:h-8 text-white mb-1" />
+            <span className="text-[6px] md:text-[8px] font-bold text-white uppercase tracking-widest">Orquestrador</span>
           </motion.div>
           <div className="w-px h-6 bg-blue-500/50" />
         </div>
 
-        <div className="grid grid-cols-3 gap-x-4 gap-y-6">
+        <div className="grid grid-cols-2 sm:grid-cols-3 gap-x-4 gap-y-6">
           {agents.map((agent) => {
             const config = AGENT_CONFIG[agent.id as keyof typeof AGENT_CONFIG] || { role: "Especialista", icon: <Bot /> };
             return (
@@ -67,9 +68,9 @@ export function SwarmWorld({ agents, knowledgeBase }: {
               >
                 <div className="flex items-center gap-2 mb-1 text-white/40">
                   {config.icon}
-                  <span className="text-[8px] font-bold uppercase tracking-widest">{config.role}</span>
+                  <span className="text-[8px] font-bold uppercase tracking-widest text-center">{config.role}</span>
                 </div>
-                <span className="text-[10px] font-bold text-white/90 mb-2">{agent.name}</span>
+                <span className="text-[10px] font-bold text-white/90 mb-2 text-center">{agent.name}</span>
                 <div className="flex flex-wrap gap-1 justify-center">
                   {MARKETING_SKILLS
                     .filter(s => s.category.toLowerCase().includes(config.role.toLowerCase().split(' ')[0].toLowerCase()) || s.name.toLowerCase().includes(config.role.toLowerCase().split(' ')[0].toLowerCase()))
@@ -87,7 +88,7 @@ export function SwarmWorld({ agents, knowledgeBase }: {
       </div>
 
       {/* Right Column: Intelligence Hub (1/4 width) */}
-      <div className="col-span-1 border-l border-white/10 pl-4 flex flex-col gap-4 z-10 overflow-y-auto custom-scrollbar">
+      <div className="md:col-span-1 border-t md:border-t-0 md:border-l border-white/10 pt-4 md:pt-0 md:pl-4 flex flex-col gap-4 z-10 shrink-0">
         <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-white/50">Hub de Inteligência</h3>
         
         {/* Knowledge Map */}

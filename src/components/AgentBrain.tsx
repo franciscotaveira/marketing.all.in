@@ -178,29 +178,40 @@ ${selectedMemory.content}`;
       className="fixed inset-4 z-50 bg-[#141414] border border-[#E4E3E0]/20 rounded-xl shadow-2xl overflow-hidden flex flex-col"
     >
       {/* Header */}
-      <div className="p-4 border-b border-[#E4E3E0]/10 flex items-center justify-between bg-black/40">
-        <div className="flex items-center gap-4">
-          <div className="w-10 h-10 bg-blue-600 rounded-lg flex items-center justify-center relative overflow-hidden">
-            <Brain className="w-6 h-6 text-white relative z-10" />
-            <motion.div 
-              animate={{ scale: [1, 1.5, 1], opacity: [0.2, 0.5, 0.2] }}
-              transition={{ duration: 2, repeat: Infinity }}
-              className="absolute inset-0 bg-white"
-            />
+      <div className="p-4 border-b border-[#E4E3E0]/10 flex flex-col md:flex-row items-start md:items-center justify-between bg-black/40 gap-4 md:gap-0">
+        <div className="flex items-center gap-4 w-full md:w-auto justify-between md:justify-start">
+          <div className="flex items-center gap-4">
+            <div className="w-10 h-10 bg-blue-600 rounded-lg flex items-center justify-center relative overflow-hidden shrink-0">
+              <Brain className="w-6 h-6 text-white relative z-10" />
+              <motion.div 
+                animate={{ scale: [1, 1.5, 1], opacity: [0.2, 0.5, 0.2] }}
+                transition={{ duration: 2, repeat: Infinity }}
+                className="absolute inset-0 bg-white"
+              />
+            </div>
+            <div>
+              <h2 className="text-lg font-bold tracking-tight text-white flex items-center gap-2">
+                Cérebro Sináptico: {agent?.name || "Global"}
+                {isSyncing && <Activity className="w-4 h-4 text-blue-400 animate-pulse" />}
+              </h2>
+              <p className="text-[10px] uppercase tracking-widest text-blue-400 font-mono">
+                Sincronizado com Obsidian & Firebase v2.1
+              </p>
+            </div>
           </div>
-          <div>
-            <h2 className="text-lg font-bold tracking-tight text-white flex items-center gap-2">
-              Cérebro Sináptico: {agent?.name || "Global"}
-              {isSyncing && <Activity className="w-4 h-4 text-blue-400 animate-pulse" />}
-            </h2>
-            <p className="text-[10px] uppercase tracking-widest text-blue-400 font-mono">
-              Sincronizado com Obsidian & Firebase v2.1
-            </p>
-          </div>
+          <button onClick={onClose} className="p-2 hover:bg-white/10 rounded-full transition-all md:hidden shrink-0">
+            <X className="w-5 h-5 text-white/50 hover:text-white" />
+          </button>
         </div>
 
-        <div className="flex items-center gap-2">
-          <div className="flex bg-white/5 p-1 rounded-lg border border-white/10">
+        <div className="flex items-center gap-2 w-full md:w-auto overflow-x-auto custom-scrollbar pb-2 md:pb-0">
+          <button 
+            onClick={() => setIsNewNoteOpen(true)}
+            className="md:hidden px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-md text-[10px] font-bold uppercase flex items-center gap-2 shrink-0"
+          >
+            <Plus className="w-3 h-3" /> Nova Memória
+          </button>
+          <div className="flex bg-white/5 p-1 rounded-lg border border-white/10 min-w-max">
             <button 
               onClick={() => setView("graph")}
               className={cn(
@@ -247,7 +258,7 @@ ${selectedMemory.content}`;
               <Activity className="w-3 h-3" /> Analytics
             </button>
           </div>
-          <button onClick={onClose} className="p-2 hover:bg-white/10 rounded-full transition-all">
+          <button onClick={onClose} className="p-2 hover:bg-white/10 rounded-full transition-all hidden md:block shrink-0">
             <X className="w-5 h-5 text-white/50" />
           </button>
         </div>
@@ -256,7 +267,7 @@ ${selectedMemory.content}`;
       {/* Main Content */}
       <div className="flex-1 flex overflow-hidden">
         {/* Sidebar: Memories List */}
-        <div className="w-80 border-r border-[#E4E3E0]/10 bg-black/20 flex flex-col">
+        <div className="hidden md:flex w-80 border-r border-[#E4E3E0]/10 bg-black/20 flex-col shrink-0">
           <div className="p-4 border-b border-[#E4E3E0]/10">
             <button 
               onClick={() => setIsNewNoteOpen(true)}
