@@ -1,4 +1,4 @@
-import { GoogleGenAI } from "@google/genai";
+import { GoogleGenAI, ThinkingLevel } from "@google/genai";
 import { Message } from "../types";
 
 const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY || "" });
@@ -10,7 +10,9 @@ export async function sendMessageToAgent(
   systemInstruction?: string,
   tools?: any[],
   images?: string[],
-  history?: Message[]
+  history?: Message[],
+  useGrounding?: boolean,
+  isHighThinking?: boolean
 ) {
   // If model is Gemini, use SDK
   if (model.startsWith("gemini")) {
@@ -53,13 +55,24 @@ export async function sendMessageToAgent(
 
     contents.push({ role: 'user', parts: currentParts });
 
+    const config: any = {
+      systemInstruction,
+      tools: tools || [],
+    };
+
+    if (useGrounding) {
+      config.tools.push({ googleSearch: {} });
+    }
+
+    if (isHighThinking) {
+      model = "gemini-3.1-pro-preview";
+      config.thinkingConfig = { thinkingLevel: ThinkingLevel.HIGH };
+    }
+
     const response = await ai.models.generateContent({
       model: model,
       contents: contents,
-      config: {
-        systemInstruction,
-        tools,
-      },
+      config: config,
     });
     return response.text || "Sem resposta.";
   }
@@ -70,7 +83,7 @@ export async function sendMessageToAgent(
     headers: {
       "Content-Type": "application/json",
     },
-    body: JSON.stringify({ agentId, message, systemInstruction, tools, images, history }),
+    body: JSON.stringify({ agentId, message, systemInstruction, tools, images, history, useGrounding, isHighThinking }),
   });
 
   if (!response.ok) {

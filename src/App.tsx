@@ -78,6 +78,10 @@ import { ErrorBoundary } from "./components/ErrorBoundary";
 import { ChatMessage } from "./components/ChatMessage";
 import { ClawWorkArena } from "./components/ClawWorkArena";
 import { CustomAgentModal } from "./components/CustomAgentModal";
+import { InputBar } from "./components/InputBar";
+import { AgentControls } from "./components/AgentControls";
+import { ChatHistory } from "./components/ChatHistory";
+import { CalculatorModal } from "./components/CalculatorModal";
 import { MARKETING_SKILLS, MARKETING_FRAMEWORKS, CATEGORY_COLORS, CATEGORY_TEXT_COLORS, CATEGORY_BG_LIGHT_COLORS } from "./constants";
 import { MarketingSkill, SkillCategory, BrandProfile, Message, SkillTier, Artifact, BrainMemory } from "./types";
 import { cn } from "./lib/utils";
@@ -196,7 +200,9 @@ export default function App() {
   const [imageConfig, setImageConfig] = useState({ aspectRatio: "1:1", size: "1K" });
   const [isBrainOpen, setIsBrainOpen] = useState(false);
   const [isMetisOpen, setIsMetisOpen] = useState(false);
+  const [isChatHistoryOpen, setIsChatHistoryOpen] = useState(false);
   const [isClawWorkOpen, setIsClawWorkOpen] = useState(false);
+  const [currentChatId, setCurrentChatId] = useState<string | null>(null);
   const [calcData, setCalcData] = useState({ investment: 0, revenue: 0 });
   
   const chatEndRef = useRef<HTMLDivElement>(null);
@@ -247,8 +253,10 @@ export default function App() {
         }
         
         // Load messages for the current chat (using a default chat ID for now)
-        const chatMessages = await firebaseService.getMessages("default");
-        if (chatMessages.data) setMessages(chatMessages.data);
+        if (currentChatId) {
+          const chatMessages = await firebaseService.getMessages(currentChatId);
+          if (chatMessages.data) setMessages(chatMessages.data as Message[]);
+        }
 
         const { data: knowledge } = await firebaseService.getKnowledge();
         if (knowledge) setKnowledgeBase(knowledge);
@@ -573,7 +581,7 @@ export default function App() {
       \`\`\`
 
       Tipos de Artefatos Suportados:
-      - copy, plan, code, data, script, visual, video, campaign, funnel, social, research, automation, architecture
+      - copy, plan, code, data, script, visual, video, campaign, funnel, social, research, automation, architecture, n8n
       
       Para artefatos complexos, você DEVE incluir um bloco JSON de metadados LOGO APÓS o conteúdo do artefato, no formato:
       { "metadata": { ... } }
@@ -587,6 +595,7 @@ export default function App() {
       - Research: { "metadata": { "researchFindings": [{ "topic": "Tendência X", "insight": "Descrição", "confidence": 95 }, ...] } }
       - Automation: { "metadata": { "automationWorkflow": [{ "step": "Trigger", "action": "Webhook", "tool": "Zapier" }, ...] } }
       - Architecture: { "metadata": { "architectureNodes": [{ "id": "1", "label": "Gemini 1.5", "type": "llm" }], "architectureLinks": [{ "source": "1", "target": "2", "label": "API Call" }] } }
+      - n8n: Use o tipo 'n8n' e coloque o JSON bruto do workflow do n8n como conteúdo. Não precisa de metadados.
 
       Diretrizes:
       1. Forneça conselhos acionáveis, baseados em dados e de alta conversão.
@@ -617,7 +626,8 @@ export default function App() {
           },
           addLog,
           currentImages,
-          messages
+          messages,
+          isHighThinking
         );
         setIsProcessing(false);
         aiResponse = result.response;
@@ -646,44 +656,48 @@ export default function App() {
       const artifactRegex = /```artifact:([a-zA-Z0-9_-]+):([^\n]+)\n([\s\S]*?)```/g;
       let match;
       while ((match = artifactRegex.exec(aiResponse)) !== null) {
+        const type = match[1];
         let content = match[3].trim();
         let metadata = undefined;
         
-        // Try to extract JSON metadata from the content
-        try {
-          // Look for a markdown JSON block
-          const jsonBlockMatch = content.match(/```json\s*([\s\S]*?)\s*```/);
-          if (jsonBlockMatch) {
-            const parsed = JSON.parse(jsonBlockMatch[1]);
-            metadata = parsed.metadata !== undefined ? parsed.metadata : parsed;
-            content = content.replace(jsonBlockMatch[0], '').trim();
-          } else {
-            // Fallback: look for a JSON object at the end of the content
-            const jsonStart = content.lastIndexOf('{');
-            const jsonEnd = content.lastIndexOf('}');
-            
-            if (jsonStart !== -1 && jsonEnd !== -1 && jsonEnd > jsonStart) {
-              const possibleJson = content.substring(jsonStart, jsonEnd + 1);
-              try {
-                const parsed = JSON.parse(possibleJson);
-                metadata = parsed.metadata !== undefined ? parsed.metadata : parsed;
-                content = content.substring(0, jsonStart).trim();
-                // Remove trailing ``` if any
-                if (content.endsWith('```')) {
-                  content = content.substring(0, content.length - 3).trim();
+        // Skip metadata extraction for n8n workflows as the entire content is the JSON
+        if (type !== 'n8n') {
+          // Try to extract JSON metadata from the content
+          try {
+            // Look for a markdown JSON block
+            const jsonBlockMatch = content.match(/```json\s*([\s\S]*?)\s*```/);
+            if (jsonBlockMatch) {
+              const parsed = JSON.parse(jsonBlockMatch[1]);
+              metadata = parsed.metadata !== undefined ? parsed.metadata : parsed;
+              content = content.replace(jsonBlockMatch[0], '').trim();
+            } else {
+              // Fallback: look for a JSON object at the end of the content
+              const jsonStart = content.lastIndexOf('{');
+              const jsonEnd = content.lastIndexOf('}');
+              
+              if (jsonStart !== -1 && jsonEnd !== -1 && jsonEnd > jsonStart) {
+                const possibleJson = content.substring(jsonStart, jsonEnd + 1);
+                try {
+                  const parsed = JSON.parse(possibleJson);
+                  metadata = parsed.metadata !== undefined ? parsed.metadata : parsed;
+                  content = content.substring(0, jsonStart).trim();
+                  // Remove trailing ``` if any
+                  if (content.endsWith('```')) {
+                    content = content.substring(0, content.length - 3).trim();
+                  }
+                } catch (e) {
+                  // Not valid JSON, ignore
                 }
-              } catch (e) {
-                // Not valid JSON, ignore
               }
             }
+          } catch (e) {
+            console.error("Failed to parse artifact metadata", e);
           }
-        } catch (e) {
-          console.error("Failed to parse artifact metadata", e);
         }
 
         artifacts.push({
           id: Math.random().toString(36).substr(2, 9),
-          type: match[1] as any,
+          type: type as any,
           title: match[2].trim(),
           content: content,
           agentName: selectedSkill?.persona || "Assistente Geral",
@@ -1316,6 +1330,12 @@ export default function App() {
                 <Menu className="w-5 h-5 text-black/60 group-hover:text-black" />
               </button>
             )}
+            <button
+              onClick={() => setIsChatHistoryOpen(true)}
+              className="p-2 md:p-2.5 hover:bg-black/5 rounded-xl transition-all active:scale-95 group shadow-sm bg-white border border-black/5 hidden md:block"
+            >
+              <History className="w-5 h-5 text-black/60 group-hover:text-black" />
+            </button>
             <div className="flex flex-col">
               <div className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-widest text-black/40 mb-1">
                 <button 
@@ -1367,333 +1387,22 @@ export default function App() {
             </div>
           </div>
 
-          <div className="flex items-center gap-2 md:gap-3 flex-wrap justify-start md:justify-end w-full md:w-auto">
-            <div className="relative">
-              <div className={cn(
-                "flex items-center rounded-xl transition-all shadow-sm border",
-                isSwarmView ? "bg-blue-600 text-white border-blue-500" : "bg-white border-black/5 text-black/60 hover:bg-black/5"
-              )}>
-                <button
-                  onClick={() => setIsSwarmView(!isSwarmView)}
-                  className="p-2.5 active:scale-95"
-                >
-                  <Users className="w-5 h-5" />
-                </button>
-                <button
-                  onClick={(e) => { e.stopPropagation(); setActiveTooltip(activeTooltip === 'visualizar_enxame' ? null : 'visualizar_enxame'); }}
-                  className="pr-2.5 pl-1 py-2.5 opacity-50 hover:opacity-100"
-                >
-                  <HelpCircle className="w-3.5 h-3.5" />
-                </button>
-              </div>
-              <AnimatePresence>
-                {activeTooltip === 'visualizar_enxame' && (
-                  <motion.div 
-                    initial={{ opacity: 0, y: 5 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: 5 }}
-                    className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-48 p-2.5 bg-black text-white text-[10px] rounded-xl shadow-xl z-50 leading-relaxed text-center"
-                  >
-                    <strong className="block text-blue-400 mb-1">Visualizar Enxame</strong>
-                    Abre o painel para acompanhar a atividade e o status de todos os agentes.
-                  </motion.div>
-                )}
-              </AnimatePresence>
-            </div>
-            <div className="hidden lg:flex items-center gap-2 mr-4 px-3 py-1.5 bg-black/5 rounded-xl border border-black/5">
-              <div className="flex -space-x-2">
-                {[1, 2, 3].map((i) => (
-                  <div key={i} className="w-5 h-5 rounded-full border-2 border-white bg-blue-500 flex items-center justify-center shadow-sm">
-                    <Bot className="w-2.5 h-2.5 text-white" />
-                  </div>
-                ))}
-              </div>
-              <span className="text-[9px] font-black uppercase tracking-widest text-black/40">Enxame Ativo</span>
-            </div>
-
-            <div className="flex items-center gap-1.5 bg-black/5 p-1 rounded-xl border border-black/5">
-              <div className="relative">
-                <div className={cn(
-                  "flex items-center rounded-lg transition-all shadow-sm",
-                  isHumanizedMode 
-                    ? "bg-gradient-to-r from-pink-500 to-rose-500 text-white shadow-pink-200" 
-                    : "text-black/40 hover:text-black/60 hover:bg-black/5"
-                )}>
-                  <button 
-                    onClick={() => setIsHumanizedMode(!isHumanizedMode)}
-                    className="flex items-center gap-2 pl-4 pr-2 py-2 text-[10px] font-black uppercase tracking-widest"
-                  >
-                    <Heart className={cn("w-3.5 h-3.5", isHumanizedMode && "fill-current")} />
-                    <span className="hidden sm:inline">Humanizado</span>
-                  </button>
-                  <button
-                    onClick={(e) => { e.stopPropagation(); setActiveTooltip(activeTooltip === 'humanizado' ? null : 'humanizado'); }}
-                    className="pr-3 pl-1 py-2 opacity-50 hover:opacity-100"
-                  >
-                    <HelpCircle className="w-3.5 h-3.5" />
-                  </button>
-                </div>
-                <AnimatePresence>
-                  {activeTooltip === 'humanizado' && (
-                    <motion.div 
-                      initial={{ opacity: 0, y: -5 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      exit={{ opacity: 0, y: -5 }}
-                      className="absolute top-full left-1/2 -translate-x-1/2 mt-2 w-48 p-2.5 bg-black text-white text-[10px] rounded-xl shadow-xl z-50 leading-relaxed text-center"
-                    >
-                      <strong className="block text-rose-400 mb-1">Modo Humanizado</strong>
-                      Deixa o texto mais natural, empático e focado em conexão emocional.
-                    </motion.div>
-                  )}
-                </AnimatePresence>
-              </div>
-
-              <div className="relative">
-                <div className={cn(
-                  "flex items-center rounded-lg transition-all shadow-sm",
-                  isSwarmMode 
-                    ? "bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-blue-200" 
-                    : "text-black/40 hover:text-black/60 hover:bg-black/5"
-                )}>
-                  <button 
-                    onClick={() => setIsSwarmMode(!isSwarmMode)}
-                    className="flex items-center gap-2 pl-4 pr-2 py-2 text-[10px] font-black uppercase tracking-widest"
-                  >
-                    <Zap className={cn("w-3.5 h-3.5", isSwarmMode && "fill-current text-yellow-300")} />
-                    <span className="hidden sm:inline">Enxame</span>
-                  </button>
-                  <button
-                    onClick={(e) => { e.stopPropagation(); setActiveTooltip(activeTooltip === 'enxame' ? null : 'enxame'); }}
-                    className="pr-3 pl-1 py-2 opacity-50 hover:opacity-100"
-                  >
-                    <HelpCircle className="w-3.5 h-3.5" />
-                  </button>
-                </div>
-                <AnimatePresence>
-                  {activeTooltip === 'enxame' && (
-                    <motion.div 
-                      initial={{ opacity: 0, y: -5 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      exit={{ opacity: 0, y: -5 }}
-                      className="absolute top-full left-1/2 -translate-x-1/2 mt-2 w-56 p-2.5 bg-black text-white text-[10px] rounded-xl shadow-xl z-50 leading-relaxed text-center"
-                    >
-                      <strong className="block text-blue-400 mb-1">Modo Enxame (Swarm)</strong>
-                      Ativa múltiplos especialistas para analisar seu pedido e criar uma estratégia 360º.
-                    </motion.div>
-                  )}
-                </AnimatePresence>
-              </div>
-
-              <div className="relative">
-                <div className={cn(
-                  "flex items-center rounded-lg transition-all shadow-sm",
-                  useGrounding 
-                    ? "bg-gradient-to-r from-emerald-500 to-teal-500 text-white shadow-emerald-200" 
-                    : "text-black/40 hover:text-black/60 hover:bg-black/5"
-                )}>
-                  <button 
-                    onClick={() => setUseGrounding(!useGrounding)}
-                    className="flex items-center gap-2 pl-4 pr-2 py-2 text-[10px] font-black uppercase tracking-widest"
-                  >
-                    <Globe className={cn("w-3.5 h-3.5", useGrounding && "animate-spin-slow")} />
-                    <span className="hidden sm:inline">Pesquisa</span>
-                  </button>
-                  <button
-                    onClick={(e) => { e.stopPropagation(); setActiveTooltip(activeTooltip === 'pesquisa' ? null : 'pesquisa'); }}
-                    className="pr-3 pl-1 py-2 opacity-50 hover:opacity-100"
-                  >
-                    <HelpCircle className="w-3.5 h-3.5" />
-                  </button>
-                </div>
-                <AnimatePresence>
-                  {activeTooltip === 'pesquisa' && (
-                    <motion.div 
-                      initial={{ opacity: 0, y: -5 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      exit={{ opacity: 0, y: -5 }}
-                      className="absolute top-full left-1/2 -translate-x-1/2 mt-2 w-48 p-2.5 bg-black text-white text-[10px] rounded-xl shadow-xl z-50 leading-relaxed text-center"
-                    >
-                      <strong className="block text-emerald-400 mb-1">Pesquisa em Tempo Real</strong>
-                      Conecta a IA à internet para buscar dados e referências atualizadas.
-                    </motion.div>
-                  )}
-                </AnimatePresence>
-              </div>
-            </div>
-
-            <div className="w-px h-6 bg-black/10 mx-1" />
-
-            <div className="flex items-center gap-1.5">
-              <div className="relative">
-                <div className="flex items-center rounded-xl transition-all hover:bg-black/5 text-black/60">
-                  <button 
-                    onClick={() => setIsBrainOpen(true)}
-                    className="p-2.5 relative group"
-                  >
-                    <Brain className="w-5 h-5 group-hover:text-blue-600 transition-colors" />
-                    <div className="absolute top-1 right-1 w-2 h-2 bg-blue-500 rounded-full border-2 border-white" />
-                  </button>
-                  <button
-                    onClick={(e) => { e.stopPropagation(); setActiveTooltip(activeTooltip === 'cerebro' ? null : 'cerebro'); }}
-                    className="pr-2.5 pl-1 py-2.5 opacity-50 hover:opacity-100"
-                  >
-                    <HelpCircle className="w-3.5 h-3.5" />
-                  </button>
-                </div>
-                <AnimatePresence>
-                  {activeTooltip === 'cerebro' && (
-                    <motion.div 
-                      initial={{ opacity: 0, y: -5 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      exit={{ opacity: 0, y: -5 }}
-                      className="absolute top-full left-1/2 -translate-x-1/2 mt-2 w-48 p-2.5 bg-black text-white text-[10px] rounded-xl shadow-xl z-50 leading-relaxed text-center"
-                    >
-                      <strong className="block text-blue-400 mb-1">Cérebro Sináptico</strong>
-                      Gerencia a base de conhecimento e aprendizado contínuo do Enxame.
-                    </motion.div>
-                  )}
-                </AnimatePresence>
-              </div>
-              
-              <div className="relative">
-                <div className="flex items-center rounded-xl transition-all hover:bg-black/5 text-black/60">
-                  <button 
-                    onClick={() => setIsCalculatorOpen(true)}
-                    className="p-2.5 group"
-                  >
-                    <BarChart3 className="w-5 h-5 group-hover:text-green-600 transition-colors" />
-                  </button>
-                  <button
-                    onClick={(e) => { e.stopPropagation(); setActiveTooltip(activeTooltip === 'calculadora' ? null : 'calculadora'); }}
-                    className="pr-2.5 pl-1 py-2.5 opacity-50 hover:opacity-100"
-                  >
-                    <HelpCircle className="w-3.5 h-3.5" />
-                  </button>
-                </div>
-                <AnimatePresence>
-                  {activeTooltip === 'calculadora' && (
-                    <motion.div 
-                      initial={{ opacity: 0, y: -5 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      exit={{ opacity: 0, y: -5 }}
-                      className="absolute top-full left-1/2 -translate-x-1/2 mt-2 w-48 p-2.5 bg-black text-white text-[10px] rounded-xl shadow-xl z-50 leading-relaxed text-center"
-                    >
-                      <strong className="block text-green-400 mb-1">Calculadora de ROI</strong>
-                      Ferramenta para projetar e analisar o retorno sobre investimento das campanhas.
-                    </motion.div>
-                  )}
-                </AnimatePresence>
-              </div>
-              
-              <div className="relative">
-                <div className={cn(
-                  "flex items-center rounded-xl transition-all shadow-sm border",
-                  isSwarmView && isWorkspaceOpen
-                    ? "bg-blue-600 text-white border-blue-600" 
-                    : "bg-white hover:bg-black/5 text-black/60 border-black/5"
-                )}>
-                  <button 
-                    onClick={() => {
-                      setIsSwarmView(true);
-                      setIsWorkspaceOpen(true);
-                    }}
-                    className="p-2.5"
-                  >
-                    <Users className="w-5 h-5" />
-                  </button>
-                  <button
-                    onClick={(e) => { e.stopPropagation(); setActiveTooltip(activeTooltip === 'sala_agentes' ? null : 'sala_agentes'); }}
-                    className="pr-2.5 pl-1 py-2.5 opacity-50 hover:opacity-100"
-                  >
-                    <HelpCircle className="w-3.5 h-3.5" />
-                  </button>
-                </div>
-                <AnimatePresence>
-                  {activeTooltip === 'sala_agentes' && (
-                    <motion.div 
-                      initial={{ opacity: 0, y: -5 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      exit={{ opacity: 0, y: -5 }}
-                      className="absolute top-full left-1/2 -translate-x-1/2 mt-2 w-48 p-2.5 bg-black text-white text-[10px] rounded-xl shadow-xl z-50 leading-relaxed text-center"
-                    >
-                      <strong className="block text-blue-400 mb-1">Sala dos Agentes</strong>
-                      Abre o painel para acompanhar a atividade e o status de todos os agentes.
-                    </motion.div>
-                  )}
-                </AnimatePresence>
-              </div>
-              
-              <div className="relative">
-                <div className={cn(
-                  "flex items-center rounded-xl transition-all shadow-sm border",
-                  isTerminalOpen 
-                    ? "bg-black text-white border-black" 
-                    : "bg-white hover:bg-black/5 text-black/60 border-black/5"
-                )}>
-                  <button 
-                    onClick={() => setIsTerminalOpen(!isTerminalOpen)}
-                    className="p-2.5"
-                  >
-                    <Terminal className="w-5 h-5" />
-                  </button>
-                  <button
-                    onClick={(e) => { e.stopPropagation(); setActiveTooltip(activeTooltip === 'terminal' ? null : 'terminal'); }}
-                    className="pr-2.5 pl-1 py-2.5 opacity-50 hover:opacity-100"
-                  >
-                    <HelpCircle className="w-3.5 h-3.5" />
-                  </button>
-                </div>
-                <AnimatePresence>
-                  {activeTooltip === 'terminal' && (
-                    <motion.div 
-                      initial={{ opacity: 0, y: -5 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      exit={{ opacity: 0, y: -5 }}
-                      className="absolute top-full left-1/2 -translate-x-1/2 mt-2 w-48 p-2.5 bg-black text-white text-[10px] rounded-xl shadow-xl z-50 leading-relaxed text-center"
-                    >
-                      <strong className="block text-blue-400 mb-1">Terminal de Execução</strong>
-                      Acompanhe o raciocínio e as ações dos agentes em tempo real.
-                    </motion.div>
-                  )}
-                </AnimatePresence>
-              </div>
-              
-              <div className="relative">
-                <div className={cn(
-                  "flex items-center rounded-xl transition-all shadow-sm border",
-                  isWorkspaceOpen 
-                    ? "bg-black text-white border-black" 
-                    : "bg-white hover:bg-black/5 text-black/60 border-black/5"
-                )}>
-                  <button 
-                    onClick={() => setIsWorkspaceOpen(!isWorkspaceOpen)}
-                    className="p-2.5"
-                  >
-                    <LayoutDashboard className="w-5 h-5" />
-                  </button>
-                  <button
-                    onClick={(e) => { e.stopPropagation(); setActiveTooltip(activeTooltip === 'workspace' ? null : 'workspace'); }}
-                    className="pr-2.5 pl-1 py-2.5 opacity-50 hover:opacity-100"
-                  >
-                    <HelpCircle className="w-3.5 h-3.5" />
-                  </button>
-                </div>
-                <AnimatePresence>
-                  {activeTooltip === 'workspace' && (
-                    <motion.div 
-                      initial={{ opacity: 0, y: -5 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      exit={{ opacity: 0, y: -5 }}
-                      className="absolute top-full left-1/2 -translate-x-1/2 mt-2 w-48 p-2.5 bg-black text-white text-[10px] rounded-xl shadow-xl z-50 leading-relaxed text-center"
-                    >
-                      <strong className="block text-gray-400 mb-1">Workspace</strong>
-                      Abre o espaço de trabalho com os artefatos gerados.
-                    </motion.div>
-                  )}
-                </AnimatePresence>
-              </div>
-            </div>
-          </div>
+          <AgentControls
+            selectedSkill={selectedSkill}
+            isSwarmMode={isSwarmMode}
+            setIsSwarmMode={setIsSwarmMode}
+            useGrounding={useGrounding}
+            setUseGrounding={setUseGrounding}
+            setIsBrainOpen={setIsBrainOpen}
+            setIsCalculatorOpen={setIsCalculatorOpen}
+            isSwarmView={isSwarmView}
+            setIsSwarmView={setIsSwarmView}
+            isWorkspaceOpen={isWorkspaceOpen}
+            setIsWorkspaceOpen={setIsWorkspaceOpen}
+            isTerminalOpen={isTerminalOpen}
+            setIsTerminalOpen={setIsTerminalOpen}
+            setIsClawWorkOpen={setIsClawWorkOpen}
+          />
         </header>
 
         {isSwarmView ? (
@@ -1712,6 +1421,16 @@ export default function App() {
             />
           )}
         </AnimatePresence>
+
+
+
+        {/* Calculator Modal */}
+        <CalculatorModal 
+          isOpen={isCalculatorOpen} 
+          onClose={() => setIsCalculatorOpen(false)} 
+          calcData={calcData} 
+          setCalcData={setCalcData} 
+        />
 
         {/* Custom Agent Modal */}
         <AnimatePresence>
@@ -1964,96 +1683,7 @@ export default function App() {
           )}
         </AnimatePresence>
 
-        {/* Calculator Modal */}
-        <AnimatePresence>
-          {isCalculatorOpen && (
-            <motion.div 
-              key="calculator-modal"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm"
-            >
-              <motion.div 
-                initial={{ opacity: 0, scale: 0.95 }}
-                animate={{ opacity: 1, scale: 1 }}
-                exit={{ opacity: 0, scale: 0.95 }}
-                className="bg-white rounded-[2.5rem] shadow-[0_30px_100px_rgba(0,0,0,0.2)] w-full max-w-md overflow-hidden border border-black/5"
-              >
-                <div className="p-6 border-b border-black/5 flex items-center justify-between bg-blue-600 text-white">
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 bg-white/20 rounded-xl flex items-center justify-center backdrop-blur-sm">
-                      <Calculator className="w-5 h-5 text-white" />
-                    </div>
-                    <div>
-                      <h3 className="font-black text-xs uppercase tracking-widest">Marketing Calculator</h3>
-                      <p className="text-[8px] font-black text-white/40 uppercase tracking-tighter">ROI & Performance Metrics</p>
-                    </div>
-                  </div>
-                  <button 
-                    onClick={() => setIsCalculatorOpen(false)}
-                    className="p-2 hover:bg-white/10 rounded-xl transition-colors"
-                  >
-                    <X className="w-5 h-5" />
-                  </button>
-                </div>
-                <div className="p-6 md:p-8 space-y-6">
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <label className="text-[9px] font-black uppercase tracking-[0.2em] text-black/30">Investimento</label>
-                      <div className="relative">
-                        <span className="absolute left-4 top-1/2 -translate-y-1/2 text-[10px] font-black text-black/20">R$</span>
-                        <input 
-                          type="number" 
-                          value={calcData.investment}
-                          onChange={(e) => setCalcData(prev => ({ ...prev, investment: Number(e.target.value) }))}
-                          className="w-full p-4 pl-10 bg-black/5 border border-transparent rounded-2xl focus:bg-white focus:border-blue-500/20 outline-none text-sm font-black transition-all" 
-                          placeholder="0,00" 
-                        />
-                      </div>
-                    </div>
-                    <div className="space-y-2">
-                      <label className="text-[9px] font-black uppercase tracking-[0.2em] text-black/30">Receita</label>
-                      <div className="relative">
-                        <span className="absolute left-4 top-1/2 -translate-y-1/2 text-[10px] font-black text-black/20">R$</span>
-                        <input 
-                          type="number" 
-                          value={calcData.revenue}
-                          onChange={(e) => setCalcData(prev => ({ ...prev, revenue: Number(e.target.value) }))}
-                          className="w-full p-4 pl-10 bg-black/5 border border-transparent rounded-2xl focus:bg-white focus:border-blue-500/20 outline-none text-sm font-black transition-all" 
-                          placeholder="0,00" 
-                        />
-                      </div>
-                    </div>
-                  </div>
-                  <div className="p-8 bg-blue-50 rounded-3xl border border-blue-100 flex flex-col items-center text-center space-y-2">
-                    <p className="text-[10px] font-black text-blue-600 uppercase tracking-widest">Retorno sobre Investimento (ROI)</p>
-                    <p className="text-5xl font-black text-blue-900 tracking-tighter">
-                      {calcData.investment > 0 
-                        ? (((calcData.revenue - calcData.investment) / calcData.investment) * 100).toFixed(1)
-                        : "0.0"}%
-                    </p>
-                    <div className="flex items-center gap-2 mt-2">
-                      <div className="px-3 py-1 bg-blue-900/10 rounded-full">
-                        <p className="text-[10px] font-black text-blue-900 uppercase tracking-tighter">
-                          Lucro: R$ {(calcData.revenue - calcData.investment).toLocaleString('pt-BR')}
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-                <div className="p-6 bg-black/5 border-t border-black/5 flex justify-center">
-                  <button 
-                    onClick={() => setIsCalculatorOpen(false)}
-                    className="w-full py-4 bg-black text-white rounded-2xl font-black text-[10px] uppercase tracking-[0.2em] hover:scale-105 active:scale-95 transition-all shadow-xl shadow-black/10"
-                  >
-                    Fechar Calculadora
-                  </button>
-                </div>
-              </motion.div>
-            </motion.div>
-          )}
-        </AnimatePresence>
+
 
         {/* Workspace + Chat Split */}
         <div className="flex-1 flex overflow-hidden">
@@ -2155,278 +1785,27 @@ export default function App() {
         </div>
 
             {/* Input Area */}
-            <div className="p-4 md:p-8 bg-white/80 backdrop-blur-3xl border-t border-black/5 relative z-20">
-              <div className="max-w-4xl mx-auto relative">
-                <div className="absolute -top-12 left-0 flex gap-2 overflow-x-auto pb-3 no-scrollbar max-w-full">
-                  {selectedSkill && (
-                    <motion.div 
-                      initial={{ opacity: 0, y: 10 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      className="flex items-center gap-2.5 bg-blue-600 text-white px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest whitespace-nowrap shadow-lg shadow-blue-200"
-                    >
-                      {getCategoryIcon(selectedSkill.category)}
-                      {selectedSkill.name}
-                      <button onClick={() => setSelectedSkill(null)} className="hover:text-white/70 transition-colors ml-1">
-                        <X className="w-3.5 h-3.5" />
-                      </button>
-                    </motion.div>
-                  )}
-                  {selectedImages.map((img, idx) => (
-                    <motion.div 
-                      initial={{ opacity: 0, scale: 0.9 }}
-                      animate={{ opacity: 1, scale: 1 }}
-                      key={idx}
-                      className="relative group h-10 w-10"
-                    >
-                      <img src={img} className="h-full w-full object-cover rounded-xl border-2 border-white shadow-md" referrerPolicy="no-referrer" />
-                      <button 
-                        onClick={() => removeImage(idx)}
-                        className="absolute -top-1.5 -right-1.5 bg-red-500 text-white rounded-full p-1 shadow-lg opacity-0 group-hover:opacity-100 transition-all active:scale-90"
-                      >
-                        <X className="w-2.5 h-2.5" />
-                      </button>
-                    </motion.div>
-                  ))}
-                </div>
-                
-                <div className="group bg-white rounded-[2.5rem] shadow-[0_10px_40px_rgba(0,0,0,0.08)] border border-black/5 p-2 transition-all focus-within:shadow-[0_20px_60px_rgba(0,0,0,0.12)] focus-within:border-blue-500/20 flex flex-col md:flex-row items-end gap-2 relative">
-                  
-                  <AnimatePresence>
-                    {showCommandMenu && filteredCommands.length > 0 && (
-                      <motion.div 
-                        initial={{ opacity: 0, y: 10, scale: 0.95 }}
-                        animate={{ opacity: 1, y: 0, scale: 1 }}
-                        exit={{ opacity: 0, y: 10, scale: 0.95 }}
-                        transition={{ duration: 0.15 }}
-                        className="absolute bottom-full left-0 mb-2 w-64 bg-white rounded-2xl shadow-2xl border border-black/5 overflow-hidden z-50"
-                      >
-                        {filteredCommands.map((cmd, index) => (
-                          <button
-                            key={cmd.id}
-                            onClick={cmd.action}
-                            className={`w-full text-left px-4 py-3 flex items-center gap-3 hover:bg-black/5 transition-colors ${index === selectedCommandIndex ? 'bg-black/5' : ''}`}
-                          >
-                            <div className="w-8 h-8 rounded-full bg-black/5 flex items-center justify-center">
-                              <cmd.icon className="w-4 h-4 text-black/70" />
-                            </div>
-                            <div>
-                              <div className="text-sm font-bold text-black/80">{cmd.label}</div>
-                              <div className="text-[10px] font-medium text-black/40 uppercase tracking-wider">/{cmd.id}</div>
-                            </div>
-                          </button>
-                        ))}
-                      </motion.div>
-                    )}
-                  </AnimatePresence>
-
-                  <textarea
-                    value={input}
-                    onChange={handleInputChange}
-                    onPaste={handlePaste}
-                    onKeyDown={handleInputKeyDown}
-                    placeholder={selectedSkill ? `Pergunte sobre ${selectedSkill.name.toLowerCase()}...` : "Qual é o seu desafio de marketing hoje? (Digite '/' para comandos)"}
-                    className="flex-1 w-full bg-transparent rounded-[2rem] p-5 focus:outline-none transition-all min-h-[80px] max-h-[300px] resize-none font-medium text-black/70 placeholder:text-black/20"
-                  />
-                    <div className="flex gap-1.5 md:gap-2 pb-2 pr-2 w-full md:w-auto overflow-x-auto custom-scrollbar justify-end">
-                      <input 
-                        type="file" 
-                        ref={fileInputRef} 
-                        onChange={handleImageUpload} 
-                        className="hidden" 
-                        multiple 
-                        accept="image/*" 
-                      />
-                      <div className="relative">
-                        <div className="flex items-center bg-red-50 text-red-500 rounded-2xl transition-all">
-                          <button
-                            onClick={() => setMessages([])}
-                            className="p-3 md:p-4 hover:bg-red-100 rounded-l-2xl"
-                          >
-                            <Trash2 className="w-4 h-4 md:w-5 md:h-5" />
-                          </button>
-                          <button
-                            onClick={(e) => { e.stopPropagation(); setActiveTooltip(activeTooltip === 'limpar_chat' ? null : 'limpar_chat'); }}
-                            className="pr-2 pl-1 py-3 md:pr-3 md:py-4 opacity-50 hover:opacity-100 rounded-r-2xl hover:bg-red-100"
-                          >
-                            <HelpCircle className="w-3 h-3 md:w-3.5 md:h-3.5" />
-                          </button>
-                        </div>
-                      <AnimatePresence>
-                        {activeTooltip === 'limpar_chat' && (
-                          <motion.div 
-                            initial={{ opacity: 0, y: 5 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            exit={{ opacity: 0, y: 5 }}
-                            className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-48 p-2.5 bg-black text-white text-[10px] rounded-xl shadow-xl z-50 leading-relaxed text-center"
-                          >
-                            <strong className="block text-red-400 mb-1">Limpar Chat</strong>
-                            Apaga todo o histórico da conversa atual.
-                          </motion.div>
-                        )}
-                      </AnimatePresence>
-                    </div>
-                    
-                      <div className="relative">
-                        <div className="flex items-center bg-black/5 text-black/40 rounded-2xl transition-all">
-                          <button
-                            onClick={() => fileInputRef.current?.click()}
-                            className="p-3 md:p-4 hover:bg-black/10 hover:text-black rounded-l-2xl active:scale-90"
-                          >
-                            <Paperclip className="w-4 h-4 md:w-5 md:h-5" />
-                          </button>
-                          <button
-                            onClick={(e) => { e.stopPropagation(); setActiveTooltip(activeTooltip === 'anexar' ? null : 'anexar'); }}
-                            className="pr-2 pl-1 py-3 md:pr-3 md:py-4 opacity-50 hover:opacity-100 hover:bg-black/10 hover:text-black rounded-r-2xl"
-                          >
-                            <HelpCircle className="w-3 h-3 md:w-3.5 md:h-3.5" />
-                          </button>
-                        </div>
-                      <AnimatePresence>
-                        {activeTooltip === 'anexar' && (
-                          <motion.div 
-                            initial={{ opacity: 0, y: 5 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            exit={{ opacity: 0, y: 5 }}
-                            className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-48 p-2.5 bg-black text-white text-[10px] rounded-xl shadow-xl z-50 leading-relaxed text-center"
-                          >
-                            <strong className="block text-gray-400 mb-1">Anexar Imagem</strong>
-                            Adiciona uma imagem como contexto para a IA.
-                          </motion.div>
-                        )}
-                      </AnimatePresence>
-                    </div>
-                    
-                    <div className="relative">
-                      <div className="flex items-center bg-white border border-black/5 text-black/40 rounded-2xl transition-all shadow-sm hover:shadow-md group">
-                        <button
-                          onClick={handleGenerateImage}
-                          disabled={!input.trim() || isLoading}
-                          className="p-3 md:p-4 hover:scale-105 active:scale-95 disabled:opacity-50 disabled:scale-100 rounded-l-2xl"
-                        >
-                          <ImageIcon className="w-4 h-4 md:w-5 md:h-5 group-hover:text-blue-600 transition-colors" />
-                        </button>
-                        <button
-                          onClick={(e) => { e.stopPropagation(); setActiveTooltip(activeTooltip === 'gerar_imagem' ? null : 'gerar_imagem'); }}
-                          className="pr-2 pl-1 py-3 md:pr-3 md:py-4 opacity-50 hover:opacity-100 rounded-r-2xl"
-                        >
-                          <HelpCircle className="w-3 h-3 md:w-3.5 md:h-3.5" />
-                        </button>
-                      </div>
-                      <AnimatePresence>
-                        {activeTooltip === 'gerar_imagem' && (
-                          <motion.div 
-                            initial={{ opacity: 0, y: 5 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            exit={{ opacity: 0, y: 5 }}
-                            className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-48 p-2.5 bg-black text-white text-[10px] rounded-xl shadow-xl z-50 leading-relaxed text-center"
-                          >
-                            <strong className="block text-blue-400 mb-1">Gerar Imagem</strong>
-                            Cria uma imagem baseada no seu texto.
-                          </motion.div>
-                        )}
-                      </AnimatePresence>
-                    </div>
-                    
-                    <div className="relative">
-                      <div className="flex items-center bg-white border border-black/5 text-black/40 rounded-2xl transition-all shadow-sm hover:shadow-md group">
-                        <button
-                          onClick={handleGenerateVideo}
-                          disabled={(!input.trim() && selectedImages.length === 0) || isLoading}
-                          className="p-3 md:p-4 hover:scale-105 active:scale-95 disabled:opacity-50 disabled:scale-100 rounded-l-2xl"
-                        >
-                          <Video className="w-4 h-4 md:w-5 md:h-5 group-hover:text-indigo-600 transition-colors" />
-                        </button>
-                        <button
-                          onClick={(e) => { e.stopPropagation(); setActiveTooltip(activeTooltip === 'gerar_video' ? null : 'gerar_video'); }}
-                          className="pr-2 pl-1 py-3 md:pr-3 md:py-4 opacity-50 hover:opacity-100 rounded-r-2xl"
-                        >
-                          <HelpCircle className="w-3 h-3 md:w-3.5 md:h-3.5" />
-                        </button>
-                      </div>
-                      <AnimatePresence>
-                        {activeTooltip === 'gerar_video' && (
-                          <motion.div 
-                            initial={{ opacity: 0, y: 5 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            exit={{ opacity: 0, y: 5 }}
-                            className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-48 p-2.5 bg-black text-white text-[10px] rounded-xl shadow-xl z-50 leading-relaxed text-center"
-                          >
-                            <strong className="block text-indigo-400 mb-1">Gerar Vídeo</strong>
-                            Cria vídeos curtos usando o modelo Veo.
-                          </motion.div>
-                        )}
-                      </AnimatePresence>
-                    </div>
-                    
-                    <div className="relative">
-                      <div className="flex items-center bg-rose-50 border border-rose-100 text-rose-600 rounded-2xl transition-all shadow-sm hover:shadow-md group">
-                        <button
-                          onClick={() => setIsLiveMode(true)}
-                          className="p-3 md:p-4 hover:scale-105 active:scale-95 rounded-l-2xl"
-                        >
-                          <Mic className="w-4 h-4 md:w-5 md:h-5" />
-                        </button>
-                        <button
-                          onClick={(e) => { e.stopPropagation(); setActiveTooltip(activeTooltip === 'voz' ? null : 'voz'); }}
-                          className="pr-2 pl-1 py-3 md:pr-3 md:py-4 opacity-50 hover:opacity-100 rounded-r-2xl"
-                        >
-                          <HelpCircle className="w-3 h-3 md:w-3.5 md:h-3.5" />
-                        </button>
-                      </div>
-                      <AnimatePresence>
-                        {activeTooltip === 'voz' && (
-                          <motion.div 
-                            initial={{ opacity: 0, y: 5 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            exit={{ opacity: 0, y: 5 }}
-                            className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-48 p-2.5 bg-black text-white text-[10px] rounded-xl shadow-xl z-50 leading-relaxed text-center"
-                          >
-                            <strong className="block text-rose-400 mb-1">Conversa em Tempo Real</strong>
-                            Ativa o modo de voz para conversar com o agente ao vivo.
-                          </motion.div>
-                        )}
-                      </AnimatePresence>
-                    </div>
-                    
-                    <div className="relative">
-                      <div className="flex items-center bg-blue-600 text-white rounded-2xl transition-all shadow-lg shadow-blue-200">
-                        <button
-                          onClick={handleSend}
-                          disabled={(!input.trim() && selectedImages.length === 0) || isLoading}
-                          className="p-3 md:p-4 hover:scale-105 active:scale-95 disabled:opacity-50 disabled:scale-100 rounded-l-2xl"
-                        >
-                          {isLoading ? <Loader2 className="w-4 h-4 md:w-5 md:h-5 animate-spin" /> : <Send className="w-4 h-4 md:w-5 md:h-5" />}
-                        </button>
-                        <button
-                          onClick={(e) => { e.stopPropagation(); setActiveTooltip(activeTooltip === 'enviar' ? null : 'enviar'); }}
-                          className="pr-2 pl-1 py-3 md:pr-3 md:py-4 opacity-50 hover:opacity-100 rounded-r-2xl"
-                        >
-                          <HelpCircle className="w-3 h-3 md:w-3.5 md:h-3.5" />
-                        </button>
-                      </div>
-                      <AnimatePresence>
-                        {activeTooltip === 'enviar' && (
-                          <motion.div 
-                            initial={{ opacity: 0, y: 5 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            exit={{ opacity: 0, y: 5 }}
-                            className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-48 p-2.5 bg-black text-white text-[10px] rounded-xl shadow-xl z-50 leading-relaxed text-center"
-                          >
-                            <strong className="block text-blue-400 mb-1">Enviar Mensagem</strong>
-                            Envia sua mensagem para o agente.
-                          </motion.div>
-                        )}
-                      </AnimatePresence>
-                    </div>
-                  </div>
-                </div>
-                <div className="mt-4 flex items-center justify-center gap-6 opacity-30">
-                  <p className="text-[9px] font-black uppercase tracking-[0.3em]">Gemini 3 Flash Intelligence</p>
-                  <div className="w-1 h-1 bg-black rounded-full" />
-                  <p className="text-[9px] font-black uppercase tracking-[0.3em]">Enxame de Marketing v2.1 PRO</p>
-                </div>
-              </div>
-            </div>
+            <InputBar
+              input={input}
+              setInput={setInput}
+              isLoading={isLoading}
+              selectedSkill={selectedSkill}
+              setSelectedSkill={setSelectedSkill}
+              selectedImages={selectedImages}
+              removeImage={removeImage}
+              handleImageUpload={handleImageUpload}
+              handleSend={handleSend}
+              handleGenerateImage={handleGenerateImage}
+              handleGenerateVideo={handleGenerateVideo}
+              setIsLiveMode={setIsLiveMode}
+              setMessages={setMessages}
+              handlePaste={handlePaste}
+              handleInputKeyDown={handleInputKeyDown}
+              showCommandMenu={showCommandMenu}
+              filteredCommands={filteredCommands}
+              selectedCommandIndex={selectedCommandIndex}
+              getCategoryIcon={getCategoryIcon}
+            />
           </div>
 
           {/* Terminal Panel */}
@@ -2588,6 +1967,12 @@ export default function App() {
             </div>
           </div>
         )}
+        <ChatHistory 
+          isOpen={isChatHistoryOpen} 
+          onClose={() => setIsChatHistoryOpen(false)} 
+          setMessages={setMessages}
+          setCurrentChatId={setCurrentChatId}
+        />
           </>
         )}
       </main>

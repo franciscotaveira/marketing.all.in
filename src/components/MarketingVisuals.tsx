@@ -11,7 +11,7 @@ import {
   Image as ImageIcon, Palette, Type, Layout, Check, FileText,
   Search, Cpu, Network, Activity, Shield, Globe, Database,
   Workflow, Layers, Microscope, Video as VideoIcon, Volume2, 
-  ExternalLink, Play, Pause, Download
+  ExternalLink, Play, Pause, Download, Copy, CheckCircle2
 } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import { Artifact, FunnelStep, SocialPlatform, DataPoint } from '../types';
@@ -605,6 +605,51 @@ export const AudioRenderer: React.FC<{ url: string; title: string }> = ({ url, t
   );
 };
 
+export const N8nWorkflowRenderer: React.FC<{ jsonContent: string, title: string }> = ({ jsonContent, title }) => {
+  const [copied, setCopied] = React.useState(false);
+
+  const handleCopy = () => {
+    navigator.clipboard.writeText(jsonContent);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
+
+  return (
+    <div className="p-6 md:p-10 bg-[#0a0a0a] rounded-[2.5rem] border border-white/10 shadow-2xl shadow-black/50">
+      <div className="flex items-center justify-between border-b border-white/10 pb-6 mb-6">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 bg-[#FF6D5A] rounded-xl flex items-center justify-center shadow-lg shadow-[#FF6D5A]/20">
+            <Workflow className="w-5 h-5 text-white" />
+          </div>
+          <div>
+            <h3 className="text-sm font-black uppercase tracking-widest text-white">n8n Workflow JSON</h3>
+            <p className="text-[9px] font-black text-[#FF6D5A] uppercase tracking-tighter">{title}</p>
+          </div>
+        </div>
+        <button
+          onClick={handleCopy}
+          className="flex items-center gap-2 px-4 py-2 bg-white/10 hover:bg-white/20 text-white rounded-lg transition-colors text-xs font-bold uppercase tracking-wider"
+        >
+          {copied ? <CheckCircle2 className="w-4 h-4 text-green-400" /> : <Copy className="w-4 h-4" />}
+          {copied ? "Copiado!" : "Copiar JSON"}
+        </button>
+      </div>
+      
+      <div className="relative">
+        <div className="absolute inset-0 bg-gradient-to-b from-transparent to-[#0a0a0a] pointer-events-none" />
+        <pre className="p-6 bg-black/50 rounded-2xl overflow-x-auto text-xs font-mono text-blue-300 border border-white/5 max-h-[400px] custom-scrollbar">
+          {jsonContent}
+        </pre>
+      </div>
+      
+      <div className="mt-6 flex items-center gap-2 text-[10px] uppercase font-bold text-white/40 tracking-widest">
+        <Database className="w-3 h-3" />
+        Cole diretamente no canvas do n8n (Ctrl+V / Cmd+V)
+      </div>
+    </div>
+  );
+};
+
 export const ArtifactRenderer: React.FC<VisualProps> = ({ artifact }) => {
   switch (artifact.type) {
     case "visual":
@@ -654,6 +699,8 @@ export const ArtifactRenderer: React.FC<VisualProps> = ({ artifact }) => {
       return <AutomationRenderer workflow={artifact.metadata?.automationWorkflow || []} />;
     case "architecture":
       return <ArchitectureRenderer nodes={artifact.metadata?.architectureNodes || []} links={artifact.metadata?.architectureLinks || []} />;
+    case "n8n":
+      return <N8nWorkflowRenderer jsonContent={artifact.content} title={artifact.title} />;
     default:
       return (
         <div className="prose prose-sm max-w-none p-10 bg-white rounded-[2.5rem] border border-black/5 shadow-xl shadow-black/5">

@@ -23,7 +23,8 @@ export async function orchestrateRequest(
   onAgentStatus: (id: string, status: 'idle' | 'thinking' | 'using_tool', tool?: string) => void,
   onLog: (agentId: string, message: string, type: 'info' | 'action' | 'success' | 'error') => void,
   images?: string[],
-  history?: Message[]
+  history?: Message[],
+  isHighThinking?: boolean
 ): Promise<OrchestrationResult> {
   
   let targetAgentId = selectedAgentId || "orchestrator";
@@ -49,7 +50,7 @@ export async function orchestrateRequest(
         if (!skill) return null;
         onAgentStatus(id, 'thinking');
         onLog(id, "Iniciando processamento da tarefa...", "info");
-        const resp = await sendMessageToAgent(id, userMessage, skill.model || model, systemInstruction, undefined, images, history);
+        const resp = await sendMessageToAgent(id, userMessage, skill.model || model, systemInstruction, undefined, images, history, useGrounding, isHighThinking);
         onLog(id, "Tarefa concluída com sucesso.", "success");
         onAgentStatus(id, 'idle');
         return { id, resp };
@@ -79,9 +80,24 @@ export async function orchestrateRequest(
 
   if (useGrounding) {
     onLog(targetAgentId, "Realizando pesquisa em tempo real...", "action");
-    const searchResult = await googleSearch(userMessage);
-    onLog(targetAgentId, `Pesquisa concluída. Fontes encontradas: ${searchResult.sources.length}`, "success");
-    finalResponse = `Pesquisa realizada:\n${searchResult.text}\n\nFontes: ${searchResult.sources.join(", ")}`;
+    // We can still do the manual googleSearch if we want, or just let Gemini handle it via tools.
+    // Since we added googleSearch to tools in sendMessageToAgent, we can just call sendMessageToAgent directly.
+    // But wait, the previous code explicitly called `googleSearch` from mcp. Let's keep the old behavior for explicit grounding if needed, OR we can just pass it to the agent.
+    // Actually, the user's request says "Use gemini-3-flash-preview (with googleSearch tool)".
+    // So we should just let the agent handle it. Let's change this to use sendMessageToAgent.
+    onLog(targetAgentId, "Processando a solicitação com Grounding...", "info");
+    finalResponse = await sendMessageToAgent(
+      targetAgentId,
+      userMessage,
+      skill?.model || model,
+      systemInstruction,
+      undefined,
+      images,
+      history,
+      useGrounding,
+      isHighThinking
+    );
+    onLog(targetAgentId, "Resposta gerada com sucesso.", "success");
   } else {
     onLog(targetAgentId, "Processando a solicitação...", "info");
     finalResponse = await sendMessageToAgent(
@@ -91,7 +107,9 @@ export async function orchestrateRequest(
       systemInstruction,
       undefined,
       images,
-      history
+      history,
+      useGrounding,
+      isHighThinking
     );
     onLog(targetAgentId, "Resposta gerada com sucesso.", "success");
   }
