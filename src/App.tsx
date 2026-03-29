@@ -67,21 +67,15 @@ import {
   HelpCircle,
 } from "lucide-react";
 import ReactMarkdown from "react-markdown";
-import { SwarmFlow } from "./components/SwarmFlow";
-import { MetisDashboard } from "./components/MetisDashboard";
 import { ArtifactRenderer } from "./components/MarketingVisuals";
-import { SwarmWorld } from "./components/SwarmWorld";
-import { LiveConversation } from "./components/LiveConversation";
 import { AgentBrain } from "./components/AgentBrain";
 import { AgentControlPanel } from "./components/AgentControlPanel";
 import { ErrorBoundary } from "./components/ErrorBoundary";
 import { ChatMessage } from "./components/ChatMessage";
-import { ClawWorkArena } from "./components/ClawWorkArena";
 import { CustomAgentModal } from "./components/CustomAgentModal";
 import { InputBar } from "./components/InputBar";
 import { AgentControls } from "./components/AgentControls";
 import { ChatHistory } from "./components/ChatHistory";
-import { CalculatorModal } from "./components/CalculatorModal";
 import { MARKETING_SKILLS, MARKETING_FRAMEWORKS, CATEGORY_COLORS, CATEGORY_TEXT_COLORS, CATEGORY_BG_LIGHT_COLORS } from "./constants";
 import { MarketingSkill, SkillCategory, BrandProfile, Message, SkillTier, Artifact, BrainMemory } from "./types";
 import { cn } from "./lib/utils";
@@ -125,7 +119,6 @@ export default function App() {
   };
   const [selectedImages, setSelectedImages] = useState<string[]>([]);
   const [useGrounding, setUseGrounding] = useState(false);
-  const [isSwarmMode, setIsSwarmMode] = useState(false);
   const [activeTooltip, setActiveTooltip] = useState<string | null>(null);
   
   // Agent Logs State
@@ -138,72 +131,19 @@ export default function App() {
   const [selectedCommandIndex, setSelectedCommandIndex] = useState(0);
   const [activeArtifact, setActiveArtifact] = useState<Artifact | null>(null);
   const [isWorkspaceOpen, setIsWorkspaceOpen] = useState(false);
-  const [isSwarmView, setIsSwarmView] = useState(false);
-  const [isCalculatorOpen, setIsCalculatorOpen] = useState(false);
-  const [isHumanizedMode, setIsHumanizedMode] = useState(false);
-  const [isGeneralAssistantMode, setIsGeneralAssistantMode] = useState(false);
-  const [isHighThinking, setIsHighThinking] = useState(false);
-  const [isLiveMode, setIsLiveMode] = useState(false);
 
   const handleArtifactClick = (art: Artifact) => {
     setActiveArtifact(art);
     setIsWorkspaceOpen(true);
   };
 
-  const [agents, setAgents] = useState<Array<{ id: string, name: string, status: "idle" | "thinking" | "orchestrating" | "swarming", role: string }>>([
-    { id: "1", name: "Hermes", status: "idle", role: "Content & Copy" },
-    { id: "2", name: "Apollo", status: "thinking", role: "SEO & Discovery" },
-    { id: "3", name: "Athena", status: "idle", role: "Paid & Distribution" },
-    { id: "4", name: "Metis", status: "idle", role: "Measurement & Testing" },
-    { id: "5", name: "Traffic", status: "idle", role: "Sales & RevOps" },
-    { id: "6", name: "CopyChief", status: "idle", role: "Copy Chief" },
-    { id: "7", name: "Design", status: "idle", role: "Visual Design" },
-    { id: "8", name: "Data", status: "idle", role: "Data Science" },
-    { id: "9", name: "Brand", status: "idle", role: "Brand Strategy" }
-  ]);
-  const [knowledgeBase, setKnowledgeBase] = useState<Array<{ 
-    id: string, 
-    agentId: string, 
-    topic: string, 
-    content: string, 
-    confidence: number,
-    tags: string[]
-  }>>([]);
-
-  const shareKnowledge = async (agentId: string, topic: string, content: string, confidence: number, tags: string[]) => {
-    const newKnowledge = { agentId, topic, content, confidence, tags };
-    const { data, error } = await firebaseService.saveKnowledge(newKnowledge);
-    if (data) {
-      setKnowledgeBase(prev => [...prev, data]);
-    }
-  };
-
-  useEffect(() => {
-    const interval = setInterval(() => {
-      const randomAgent = agents[Math.floor(Math.random() * agents.length)];
-      const topics = ["SEO", "Copywriting", "Paid Media", "Data Analysis", "Brand Strategy"];
-      const topic = topics[Math.floor(Math.random() * topics.length)];
-      
-      shareKnowledge(
-        randomAgent.id, 
-        topic,
-        `Insight sobre ${topic} gerado por ${randomAgent.name}: ${Math.random().toString(36).substring(7)}`,
-        Math.random(),
-        [topic.toLowerCase(), "auto-learned"]
-      );
-    }, 5000);
-    return () => clearInterval(interval);
-  }, [agents]);
   const [isGeneratingVideo, setIsGeneratingVideo] = useState(false);
   const [isTranscribing, setIsTranscribing] = useState(false);
   const [isSpeaking, setIsSpeaking] = useState(false);
   const [imageConfig, setImageConfig] = useState({ aspectRatio: "1:1", size: "1K" });
   const [isBrainOpen, setIsBrainOpen] = useState(false);
-  const [isMetisOpen, setIsMetisOpen] = useState(false);
   const [isChatHistoryOpen, setIsChatHistoryOpen] = useState(false);
-  const [isClawWorkOpen, setIsClawWorkOpen] = useState(false);
   const [currentChatId, setCurrentChatId] = useState<string | null>(null);
-  const [calcData, setCalcData] = useState({ investment: 0, revenue: 0 });
   
   const chatEndRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -214,17 +154,6 @@ export default function App() {
       terminalEndRef.current.scrollIntoView({ behavior: 'smooth' });
     }
   }, [agentLogs]);
-
-  useEffect(() => {
-    const interval = setInterval(() => {
-      const statuses: ("idle" | "thinking" | "orchestrating" | "swarming")[] = ["idle", "thinking", "orchestrating", "swarming"];
-      setAgents(prev => prev.map(agent => ({
-        ...agent,
-        status: statuses[Math.floor(Math.random() * statuses.length)]
-      })));
-    }, 3000);
-    return () => clearInterval(interval);
-  }, []);
 
   useEffect(() => {
     const isTestMode = new URLSearchParams(window.location.search).get('test_mode') === 'true';
@@ -257,9 +186,6 @@ export default function App() {
           const chatMessages = await firebaseService.getMessages(currentChatId);
           if (chatMessages.data) setMessages(chatMessages.data as Message[]);
         }
-
-        const { data: knowledge } = await firebaseService.getKnowledge();
-        if (knowledge) setKnowledgeBase(knowledge);
       };
       loadData();
     }
@@ -451,11 +377,8 @@ export default function App() {
     { id: 'imagem', label: 'Gerar Imagem', icon: ImageIcon, action: () => { handleGenerateImage(); setInput(""); setShowCommandMenu(false); } },
     { id: 'video', label: 'Gerar Vídeo', icon: Video, action: () => { handleGenerateVideo(); setInput(""); setShowCommandMenu(false); } },
     { id: 'pesquisa', label: 'Alternar Pesquisa', icon: Globe, action: () => { setUseGrounding(!useGrounding); setInput(""); setShowCommandMenu(false); } },
-    { id: 'enxame', label: 'Alternar Modo Enxame', icon: Network, action: () => { setIsSwarmMode(!isSwarmMode); setInput(""); setShowCommandMenu(false); } },
-    { id: 'humanizado', label: 'Alternar Humanizado', icon: Heart, action: () => { setIsHumanizedMode(!isHumanizedMode); setInput(""); setShowCommandMenu(false); } },
     { id: 'limpar', label: 'Limpar Chat', icon: Trash2, action: () => { setMessages([]); setInput(""); setShowCommandMenu(false); } },
     { id: 'workspace', label: 'Abrir Workspace', icon: LayoutDashboard, action: () => { setIsWorkspaceOpen(true); setInput(""); setShowCommandMenu(false); } },
-    { id: 'clawwork', label: 'ClawWork Arena', icon: Trophy, action: () => { setIsClawWorkOpen(true); setInput(""); setShowCommandMenu(false); } },
   ];
 
   const filteredCommands = COMMANDS.filter(cmd => cmd.id.includes(commandFilter.toLowerCase()));
@@ -515,24 +438,12 @@ export default function App() {
         ? `\n\nPerfil da Marca:\n- Nome: ${activeBrandProfile.name}\n- Público: ${activeBrandProfile.audience}\n- Tom: ${activeBrandProfile.tone}\n- Mensagem: ${activeBrandProfile.messaging}\n- Detalhes: ${activeBrandProfile.productDetails}\n- Concorrentes: ${activeBrandProfile.competitors}${activeBrandProfile.dataSources ? `\n\nFONTES DE DADOS E INTEGRAÇÕES:\n${activeBrandProfile.dataSources}` : ''}`
         : "";
 
-      const skillContext = (!isGeneralAssistantMode && selectedSkill) 
+      const skillContext = selectedSkill 
         ? `\n\nContexto da Habilidade (${selectedSkill.name}):\n${selectedSkill.prompt}`
-        : "\n\nVocê é um assistente de marketing multifacetado e experiente. Responda de forma abrangente, estratégica e prática, integrando conhecimentos de diversas áreas do marketing conforme necessário.";
+        : "\n\nVocê é um Engenheiro de Automação multifacetado e experiente. Responda de forma abrangente, estratégica e prática, integrando conhecimentos de diversas áreas de automação e marketing conforme necessário.";
 
       const frameworkContext = selectedFramework 
         ? `\n\nUtilize o Framework: ${MARKETING_FRAMEWORKS.find(f => f.id === selectedFramework)?.name} (${MARKETING_FRAMEWORKS.find(f => f.id === selectedFramework)?.description})`
-        : "";
-
-      const humanizationContext = isHumanizedMode 
-        ? `\n\nDIRETRIZES DE HUMANIZAÇÃO ATIVAS:
-        - Use uma linguagem natural, autêntica e empática.
-        - Evite soar como um robô ou uma IA genérica.
-        - Incorpore variações de sentenças (curtas e longas).
-        - Use perguntas retóricas para engajar o usuário.
-        - Mostre que você entende o contexto emocional e os desafios do usuário.
-        - Use interjeições e expressões coloquiais leves quando apropriado.
-        - Antecipe dúvidas e forneça explicações claras com exemplos reais.
-        - Se estiver incerto, use 'hedging' (ex: "parece que", "talvez uma abordagem interessante seja...").`
         : "";
 
       // Fetch Brain Memories (RAG)
@@ -551,7 +462,7 @@ export default function App() {
         console.warn("Brain sync error:", e);
       }
 
-      const prompt = `Solicitação do Usuário: ${userMessage}${skillContext}${brandContext}${frameworkContext}${humanizationContext}${brainContext}`;
+      const prompt = `Solicitação do Usuário: ${userMessage}${skillContext}${brandContext}${frameworkContext}${brainContext}`;
 
       const contents: any[] = [];
       
@@ -570,10 +481,8 @@ export default function App() {
         });
       });
 
-      const systemInstruction = `Você é um Agente de Inteligência de Marketing de elite operando em um Enxame (Swarm). 
-      ${selectedSkill ? `Atualmente, você está assumindo a persona de: ${selectedSkill.persona} (${selectedSkill.name}).` : "Você está atuando como Assistente Geral de Marketing."}
-      
-      ${isSwarmMode ? "MODO ENXAME ATIVO: Simule uma colaboração entre múltiplos especialistas. Se houver um plano complexo, apresente-o em seções claras." : ""}
+      const systemInstruction = `Você é o Engenheiro de Automação de elite. 
+      ${selectedSkill ? `Atualmente, você está assumindo a persona de: ${selectedSkill.persona} (${selectedSkill.name}).` : "Você está atuando como Engenheiro de Automação Geral."}
       
       SEMPRE que for gerar um plano, copy, roteiro, código ou qualquer material tático/prático, você DEVE extrair isso como um 'Artefato' usando blocos de código com a linguagem 'artifact' no formato exato:
       \`\`\`artifact:tipo:título
@@ -614,7 +523,7 @@ export default function App() {
         const result = await orchestrateRequest(
           prompt,
           selectedSkill?.id || null,
-          isSwarmMode,
+          false,
           model,
           systemInstruction,
           useGrounding,
@@ -626,8 +535,7 @@ export default function App() {
           },
           addLog,
           currentImages,
-          messages,
-          isHighThinking
+          messages
         );
         setIsProcessing(false);
         aiResponse = result.response;
@@ -910,194 +818,6 @@ export default function App() {
           <div className="space-y-3">
             <h2 className="text-[10px] uppercase tracking-[0.2em] font-black text-white/30 px-2">Configurações</h2>
             <div className="space-y-1.5">
-              <div className="relative">
-                <div className={cn(
-                  "w-full rounded-xl text-[10px] font-black uppercase tracking-widest transition-all flex items-center justify-between group border",
-                  isSwarmMode 
-                    ? "bg-blue-600 border-blue-500 text-white shadow-[0_0_15px_rgba(37,99,235,0.3)]" 
-                    : "bg-white/5 border-white/5 text-white/40 hover:bg-white/10"
-                )}>
-                  <button 
-                    onClick={() => setIsSwarmMode(!isSwarmMode)}
-                    className="p-3.5 flex-1 flex items-center justify-between"
-                  >
-                    <div className="flex items-center gap-2.5">
-                      <Bot className={cn("w-4 h-4", isSwarmMode ? "text-white" : "text-white/40")} />
-                      <span>Modo Swarm</span>
-                    </div>
-                    <div className={cn(
-                      "w-8 h-4 rounded-full relative transition-all",
-                      isSwarmMode ? "bg-white/20" : "bg-white/10"
-                    )}>
-                      <div className={cn(
-                        "absolute top-1 w-2 h-2 rounded-full transition-all shadow-sm",
-                        isSwarmMode ? "right-1 bg-white" : "left-1 bg-white/50"
-                      )} />
-                    </div>
-                  </button>
-                  <button
-                    onClick={(e) => { e.stopPropagation(); setActiveTooltip(activeTooltip === 'modo_swarm' ? null : 'modo_swarm'); }}
-                    className="pr-3 pl-1 py-3.5 opacity-50 hover:opacity-100"
-                  >
-                    <HelpCircle className="w-3.5 h-3.5" />
-                  </button>
-                </div>
-                <AnimatePresence>
-                  {activeTooltip === 'modo_swarm' && (
-                    <motion.div 
-                      initial={{ opacity: 0, x: -5 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      exit={{ opacity: 0, x: -5 }}
-                      className="absolute top-1/2 -translate-y-1/2 left-full ml-2 w-48 p-2.5 bg-black text-white text-[10px] rounded-xl shadow-xl z-50 leading-relaxed"
-                    >
-                      <strong className="block text-blue-400 mb-1">Modo Enxame (Swarm)</strong>
-                      Ativa múltiplos especialistas para analisar seu pedido e criar uma estratégia 360º.
-                    </motion.div>
-                  )}
-                </AnimatePresence>
-              </div>
-              
-              <div className="relative">
-                <div className={cn(
-                  "w-full rounded-xl text-[10px] font-black uppercase tracking-widest transition-all flex items-center justify-between group border",
-                  isHumanizedMode 
-                    ? "bg-rose-600 border-rose-500 text-white shadow-[0_0_15px_rgba(225,29,72,0.3)]" 
-                    : "bg-white/5 border-white/5 text-white/40 hover:bg-white/10"
-                )}>
-                  <button 
-                    onClick={() => setIsHumanizedMode(!isHumanizedMode)}
-                    className="p-3.5 flex-1 flex items-center justify-between"
-                  >
-                    <div className="flex items-center gap-2.5">
-                      <Sparkles className={cn("w-4 h-4", isHumanizedMode ? "text-white" : "text-white/40")} />
-                      <span>Humanizado</span>
-                    </div>
-                    <div className={cn(
-                      "w-8 h-4 rounded-full relative transition-all",
-                      isHumanizedMode ? "bg-white/20" : "bg-white/10"
-                    )}>
-                      <div className={cn(
-                        "absolute top-1 w-2 h-2 rounded-full transition-all shadow-sm",
-                        isHumanizedMode ? "right-1 bg-white" : "left-1 bg-white/50"
-                      )} />
-                    </div>
-                  </button>
-                  <button
-                    onClick={(e) => { e.stopPropagation(); setActiveTooltip(activeTooltip === 'modo_humanizado' ? null : 'modo_humanizado'); }}
-                    className="pr-3 pl-1 py-3.5 opacity-50 hover:opacity-100"
-                  >
-                    <HelpCircle className="w-3.5 h-3.5" />
-                  </button>
-                </div>
-                <AnimatePresence>
-                  {activeTooltip === 'modo_humanizado' && (
-                    <motion.div 
-                      initial={{ opacity: 0, x: -5 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      exit={{ opacity: 0, x: -5 }}
-                      className="absolute top-1/2 -translate-y-1/2 left-full ml-2 w-48 p-2.5 bg-black text-white text-[10px] rounded-xl shadow-xl z-50 leading-relaxed"
-                    >
-                      <strong className="block text-rose-400 mb-1">Modo Humanizado</strong>
-                      Deixa o texto mais natural, empático e focado em conexão emocional.
-                    </motion.div>
-                  )}
-                </AnimatePresence>
-              </div>
-
-              <div className="relative">
-                <div className={cn(
-                  "w-full rounded-xl text-[10px] font-black uppercase tracking-widest transition-all flex items-center justify-between group border",
-                  isGeneralAssistantMode 
-                    ? "bg-indigo-600 border-indigo-500 text-white shadow-[0_0_15px_rgba(79,70,229,0.3)]" 
-                    : "bg-white/5 border-white/5 text-white/40 hover:bg-white/10"
-                )}>
-                  <button 
-                    onClick={() => setIsGeneralAssistantMode(!isGeneralAssistantMode)}
-                    className="p-3.5 flex-1 flex items-center justify-between"
-                  >
-                    <div className="flex items-center gap-2.5">
-                      <Bot className={cn("w-4 h-4", isGeneralAssistantMode ? "text-white" : "text-white/40")} />
-                      <span>Assistente Geral</span>
-                    </div>
-                    <div className={cn(
-                      "w-8 h-4 rounded-full relative transition-all",
-                      isGeneralAssistantMode ? "bg-white/20" : "bg-white/10"
-                    )}>
-                      <div className={cn(
-                        "absolute top-1 w-2 h-2 rounded-full transition-all shadow-sm",
-                        isGeneralAssistantMode ? "right-1 bg-white" : "left-1 bg-white/50"
-                      )} />
-                    </div>
-                  </button>
-                  <button
-                    onClick={(e) => { e.stopPropagation(); setActiveTooltip(activeTooltip === 'assistente_geral' ? null : 'assistente_geral'); }}
-                    className="pr-3 pl-1 py-3.5 opacity-50 hover:opacity-100"
-                  >
-                    <HelpCircle className="w-3.5 h-3.5" />
-                  </button>
-                </div>
-                <AnimatePresence>
-                  {activeTooltip === 'assistente_geral' && (
-                    <motion.div 
-                      initial={{ opacity: 0, x: -5 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      exit={{ opacity: 0, x: -5 }}
-                      className="absolute top-1/2 -translate-y-1/2 left-full ml-2 w-48 p-2.5 bg-black text-white text-[10px] rounded-xl shadow-xl z-50 leading-relaxed"
-                    >
-                      <strong className="block text-indigo-400 mb-1">Assistente Geral</strong>
-                      Desativa as habilidades específicas e atua como um assistente de marketing genérico.
-                    </motion.div>
-                  )}
-                </AnimatePresence>
-              </div>
-
-              <div className="relative">
-                <div className={cn(
-                  "w-full rounded-xl text-[10px] font-black uppercase tracking-widest transition-all flex items-center justify-between group border",
-                  isHighThinking 
-                    ? "bg-amber-600 border-amber-500 text-white shadow-[0_0_15px_rgba(245,158,11,0.3)]" 
-                    : "bg-white/5 border-white/5 text-white/40 hover:bg-white/10"
-                )}>
-                  <button 
-                    onClick={() => setIsHighThinking(!isHighThinking)}
-                    className="p-3.5 flex-1 flex items-center justify-between"
-                  >
-                    <div className="flex items-center gap-2.5">
-                      <Brain className={cn("w-4 h-4", isHighThinking ? "text-white" : "text-white/40")} />
-                      <span>Pensamento Avançado</span>
-                    </div>
-                    <div className={cn(
-                      "w-8 h-4 rounded-full relative transition-all",
-                      isHighThinking ? "bg-white/20" : "bg-white/10"
-                    )}>
-                      <div className={cn(
-                        "absolute top-1 w-2 h-2 rounded-full transition-all shadow-sm",
-                        isHighThinking ? "right-1 bg-white" : "left-1 bg-white/50"
-                      )} />
-                    </div>
-                  </button>
-                  <button
-                    onClick={(e) => { e.stopPropagation(); setActiveTooltip(activeTooltip === 'pensamento_avancado' ? null : 'pensamento_avancado'); }}
-                    className="pr-3 pl-1 py-3.5 opacity-50 hover:opacity-100"
-                  >
-                    <HelpCircle className="w-3.5 h-3.5" />
-                  </button>
-                </div>
-                <AnimatePresence>
-                  {activeTooltip === 'pensamento_avancado' && (
-                    <motion.div 
-                      initial={{ opacity: 0, x: -5 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      exit={{ opacity: 0, x: -5 }}
-                      className="absolute top-1/2 -translate-y-1/2 left-full ml-2 w-48 p-2.5 bg-black text-white text-[10px] rounded-xl shadow-xl z-50 leading-relaxed"
-                    >
-                      <strong className="block text-amber-400 mb-1">Pensamento Avançado</strong>
-                      Ativa o raciocínio profundo para resolver problemas complexos (pode demorar mais).
-                    </motion.div>
-                  )}
-                </AnimatePresence>
-              </div>
-
               <div className="space-y-2 p-3 bg-white/5 rounded-xl border border-white/5">
                 <p className="text-[8px] font-black uppercase tracking-widest text-white/30 mb-2">Configurações de Imagem</p>
                 <div className="grid grid-cols-2 gap-2">
@@ -1131,26 +851,6 @@ export default function App() {
                 <div className="flex items-center gap-2.5">
                   <Brain className="w-4 h-4" />
                   <span>Cérebro Sináptico</span>
-                </div>
-                <ChevronRight className="w-3 h-3 group-hover:translate-x-1 transition-all" />
-              </button>
-              <button 
-                onClick={() => setIsMetisOpen(true)}
-                className="w-full p-3.5 bg-purple-600/10 border border-purple-500/20 rounded-xl text-[10px] font-black uppercase tracking-widest text-purple-400 hover:bg-purple-600/20 transition-all flex items-center justify-between group"
-              >
-                <div className="flex items-center gap-2.5">
-                  <BarChart3 className="w-4 h-4" />
-                  <span>Analytics Metis</span>
-                </div>
-                <ChevronRight className="w-3 h-3 group-hover:translate-x-1 transition-all" />
-              </button>
-              <button 
-                onClick={() => setIsClawWorkOpen(true)}
-                className="w-full p-3.5 bg-emerald-600/10 border border-emerald-500/20 rounded-xl text-[10px] font-black uppercase tracking-widest text-emerald-400 hover:bg-emerald-600/20 transition-all flex items-center justify-between group"
-              >
-                <div className="flex items-center gap-2.5">
-                  <Trophy className="w-4 h-4" />
-                  <span>ClawWork Arena</span>
                 </div>
                 <ChevronRight className="w-3 h-3 group-hover:translate-x-1 transition-all" />
               </button>
@@ -1341,18 +1041,12 @@ export default function App() {
                 <button 
                   onClick={() => {
                     setSelectedSkill(null);
-                    setIsSwarmView(false);
                   }}
                   className="hover:text-black/70 transition-colors"
                 >
                   Home
                 </button>
-                {isSwarmView ? (
-                  <>
-                    <ChevronRight className="w-3 h-3" />
-                    <span className="text-blue-600">Swarm View</span>
-                  </>
-                ) : selectedSkill ? (
+                {selectedSkill ? (
                   <>
                     <ChevronRight className="w-3 h-3" />
                     <button 
@@ -1370,48 +1064,34 @@ export default function App() {
                 ) : null}
               </div>
               <h1 className="text-sm font-black uppercase tracking-[0.15em] text-black/80 flex items-center gap-2">
-                {isSwarmView ? "Swarm View" : selectedSkill ? selectedSkill.name : "Inteligência de Marketing"}
-                {!isSwarmView && (
-                  <button 
-                    onClick={() => setMessages([])}
-                    className="text-[8px] font-black uppercase tracking-widest text-black/30 hover:text-red-500 transition-colors ml-4"
-                  >
-                    Limpar Conversa
-                  </button>
-                )}
+                {selectedSkill ? selectedSkill.name : "Inteligência de Marketing"}
+                <button 
+                  onClick={() => setMessages([])}
+                  className="text-[8px] font-black uppercase tracking-widest text-black/30 hover:text-red-500 transition-colors ml-4"
+                >
+                  Limpar Conversa
+                </button>
                 <span className="w-1.5 h-1.5 bg-blue-500 rounded-full animate-pulse shadow-[0_0_8px_rgba(59,130,246,0.6)]" />
               </h1>
               <p className="text-[10px] text-black/40 font-bold uppercase tracking-tighter">
-                {isSwarmView ? "Visualização do enxame de agentes" : selectedSkill ? selectedSkill.persona : "Selecione uma habilidade para começar"}
+                {selectedSkill ? selectedSkill.persona : "Selecione uma habilidade para começar"}
               </p>
             </div>
           </div>
 
           <AgentControls
             selectedSkill={selectedSkill}
-            isSwarmMode={isSwarmMode}
-            setIsSwarmMode={setIsSwarmMode}
             useGrounding={useGrounding}
             setUseGrounding={setUseGrounding}
             setIsBrainOpen={setIsBrainOpen}
-            setIsCalculatorOpen={setIsCalculatorOpen}
-            isSwarmView={isSwarmView}
-            setIsSwarmView={setIsSwarmView}
             isWorkspaceOpen={isWorkspaceOpen}
             setIsWorkspaceOpen={setIsWorkspaceOpen}
             isTerminalOpen={isTerminalOpen}
             setIsTerminalOpen={setIsTerminalOpen}
-            setIsClawWorkOpen={setIsClawWorkOpen}
           />
         </header>
 
-        {isSwarmView ? (
-          <div className="flex-1 p-6 overflow-hidden">
-            <SwarmFlow agents={agents} />
-          </div>
-        ) : (
-          <>
-            {/* Agent Brain Modal */}
+        {/* Agent Brain Modal */}
         <AnimatePresence>
           {isBrainOpen && (
             <AgentBrain 
@@ -1425,13 +1105,6 @@ export default function App() {
 
 
         {/* Calculator Modal */}
-        <CalculatorModal 
-          isOpen={isCalculatorOpen} 
-          onClose={() => setIsCalculatorOpen(false)} 
-          calcData={calcData} 
-          setCalcData={setCalcData} 
-        />
-
         {/* Custom Agent Modal */}
         <AnimatePresence>
           {isCustomAgentModalOpen && (
@@ -1759,7 +1432,6 @@ export default function App() {
                   key={i}
                   msg={msg}
                   index={i}
-                  isSwarmMode={isSwarmMode}
                   isSpeaking={isSpeaking}
                   copiedId={copiedId}
                   onArtifactClick={handleArtifactClick}
@@ -1797,7 +1469,6 @@ export default function App() {
               handleSend={handleSend}
               handleGenerateImage={handleGenerateImage}
               handleGenerateVideo={handleGenerateVideo}
-              setIsLiveMode={setIsLiveMode}
               setMessages={setMessages}
               handlePaste={handlePaste}
               handleInputKeyDown={handleInputKeyDown}
@@ -1890,9 +1561,7 @@ export default function App() {
                 </div>
                 
                 <div className="flex-1 overflow-y-auto p-4 md:p-10 custom-scrollbar">
-                  {isSwarmView ? (
-                    <SwarmWorld agents={agents} knowledgeBase={knowledgeBase} />
-                  ) : activeArtifact ? (
+                  {activeArtifact ? (
                     <div className="space-y-10 max-w-3xl mx-auto">
                       <div className="flex items-start justify-between">
                         <div className="space-y-3">
@@ -1949,32 +1618,12 @@ export default function App() {
             )}
           </AnimatePresence>
         </div>
-        <LiveConversation 
-          isOpen={isLiveMode} 
-          onClose={() => setIsLiveMode(false)} 
-        />
-        {isMetisOpen && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4 md:p-6" onClick={() => setIsMetisOpen(false)}>
-            <div className="w-full max-w-4xl max-h-[90vh] overflow-y-auto custom-scrollbar rounded-2xl" onClick={e => e.stopPropagation()}>
-              <MetisDashboard onClose={() => setIsMetisOpen(false)} />
-            </div>
-          </div>
-        )}
-        {isClawWorkOpen && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4 md:p-6" onClick={() => setIsClawWorkOpen(false)}>
-            <div className="w-full max-w-6xl h-[90vh] md:h-[80vh] rounded-2xl overflow-hidden" onClick={e => e.stopPropagation()}>
-              <ClawWorkArena onClose={() => setIsClawWorkOpen(false)} />
-            </div>
-          </div>
-        )}
         <ChatHistory 
           isOpen={isChatHistoryOpen} 
           onClose={() => setIsChatHistoryOpen(false)} 
           setMessages={setMessages}
           setCurrentChatId={setCurrentChatId}
         />
-          </>
-        )}
       </main>
       <style>{`
         .custom-scrollbar::-webkit-scrollbar {

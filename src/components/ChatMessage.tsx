@@ -8,7 +8,6 @@ import { Message, Artifact } from '../types';
 interface ChatMessageProps {
   msg: Message;
   index: number;
-  isSwarmMode: boolean;
   isSpeaking: boolean;
   copiedId: string | null;
   onArtifactClick: (art: Artifact) => void;
@@ -19,7 +18,6 @@ interface ChatMessageProps {
 export const ChatMessage = memo(function ChatMessage({
   msg,
   index,
-  isSwarmMode,
   isSpeaking,
   copiedId,
   onArtifactClick,
@@ -54,18 +52,6 @@ export const ChatMessage = memo(function ChatMessage({
               <span className="text-[8px] px-2 py-0.5 bg-blue-50 text-blue-700 rounded-full uppercase font-black tracking-widest border border-blue-100">
                 {msg.agentTier}
               </span>
-            )}
-            {isSwarmMode && msg.role === "ai" && (
-              <div className="flex items-center gap-2 ml-auto bg-black/5 px-2 py-1 rounded-full border border-black/5">
-                <div className="flex -space-x-1.5 overflow-hidden">
-                  {[1, 2, 3].map((i) => (
-                    <div key={i} className="inline-block h-3.5 w-3.5 rounded-full ring-2 ring-white bg-blue-500 flex items-center justify-center">
-                      <Bot className="w-2 h-2 text-white" />
-                    </div>
-                  ))}
-                </div>
-                <span className="text-[8px] font-black text-black/30 uppercase tracking-tighter">Enxame Ativo</span>
-              </div>
             )}
           </div>
         )}

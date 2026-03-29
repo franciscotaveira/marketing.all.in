@@ -8,36 +8,24 @@ import { MarketingSkill } from '../types';
 
 interface AgentControlsProps {
   selectedSkill: MarketingSkill | null;
-  isSwarmMode: boolean;
-  setIsSwarmMode: (value: boolean) => void;
   useGrounding: boolean;
   setUseGrounding: (value: boolean) => void;
   setIsBrainOpen: (value: boolean) => void;
-  setIsCalculatorOpen: (value: boolean) => void;
-  isSwarmView: boolean;
-  setIsSwarmView: (value: boolean) => void;
   isWorkspaceOpen: boolean;
   setIsWorkspaceOpen: (value: boolean) => void;
   isTerminalOpen: boolean;
   setIsTerminalOpen: (value: boolean) => void;
-  setIsClawWorkOpen: (value: boolean) => void;
 }
 
 export function AgentControls({
   selectedSkill,
-  isSwarmMode,
-  setIsSwarmMode,
   useGrounding,
   setUseGrounding,
   setIsBrainOpen,
-  setIsCalculatorOpen,
-  isSwarmView,
-  setIsSwarmView,
   isWorkspaceOpen,
   setIsWorkspaceOpen,
   isTerminalOpen,
-  setIsTerminalOpen,
-  setIsClawWorkOpen
+  setIsTerminalOpen
 }: AgentControlsProps) {
   const [activeTooltip, setActiveTooltip] = useState<string | null>(null);
 
@@ -61,42 +49,6 @@ export function AgentControls({
       
       <div className="flex items-center gap-3">
         <div className="flex items-center gap-1.5">
-          <div className="relative">
-            <div className={cn(
-              "flex items-center rounded-lg transition-all shadow-sm",
-              isSwarmMode 
-                ? "bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-blue-200" 
-                : "text-black/40 hover:text-black/60 hover:bg-black/5"
-            )}>
-              <button 
-                onClick={() => setIsSwarmMode(!isSwarmMode)}
-                className="flex items-center gap-2 pl-4 pr-2 py-2 text-[10px] font-black uppercase tracking-widest"
-              >
-                <Zap className={cn("w-3.5 h-3.5", isSwarmMode && "fill-current text-yellow-300")} />
-                <span className="hidden sm:inline">Enxame</span>
-              </button>
-              <button
-                onClick={(e) => { e.stopPropagation(); setActiveTooltip(activeTooltip === 'enxame' ? null : 'enxame'); }}
-                className="pr-3 pl-1 py-2 opacity-50 hover:opacity-100"
-              >
-                <HelpCircle className="w-3.5 h-3.5" />
-              </button>
-            </div>
-            <AnimatePresence>
-              {activeTooltip === 'enxame' && (
-                <motion.div 
-                  initial={{ opacity: 0, y: -5 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -5 }}
-                  className="absolute top-full left-1/2 -translate-x-1/2 mt-2 w-56 p-2.5 bg-black text-white text-[10px] rounded-xl shadow-xl z-50 leading-relaxed text-center"
-                >
-                  <strong className="block text-blue-400 mb-1">Modo Enxame (Swarm)</strong>
-                  Ativa múltiplos especialistas para analisar seu pedido e criar uma estratégia 360º.
-                </motion.div>
-              )}
-            </AnimatePresence>
-          </div>
-
           <div className="relative">
             <div className={cn(
               "flex items-center rounded-lg transition-all shadow-sm",
@@ -163,74 +115,6 @@ export function AgentControls({
                 >
                   <strong className="block text-blue-400 mb-1">Cérebro Sináptico</strong>
                   Gerencia a base de conhecimento e aprendizado contínuo do Enxame.
-                </motion.div>
-              )}
-            </AnimatePresence>
-          </div>
-          
-          <div className="relative">
-            <div className="flex items-center rounded-xl transition-all hover:bg-black/5 text-black/60">
-              <button 
-                onClick={() => setIsCalculatorOpen(true)}
-                className="p-2.5 group"
-              >
-                <BarChart3 className="w-5 h-5 group-hover:text-green-600 transition-colors" />
-              </button>
-              <button
-                onClick={(e) => { e.stopPropagation(); setActiveTooltip(activeTooltip === 'calculadora' ? null : 'calculadora'); }}
-                className="pr-2.5 pl-1 py-2.5 opacity-50 hover:opacity-100"
-              >
-                <HelpCircle className="w-3.5 h-3.5" />
-              </button>
-            </div>
-            <AnimatePresence>
-              {activeTooltip === 'calculadora' && (
-                <motion.div 
-                  initial={{ opacity: 0, y: -5 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -5 }}
-                  className="absolute top-full left-1/2 -translate-x-1/2 mt-2 w-48 p-2.5 bg-black text-white text-[10px] rounded-xl shadow-xl z-50 leading-relaxed text-center"
-                >
-                  <strong className="block text-green-400 mb-1">Calculadora de ROI</strong>
-                  Ferramenta para projetar e analisar o retorno sobre investimento das campanhas.
-                </motion.div>
-              )}
-            </AnimatePresence>
-          </div>
-          
-          <div className="relative">
-            <div className={cn(
-              "flex items-center rounded-xl transition-all shadow-sm border",
-              isSwarmView && isWorkspaceOpen
-                ? "bg-blue-600 text-white border-blue-600" 
-                : "bg-white hover:bg-black/5 text-black/60 border-black/5"
-            )}>
-              <button 
-                onClick={() => {
-                  setIsSwarmView(true);
-                  setIsWorkspaceOpen(true);
-                }}
-                className="p-2.5"
-              >
-                <Users className="w-5 h-5" />
-              </button>
-              <button
-                onClick={(e) => { e.stopPropagation(); setActiveTooltip(activeTooltip === 'sala_agentes' ? null : 'sala_agentes'); }}
-                className="pr-2.5 pl-1 py-2.5 opacity-50 hover:opacity-100"
-              >
-                <HelpCircle className="w-3.5 h-3.5" />
-              </button>
-            </div>
-            <AnimatePresence>
-              {activeTooltip === 'sala_agentes' && (
-                <motion.div 
-                  initial={{ opacity: 0, y: -5 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -5 }}
-                  className="absolute top-full left-1/2 -translate-x-1/2 mt-2 w-48 p-2.5 bg-black text-white text-[10px] rounded-xl shadow-xl z-50 leading-relaxed text-center"
-                >
-                  <strong className="block text-blue-400 mb-1">Sala dos Agentes</strong>
-                  Abre o painel para acompanhar a atividade e o status de todos os agentes.
                 </motion.div>
               )}
             </AnimatePresence>

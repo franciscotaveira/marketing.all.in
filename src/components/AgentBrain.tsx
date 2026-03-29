@@ -106,7 +106,7 @@ export function AgentBrain({ agent, onClose }: AgentBrainProps) {
       {
         title: "[God-Tier] Arquitetura de Worker Nodes (Redis/Postgres)",
         content: "Para escalar o n8n horizontalmente, NUNCA use o modo regular em produção de alto volume. Configure `EXECUTIONS_MODE=queue`, conecte ao Redis (`QUEUE_BULL_REDIS_HOST`) e suba múltiplos containers de Worker. Para evitar travamentos no banco, sempre defina `EXECUTIONS_DATA_PRUNE=true` e `EXECUTIONS_DATA_MAX_AGE=168` (7 dias).",
-        tags: "infraestrutura, devops, escalabilidade, redis",
+        tags: ["infraestrutura", "devops", "escalabilidade", "redis"],
         agentId: "automation-engineer",
         type: "insight" as const,
         importance: 10
@@ -114,7 +114,7 @@ export function AgentBrain({ agent, onClose }: AgentBrainProps) {
       {
         title: "[God-Tier] Tratamento de Erros e Resiliência (Error Trigger)",
         content: "Fluxos amadores param quando uma API falha. Fluxos Enterprise usam o nó 'Error Trigger' em um workflow separado. Quando qualquer fluxo falha, o Error Trigger captura o erro, envia um alerta detalhado (com o ID da execução e o nome do nó que falhou) para o Slack/Discord e tenta uma rota de fallback ou re-enfileira a mensagem no RabbitMQ.",
-        tags: "resiliencia, tratamento-de-erros, slack, webhook",
+        tags: ["resiliencia", "tratamento-de-erros", "slack", "webhook"],
         agentId: "automation-engineer",
         type: "insight" as const,
         importance: 9
@@ -122,7 +122,7 @@ export function AgentBrain({ agent, onClose }: AgentBrainProps) {
       {
         title: "[God-Tier] Processamento em Lote (Split in Batches)",
         content: "Ao processar milhares de registros (ex: sincronizar banco com CRM), o n8n pode estourar a memória (OOM). A solução definitiva é usar o nó 'Split in Batches' (ou Loop) com tamanho de lote de 50-100. Adicione um nó 'Wait' de 1 segundo entre os lotes para respeitar o Rate Limit das APIs externas (HTTP 429 Too Many Requests).",
-        tags: "performance, rate-limit, lote, crm",
+        tags: ["performance", "rate-limit", "lote", "crm"],
         agentId: "automation-engineer",
         type: "insight" as const,
         importance: 9
@@ -130,7 +130,7 @@ export function AgentBrain({ agent, onClose }: AgentBrainProps) {
       {
         title: "[God-Tier] RAG Complexo e Agentes Autônomos no n8n",
         content: "Para criar um Agente de IA no n8n, use o nó 'AI Agent' conectado a um 'Window Buffer Memory' (para lembrar o contexto) e ferramentas (Tools) como 'Wikipedia', 'Calculator' ou 'HTTP Request'. Para RAG, conecte um 'Vector Store' (Pinecone/Qdrant) alimentado por um 'Document Loader' e um 'Text Splitter' (chunk size 1000, overlap 200).",
-        tags: "ia, rag, langchain, agentes, memoria",
+        tags: ["ia", "rag", "langchain", "agentes", "memoria"],
         agentId: "automation-engineer",
         type: "insight" as const,
         importance: 10
@@ -138,7 +138,7 @@ export function AgentBrain({ agent, onClose }: AgentBrainProps) {
       {
         title: "[God-Tier] Web Scraping Dinâmico com Puppeteer",
         content: "Quando APIs não estão disponíveis e o site usa React/Vue (SPA), requisições HTTP normais falham. A solução é usar o n8n para chamar um serviço externo do Puppeteer/Playwright (via HTTP Request) ou usar um Custom Node de browserless.io para renderizar o JavaScript, esperar o seletor aparecer e extrair o HTML final.",
-        tags: "scraping, puppeteer, automacao-web, spa",
+        tags: ["scraping", "puppeteer", "automacao-web", "spa"],
         agentId: "automation-engineer",
         type: "insight" as const,
         importance: 8
@@ -146,7 +146,7 @@ export function AgentBrain({ agent, onClose }: AgentBrainProps) {
       {
         title: "[God-Tier] Manipulação de Dados Binários (Files/Streams)",
         content: "NUNCA carregue arquivos grandes (vídeos, PDFs pesados) diretamente na memória do n8n. Use a flag `BINARY_DATA_MODE=filesystem` no seu `.env` para que o n8n grave os arquivos no disco em vez de mantê-los na RAM. Para processar arquivos gigantes, use streams e o nó 'Read Binary File' configurado para ler em chunks.",
-        tags: "arquivos, binario, memoria, performance",
+        tags: ["arquivos", "binario", "memoria", "performance"],
         agentId: "automation-engineer",
         type: "insight" as const,
         importance: 10
@@ -154,7 +154,7 @@ export function AgentBrain({ agent, onClose }: AgentBrainProps) {
       {
         title: "[God-Tier] Segurança de Webhooks (HMAC & IP Whitelisting)",
         content: "Webhooks abertos são uma falha de segurança crítica. Sempre valide a assinatura HMAC do payload recebido (ex: Stripe, Shopify) usando um nó de Crypto antes de processar os dados. Em ambientes Enterprise, configure o proxy reverso (Nginx/Traefik) para aceitar requisições no endpoint do webhook apenas de IPs conhecidos (IP Whitelisting).",
-        tags: "seguranca, webhook, hmac, proxy",
+        tags: ["seguranca", "webhook", "hmac", "proxy"],
         agentId: "automation-engineer",
         type: "insight" as const,
         importance: 10
@@ -162,7 +162,7 @@ export function AgentBrain({ agent, onClose }: AgentBrainProps) {
       {
         title: "[God-Tier] CI/CD de Workflows (Promoção de Ambientes)",
         content: "Não edite fluxos em produção. Tenha instâncias separadas (Dev, Staging, Prod). Use a API pública do n8n (`/api/v1/workflows`) ou a CLI (`n8n export`) em um pipeline do GitHub Actions para exportar o JSON do fluxo de Dev, substituir os IDs de credenciais (usando variáveis de ambiente) e importar na instância de Produção automaticamente.",
-        tags: "ci-cd, github-actions, deploy, api",
+        tags: ["ci-cd", "github-actions", "deploy", "api"],
         agentId: "automation-engineer",
         type: "insight" as const,
         importance: 9
@@ -170,7 +170,7 @@ export function AgentBrain({ agent, onClose }: AgentBrainProps) {
       {
         title: "[God-Tier] Sub-Workflows como Microserviços (Execute Workflow)",
         content: "Workflows gigantes (monolitos) são impossíveis de dar manutenção. Quebre a lógica em dezenas de sub-workflows menores e chame-os usando o nó 'Execute Workflow'. Isso permite reaproveitamento de código (ex: um fluxo único só para enviar emails, chamado por vários outros fluxos) e isolamento de falhas.",
-        tags: "arquitetura, microservicos, dry, manutencao",
+        tags: ["arquitetura", "microservicos", "dry", "manutencao"],
         agentId: "automation-engineer",
         type: "insight" as const,
         importance: 9
@@ -178,7 +178,7 @@ export function AgentBrain({ agent, onClose }: AgentBrainProps) {
       {
         title: "[God-Tier] High-Performance Webhooks (Respond to Webhook)",
         content: "Se o seu n8n recebe um Webhook do Stripe ou Shopify e demora para processar, a API externa vai dar Timeout e reenviar o evento, causando duplicação. A regra de ouro é: coloque um nó 'Respond to Webhook' LOGO APÓS o gatilho para retornar HTTP 200 OK imediatamente. O n8n continuará processando o resto do fluxo de forma assíncrona em background.",
-        tags: "webhooks, performance, timeout, assincrono",
+        tags: ["webhooks", "performance", "timeout", "assincrono"],
         agentId: "automation-engineer",
         type: "insight" as const,
         importance: 10
@@ -186,7 +186,7 @@ export function AgentBrain({ agent, onClose }: AgentBrainProps) {
       {
         title: "[God-Tier] Human-in-the-Loop (HITL) com Nó Wait",
         content: "Aprovações manuais não precisam quebrar a automação. Use o nó 'Wait' configurado para 'On Webhook Call'. Envie uma mensagem no Slack com botões (Aprovar/Rejeitar) que apontam para a URL desse Webhook de retomada. O n8n pausará a execução (sem consumir CPU) e só continuará quando o humano clicar no botão.",
-        tags: "hitL, aprovacao, slack, wait-node",
+        tags: ["hitL", "aprovacao", "slack", "wait-node"],
         agentId: "automation-engineer",
         type: "insight" as const,
         importance: 9
@@ -194,7 +194,7 @@ export function AgentBrain({ agent, onClose }: AgentBrainProps) {
       {
         title: "[God-Tier] Exponential Backoff & Retry Logic",
         content: "APIs falham. Não use apenas 'Retry on Fail' nas configurações do nó, pois isso repete imediatamente. Construa uma malha de repetição real: Use um nó 'Loop' conectado a um nó 'Wait' dinâmico (ex: `{{ $runIndex * 5 }} seconds`). Se a API falhar, ele espera 5s, depois 10s, depois 15s (Exponential Backoff) antes de desistir.",
-        tags: "resiliencia, retry, backoff, apis",
+        tags: ["resiliencia", "retry", "backoff", "apis"],
         agentId: "automation-engineer",
         type: "insight" as const,
         importance: 10
@@ -202,7 +202,7 @@ export function AgentBrain({ agent, onClose }: AgentBrainProps) {
       {
         title: "[God-Tier] Enterprise Secrets Management",
         content: "Em bancos e empresas Fortune 500, você não salva senhas no n8n. Em vez de usar as 'Credentials' nativas, faça uma chamada HTTP autenticada (via IAM role) para o AWS Secrets Manager ou HashiCorp Vault no início do fluxo. Injete a chave em memória apenas durante aquela execução e limpe os dados em seguida.",
-        tags: "seguranca, secrets, aws, vault, compliance",
+        tags: ["seguranca", "secrets", "aws", "vault", "compliance"],
         agentId: "automation-engineer",
         type: "insight" as const,
         importance: 10
@@ -210,7 +210,7 @@ export function AgentBrain({ agent, onClose }: AgentBrainProps) {
       {
         title: "[God-Tier] Automated Workflow Testing (Mock Data)",
         content: "Para testar fluxos complexos sem disparar ações reais, crie um fluxo 'Test Runner'. Ele usa um nó 'Code' para gerar payloads JSON falsos (Mock Data) e chama o seu fluxo principal via 'Execute Workflow'. O fluxo principal deve ter um IF checando uma variável `isTest=true` para pular nós que enviam emails ou cobram cartões.",
-        tags: "qa, testes, ci-cd, mock",
+        tags: ["qa", "testes", "ci-cd", "mock"],
         agentId: "automation-engineer",
         type: "insight" as const,
         importance: 8

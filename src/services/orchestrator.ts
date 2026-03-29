@@ -23,8 +23,7 @@ export async function orchestrateRequest(
   onAgentStatus: (id: string, status: 'idle' | 'thinking' | 'using_tool', tool?: string) => void,
   onLog: (agentId: string, message: string, type: 'info' | 'action' | 'success' | 'error') => void,
   images?: string[],
-  history?: Message[],
-  isHighThinking?: boolean
+  history?: Message[]
 ): Promise<OrchestrationResult> {
   
   let targetAgentId = selectedAgentId || "orchestrator";
@@ -50,7 +49,7 @@ export async function orchestrateRequest(
         if (!skill) return null;
         onAgentStatus(id, 'thinking');
         onLog(id, "Iniciando processamento da tarefa...", "info");
-        const resp = await sendMessageToAgent(id, userMessage, skill.model || model, systemInstruction, undefined, images, history, useGrounding, isHighThinking);
+        const resp = await sendMessageToAgent(id, userMessage, skill.model || model, systemInstruction, undefined, images, history, useGrounding);
         onLog(id, "Tarefa concluída com sucesso.", "success");
         onAgentStatus(id, 'idle');
         return { id, resp };
@@ -94,8 +93,7 @@ export async function orchestrateRequest(
       undefined,
       images,
       history,
-      useGrounding,
-      isHighThinking
+      useGrounding
     );
     onLog(targetAgentId, "Resposta gerada com sucesso.", "success");
   } else {
@@ -108,8 +106,7 @@ export async function orchestrateRequest(
       undefined,
       images,
       history,
-      useGrounding,
-      isHighThinking
+      useGrounding
     );
     onLog(targetAgentId, "Resposta gerada com sucesso.", "success");
   }

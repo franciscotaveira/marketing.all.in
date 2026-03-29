@@ -80,7 +80,7 @@ export type SocialPlatform = "instagram" | "linkedin" | "tiktok" | "facebook" | 
 export interface Artifact {
   id: string;
   title: string;
-  type: "copy" | "plan" | "code" | "data" | "script" | "visual" | "video" | "campaign" | "funnel" | "social" | "design-system" | "research" | "automation" | "architecture";
+  type: "copy" | "plan" | "code" | "data" | "script" | "visual" | "video" | "campaign" | "funnel" | "social" | "design-system" | "research" | "automation" | "architecture" | "n8n";
   content: string;
   agentName: string;
   metadata?: {

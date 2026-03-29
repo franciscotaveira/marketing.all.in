@@ -19,7 +19,6 @@ interface InputBarProps {
   handleSend: () => void;
   handleGenerateImage: () => void;
   handleGenerateVideo: () => void;
-  setIsLiveMode: (value: boolean) => void;
   setMessages: (messages: any[]) => void;
   handlePaste: (e: React.ClipboardEvent) => void;
   handleInputKeyDown: (e: React.KeyboardEvent) => void;
@@ -41,7 +40,6 @@ export function InputBar({
   handleSend,
   handleGenerateImage,
   handleGenerateVideo,
-  setIsLiveMode,
   setMessages,
   handlePaste,
   handleInputKeyDown,
@@ -259,36 +257,6 @@ export function InputBar({
                   >
                     <strong className="block text-indigo-400 mb-1">Gerar Vídeo</strong>
                     Cria vídeos curtos usando o modelo Veo.
-                  </motion.div>
-                )}
-              </AnimatePresence>
-            </div>
-            
-            <div className="relative">
-              <div className="flex items-center bg-rose-50 border border-rose-100 text-rose-600 rounded-2xl transition-all shadow-sm hover:shadow-md group">
-                <button
-                  onClick={() => setIsLiveMode(true)}
-                  className="p-3 md:p-4 hover:scale-105 active:scale-95 rounded-l-2xl"
-                >
-                  <Mic className="w-4 h-4 md:w-5 md:h-5" />
-                </button>
-                <button
-                  onClick={(e) => { e.stopPropagation(); setActiveTooltip(activeTooltip === 'voz' ? null : 'voz'); }}
-                  className="pr-2 pl-1 py-3 md:pr-3 md:py-4 opacity-50 hover:opacity-100 rounded-r-2xl"
-                >
-                  <HelpCircle className="w-3 h-3 md:w-3.5 md:h-3.5" />
-                </button>
-              </div>
-              <AnimatePresence>
-                {activeTooltip === 'voz' && (
-                  <motion.div 
-                    initial={{ opacity: 0, y: 5 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: 5 }}
-                    className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-48 p-2.5 bg-black text-white text-[10px] rounded-xl shadow-xl z-50 leading-relaxed text-center"
-                  >
-                    <strong className="block text-rose-400 mb-1">Conversa em Tempo Real</strong>
-                    Ativa o modo de voz para conversar com o agente ao vivo.
                   </motion.div>
                 )}
               </AnimatePresence>
