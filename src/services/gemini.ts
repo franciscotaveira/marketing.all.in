@@ -20,37 +20,68 @@ export class GeminiService {
     this.ai = new GoogleGenAI({ apiKey });
   }
 
+  private async withRetry<T>(fn: () => Promise<T>, maxRetries: number = 3): Promise<T> {
+    let lastError: any;
+    for (let i = 0; i < maxRetries; i++) {
+      try {
+        return await fn();
+      } catch (error: any) {
+        lastError = error;
+        // Check if it's a rate limit error (429)
+        const isRateLimit = error?.message?.includes('429') || 
+                           error?.status === 429 || 
+                           error?.error?.code === 429 ||
+                           error?.message?.includes('RESOURCE_EXHAUSTED');
+        
+        if (isRateLimit && i < maxRetries - 1) {
+          const delay = Math.pow(2, i) * 1000 + Math.random() * 1000;
+          console.warn(`Rate limit hit (429). Retrying in ${Math.round(delay)}ms... (Attempt ${i + 1}/${maxRetries})`);
+          await new Promise(resolve => setTimeout(resolve, delay));
+          continue;
+        }
+        throw error;
+      }
+    }
+    throw lastError;
+  }
+
   async generateText(prompt: string | any[], model: string = MODELS.GENERAL, systemInstruction?: string, tools?: any[]) {
-    const response = await this.ai.models.generateContent({
-      model,
-      contents: prompt,
-      config: {
-        systemInstruction,
-        tools,
-      },
+    return this.withRetry(async () => {
+      const response = await this.ai.models.generateContent({
+        model,
+        contents: prompt,
+        config: {
+          systemInstruction,
+          tools,
+        },
+      });
+      return response;
     });
-    return response;
   }
 
   async generateComplexResponse(prompt: string, systemInstruction?: string) {
-    const response = await this.ai.models.generateContent({
-      model: MODELS.COMPLEX,
-      contents: prompt,
-      config: {
-        systemInstruction,
-        thinkingConfig: { thinkingLevel: ThinkingLevel.HIGH },
-      },
+    return this.withRetry(async () => {
+      const response = await this.ai.models.generateContent({
+        model: MODELS.COMPLEX,
+        contents: prompt,
+        config: {
+          systemInstruction,
+          thinkingConfig: { thinkingLevel: ThinkingLevel.HIGH },
+        },
+      });
+      return response;
     });
-    return response;
   }
 
 
   async embedContent(text: string) {
-    const result = await this.ai.models.embedContent({
-      model: 'gemini-embedding-2-preview',
-      contents: text,
+    return this.withRetry(async () => {
+      const result = await this.ai.models.embedContent({
+        model: 'gemini-embedding-2-preview',
+        contents: text,
+      });
+      return result;
     });
-    return result;
   }
 }
 

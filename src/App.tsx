@@ -78,8 +78,8 @@ import { CustomAgentModal } from "./components/CustomAgentModal";
 import { InputBar } from "./components/InputBar";
 import { AgentControls } from "./components/AgentControls";
 import { ChatHistory } from "./components/ChatHistory";
-import { MARKETING_SKILLS, MARKETING_FRAMEWORKS, CATEGORY_COLORS, CATEGORY_TEXT_COLORS, CATEGORY_BG_LIGHT_COLORS } from "./constants";
-import { MarketingSkill, SkillCategory, Message, SkillTier, Artifact, BrainMemory, Company } from "./types";
+import { MARKETING_SKILLS, MARKETING_FRAMEWORKS, CATEGORY_COLORS, CATEGORY_TEXT_COLORS, CATEGORY_BG_LIGHT_COLORS, WORKFLOWS } from "./constants";
+import { MarketingSkill, SkillCategory, Message, SkillTier, Artifact, BrainMemory, Company, Workflow } from "./types";
 import { cn } from "./lib/utils";
 import { firebaseService } from "./lib/firebaseService";
 import { auth, googleProvider, signInWithPopup, signOut, onAuthStateChanged, User as FirebaseUser } from "./firebase";
@@ -117,6 +117,10 @@ export default function App() {
   const [editingCompanyId, setEditingCompanyId] = useState<string | null>(null);
   const [isBrandContextModalOpen, setIsBrandContextModalOpen] = useState(false);
 
+  const [activeWorkflow, setActiveWorkflow] = useState<Workflow | null>(null);
+  const [workflowStepIndex, setWorkflowStepIndex] = useState<number>(-1);
+  const activeWorkflowRef = useRef<string | null>(null);
+
   useEffect(() => {
     localStorage.setItem('companies', JSON.stringify(companies));
   }, [companies]);
@@ -144,6 +148,165 @@ export default function App() {
   const handleArtifactClick = (art: Artifact) => {
     setActiveArtifact(art);
     setIsWorkspaceOpen(true);
+  };
+
+  const handleStartWorkflow = (workflow: Workflow) => {
+    setSelectedSkill(null);
+    setActiveWorkflow(workflow);
+    activeWorkflowRef.current = workflow.id;
+    setWorkflowStepIndex(0);
+    setMessages(prev => [...prev, {
+      role: "ai",
+      content: `**Iniciando Workflow: ${workflow.name}**\n\n${workflow.initialPrompt}`,
+      agentName: "Orquestrador de Workflow"
+    }]);
+    if (window.innerWidth < 768) setIsSidebarOpen(false);
+  };
+
+  const runWorkflowSequence = async (initialInput: string, workflow: Workflow) => {
+    setIsLoading(true);
+
+    let currentContext = `Input Inicial do Usuário: ${initialInput}`;
+    
+    for (let i = 0; i < workflow.steps.length; i++) {
+      if (activeWorkflowRef.current !== workflow.id) {
+        setMessages(prev => [...prev, {
+          role: "ai",
+          content: `⚠️ **Workflow Cancelado.**`,
+          agentName: "Orquestrador de Workflow"
+        }]);
+        break;
+      }
+
+      const step = workflow.steps[i];
+      setWorkflowStepIndex(i);
+      const agent = MARKETING_SKILLS.find(s => s.id === step.agentId) || MARKETING_SKILLS[0];
+      
+      setMessages(prev => [...prev, {
+        role: "ai",
+        content: `⏳ **Executando Etapa ${i + 1}/${workflow.steps.length}: ${step.name}**\nAgente: ${agent.name}...`,
+        agentName: "Orquestrador de Workflow"
+      }]);
+
+      const prompt = `Você está executando a etapa ${i + 1} de um workflow automatizado.\n\nInstrução da Etapa: ${step.instruction}\n\nContexto Acumulado:\n${currentContext}`;
+      
+      const systemInstruction = `Você é ${agent.persona} (${agent.name}). 
+      Sua tarefa é cumprir a instrução da etapa atual do workflow com base no contexto fornecido.
+      Gere a saída de forma clara e profissional. Se for gerar um material prático, use o formato de artefato:
+      \`\`\`artifact:tipo:título
+      conteúdo do artefato aqui
+      \`\`\``;
+
+      try {
+        const result = await orchestrateRequest(
+          prompt,
+          agent.id,
+          agent.model,
+          systemInstruction,
+          false,
+          false,
+          addLog,
+          [],
+          []
+        );
+
+        const aiResponse = result.response;
+        
+        const artifacts: Artifact[] = [];
+        const artifactRegex = /```artifact:([a-zA-Z0-9_-]+):([^\n]+)\n([\s\S]*?)```/g;
+        let match;
+        while ((match = artifactRegex.exec(aiResponse)) !== null) {
+          const type = match[1];
+          let content = match[3].trim();
+          let metadata = undefined;
+          
+          if (type !== 'n8n') {
+            try {
+              const jsonBlockMatch = content.match(/```json\s*([\s\S]*?)\s*```/);
+              if (jsonBlockMatch) {
+                const parsed = JSON.parse(jsonBlockMatch[1]);
+                metadata = parsed.metadata !== undefined ? parsed.metadata : parsed;
+                content = content.replace(jsonBlockMatch[0], '').trim();
+              } else {
+                const jsonStart = content.lastIndexOf('{');
+                const jsonEnd = content.lastIndexOf('}');
+                if (jsonStart !== -1 && jsonEnd !== -1 && jsonEnd > jsonStart) {
+                  const possibleJson = content.substring(jsonStart, jsonEnd + 1);
+                  try {
+                    const parsed = JSON.parse(possibleJson);
+                    metadata = parsed.metadata !== undefined ? parsed.metadata : parsed;
+                    content = content.substring(0, jsonStart).trim();
+                    if (content.endsWith('```')) {
+                      content = content.substring(0, content.length - 3).trim();
+                    }
+                  } catch (e) {}
+                }
+              }
+            } catch (e) {}
+          }
+
+          artifacts.push({
+            id: Math.random().toString(36).substr(2, 9),
+            type: type as any,
+            title: match[2].trim(),
+            content: content,
+            agentName: agent.persona,
+            metadata
+          });
+        }
+
+        if (artifacts.length > 0) {
+          setActiveArtifact(artifacts[0]);
+          setIsWorkspaceOpen(true);
+        }
+
+        const formattedResponse = aiResponse.replace(artifactRegex, '> *Artefato gerado: $2*');
+
+        setMessages(prev => {
+          const newMsgs = [...prev];
+          newMsgs.pop(); // Remove "Executando..."
+          return [...newMsgs, {
+            role: "ai",
+            content: `✅ **Etapa ${i + 1} Concluída: ${step.name}**\n\n${formattedResponse}`,
+            agentName: agent.persona,
+            agentTier: agent.tier,
+            artifacts: artifacts.length > 0 ? artifacts : undefined
+          }];
+        });
+
+        currentContext += `\n\n--- Resultado da Etapa ${i + 1} (${step.name}) ---\n${aiResponse}`;
+
+      } catch (error) {
+        console.error(`Error in workflow step ${i}:`, error);
+        setMessages(prev => {
+          const newMsgs = [...prev];
+          newMsgs.pop();
+          return [...newMsgs, {
+            role: "ai",
+            content: `❌ **Erro na Etapa ${i + 1}: ${step.name}**\nO workflow foi interrompido.`,
+            agentName: "Orquestrador de Workflow"
+          }];
+        });
+        setIsLoading(false);
+        setActiveWorkflow(null);
+        activeWorkflowRef.current = null;
+        setWorkflowStepIndex(-1);
+        return;
+      }
+    }
+    
+    if (activeWorkflowRef.current === workflow.id) {
+      setMessages(prev => [...prev, {
+        role: "ai",
+        content: `🎉 **Workflow "${workflow.name}" Concluído com Sucesso!**\nTodos os agentes finalizaram suas tarefas.`,
+        agentName: "Orquestrador de Workflow"
+      }]);
+    }
+    
+    setIsLoading(false);
+    setActiveWorkflow(null);
+    activeWorkflowRef.current = null;
+    setWorkflowStepIndex(-1);
   };
 
   const [isBrainOpen, setIsBrainOpen] = useState(false);
@@ -323,6 +486,12 @@ export default function App() {
     const userMsg: Omit<Message, 'createdAt'> = { role: "user", content: userMessage, images: currentImages };
     setMessages(prev => [...prev, userMsg as Message]);
     firebaseService.saveMessage("default", userMsg);
+    
+    if (activeWorkflow && workflowStepIndex === 0) {
+      runWorkflowSequence(userMessage, activeWorkflow);
+      return;
+    }
+
     setIsLoading(true);
 
     try {
@@ -663,6 +832,34 @@ export default function App() {
             </div>
           </div>
 
+          {/* Workflows */}
+          <div className="space-y-3">
+            <h2 className="text-xs uppercase tracking-[0.2em] font-black text-white/50 px-2">Workflows Automatizados</h2>
+            <div className="grid grid-cols-1 gap-1.5">
+              {WORKFLOWS.map((workflow) => (
+                <button 
+                  key={workflow.id}
+                  onClick={() => handleStartWorkflow(workflow)}
+                  className={cn(
+                    "p-3 rounded-xl text-xs font-black uppercase tracking-widest transition-all text-left flex items-center justify-between group border",
+                    activeWorkflow?.id === workflow.id
+                      ? "bg-blue-600 border-blue-500 text-white shadow-[0_0_15px_rgba(37,99,235,0.3)]" 
+                      : "bg-white/10 border-white/10 text-white/70 hover:bg-white/20 hover:text-white"
+                  )}
+                >
+                  <div className="flex flex-col min-w-0">
+                    <span className="truncate">{workflow.name}</span>
+                    <span className={cn(
+                      "text-xs opacity-70 truncate font-medium mt-0.5",
+                      activeWorkflow?.id === workflow.id ? "text-blue-100" : ""
+                    )}>{workflow.description}</span>
+                  </div>
+                  {activeWorkflow?.id === workflow.id ? <Check className="w-3 h-3" /> : <Play className="w-3 h-3 opacity-0 group-hover:opacity-100 transition-opacity" />}
+                </button>
+              ))}
+            </div>
+          </div>
+
           {/* Framework Selector */}
           <div className="space-y-3">
             <h2 className="text-xs uppercase tracking-[0.2em] font-black text-white/50 px-2">Framework</h2>
@@ -744,6 +941,9 @@ export default function App() {
                           key={skill.id}
                           onClick={() => {
                             setSelectedSkill(skill);
+                            setActiveWorkflow(null);
+                            activeWorkflowRef.current = null;
+                            setWorkflowStepIndex(-1);
                             if (window.innerWidth < 768) setIsSidebarOpen(false);
                           }}
                           className={cn(
@@ -838,6 +1038,9 @@ export default function App() {
                 <button 
                   onClick={() => {
                     setSelectedSkill(null);
+                    setActiveWorkflow(null);
+                    activeWorkflowRef.current = null;
+                    setWorkflowStepIndex(-1);
                   }}
                   className="hover:text-black/70 transition-colors"
                 >
@@ -858,10 +1061,29 @@ export default function App() {
                     <ChevronRight className="w-3 h-3" />
                     <span className="text-blue-600">{selectedSkill.name}</span>
                   </>
+                ) : activeWorkflow ? (
+                  <>
+                    <ChevronRight className="w-3 h-3" />
+                    <span className="text-blue-600">Workflows</span>
+                    <ChevronRight className="w-3 h-3" />
+                    <span className="text-blue-600">{activeWorkflow.name}</span>
+                  </>
                 ) : null}
               </div>
               <h1 className="text-sm font-black uppercase tracking-[0.15em] text-black/80 flex items-center gap-2">
-                {selectedSkill ? selectedSkill.name : "Inteligência de Marketing"}
+                {activeWorkflow ? `Workflow: ${activeWorkflow.name}` : selectedSkill ? selectedSkill.name : "Inteligência de Marketing"}
+                {activeWorkflow && (
+                  <button 
+                    onClick={() => { 
+                      setActiveWorkflow(null); 
+                      activeWorkflowRef.current = null;
+                      setWorkflowStepIndex(-1); 
+                    }}
+                    className="text-xs font-black uppercase tracking-widest text-red-500 hover:text-red-600 transition-colors ml-2"
+                  >
+                    Cancelar Workflow
+                  </button>
+                )}
                 <button 
                   onClick={() => setMessages([])}
                   className="text-xs font-black uppercase tracking-widest text-gray-400 hover:text-red-500 transition-colors ml-4"
@@ -871,7 +1093,7 @@ export default function App() {
                 <span className="w-1.5 h-1.5 bg-blue-500 rounded-full animate-pulse shadow-[0_0_8px_rgba(59,130,246,0.6)]" />
               </h1>
               <p className="text-xs text-gray-500 font-bold uppercase tracking-tighter">
-                {selectedSkill ? selectedSkill.persona : "Selecione uma habilidade para começar"}
+                {activeWorkflow ? "Aguardando seu input..." : selectedSkill ? selectedSkill.persona : "Selecione uma habilidade para começar"}
               </p>
             </div>
           </div>

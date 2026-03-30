@@ -1,4 +1,88 @@
-import { SkillCategory, MarketingSkill, SkillTier } from "./types";
+import { SkillCategory, MarketingSkill, SkillTier, Workflow } from "./types";
+
+export const WORKFLOWS: Workflow[] = [
+  {
+    id: "wf_organic_growth",
+    name: "Máquina de Crescimento Orgânico",
+    description: "Pesquisa SEO -> Estratégia de Conteúdo -> Copywriting",
+    initialPrompt: "Qual é o seu nicho de mercado e qual produto/serviço principal você quer promover organicamente?",
+    steps: [
+      {
+        id: "step_1",
+        name: "Pesquisa de Palavras-chave e Intenção",
+        agentId: "seo-specialist",
+        instruction: "Analise o nicho fornecido. Identifique 5 palavras-chave de cauda longa (long-tail) com alta intenção de compra e baixa concorrência. Para cada uma, defina a intenção de busca do usuário."
+      },
+      {
+        id: "step_2",
+        name: "Estratégia de Conteúdo",
+        agentId: "content-strategist",
+        instruction: "Com base nas palavras-chave identificadas na etapa anterior, crie um calendário editorial com 3 pautas de artigos pilares (pillar content). Inclua título, formato e ângulo único para cada um."
+      },
+      {
+        id: "step_3",
+        name: "Criação do Artigo Principal",
+        agentId: "copywriter",
+        frameworkId: "pas",
+        instruction: "Escolha a melhor pauta da etapa anterior e escreva a introdução e o primeiro tópico do artigo otimizado para SEO, usando o framework PAS para prender a atenção do leitor."
+      }
+    ]
+  },
+  {
+    id: "wf_product_launch",
+    name: "Lançamento de Produto (MVP)",
+    description: "Estratégia -> Landing Page -> Anúncios",
+    initialPrompt: "Descreva o produto que você está lançando, o preço e quem é o seu cliente ideal.",
+    steps: [
+      {
+        id: "step_1",
+        name: "Posicionamento e Oferta",
+        agentId: "growth-hacker",
+        instruction: "Defina o posicionamento único de mercado para este produto. Crie uma oferta irresistível (Garantia, Bônus, Ancoragem de Preço)."
+      },
+      {
+        id: "step_2",
+        name: "Copy da Landing Page",
+        agentId: "copywriter",
+        frameworkId: "storybrand",
+        instruction: "Com base na oferta criada, escreva a copy estruturada para a Landing Page usando o framework StoryBrand (Herói, Problema, Guia, Plano, Chamada para Ação)."
+      },
+      {
+        id: "step_3",
+        name: "Criativos de Anúncio",
+        agentId: "media-buyer",
+        instruction: "Crie 3 roteiros curtos para anúncios de vídeo (Meta/TikTok Ads) focados em tráfego frio para levar as pessoas para esta Landing Page."
+      }
+    ]
+  },
+  {
+    id: "wf_conversion_audit",
+    name: "Auditoria de Conversão (CRO)",
+    description: "Análise de Fricção -> Hipóteses de Teste -> Copy Alternativa",
+    initialPrompt: "Descreva a página ou funil que você quer otimizar. Qual é a taxa de conversão atual e qual é o principal gargalo que você percebe?",
+    steps: [
+      {
+        id: "step_1",
+        name: "Identificação de Fricção",
+        agentId: "cro-expert",
+        instruction: "Analise o cenário descrito. Identifique os 3 principais pontos de fricção psicológica ou de usabilidade que estão matando a conversão."
+      },
+      {
+        id: "step_2",
+        name: "Hipóteses de Teste A/B",
+        agentId: "data-scientist",
+        instruction: "Com base nos pontos de fricção, formule 2 hipóteses de Teste A/B estatisticamente válidas. Defina a métrica primária e o tempo estimado de teste."
+      },
+      {
+        id: "step_3",
+        name: "Copy Otimizada (Variante B)",
+        agentId: "copywriter",
+        frameworkId: "lift",
+        instruction: "Escreva a nova copy (Variante B) para o principal ponto de fricção encontrado, utilizando o Modelo LIFT para aumentar a clareza e urgência."
+      }
+    ]
+  }
+];
 
 export const CATEGORY_COLORS: Record<SkillCategory, string> = {
   [SkillCategory.CRO]: "bg-emerald-500",

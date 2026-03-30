@@ -48,6 +48,22 @@ export interface Company {
   context: string;
 }
 
+export interface WorkflowStep {
+  id: string;
+  name: string;
+  agentId: string;
+  frameworkId?: string;
+  instruction: string;
+}
+
+export interface Workflow {
+  id: string;
+  name: string;
+  description: string;
+  initialPrompt: string;
+  steps: WorkflowStep[];
+}
+
 export interface Message {
   role: "user" | "ai";
   content: string;

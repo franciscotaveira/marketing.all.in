@@ -78,7 +78,13 @@ export async function sendMessageToAgent(
   });
 
   if (!response.ok) {
-    throw new Error(`Chat error: ${response.statusText}`);
+    let errorData;
+    try {
+      errorData = await response.json();
+    } catch (e) {
+      errorData = { message: response.statusText };
+    }
+    throw new Error(`Chat error: ${JSON.stringify(errorData)}`);
   }
 
   const data = await response.json();
