@@ -1,12 +1,7 @@
-import { GoogleGenAI } from "@google/genai";
-
-const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY || "" });
+import { gemini } from "./gemini";
 
 export async function generateEmbedding(text: string): Promise<number[]> {
-  const result = await ai.models.embedContent({
-    model: 'gemini-embedding-2-preview',
-    contents: text,
-  });
+  const result = await gemini.embedContent(text);
 
   if (!result.embeddings || result.embeddings.length === 0) {
     throw new Error("Failed to generate embedding");

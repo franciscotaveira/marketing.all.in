@@ -53,7 +53,7 @@ export const CustomAgentModal: React.FC<CustomAgentModalProps> = ({ onClose, onS
       <div className="flex-1 overflow-y-auto p-6 space-y-6 custom-scrollbar">
         <div className="grid grid-cols-2 gap-6">
           <div className="space-y-2">
-            <label className="text-[10px] font-bold uppercase tracking-widest text-white/50 flex items-center gap-2">
+            <label className="text-xs font-bold uppercase tracking-widest text-white/50 flex items-center gap-2">
               <Bot className="w-3 h-3" />
               Nome do Agente
             </label>
@@ -67,7 +67,7 @@ export const CustomAgentModal: React.FC<CustomAgentModalProps> = ({ onClose, onS
           </div>
 
           <div className="space-y-2">
-            <label className="text-[10px] font-bold uppercase tracking-widest text-white/50 flex items-center gap-2">
+            <label className="text-xs font-bold uppercase tracking-widest text-white/50 flex items-center gap-2">
               <Target className="w-3 h-3" />
               Categoria
             </label>
@@ -84,7 +84,7 @@ export const CustomAgentModal: React.FC<CustomAgentModalProps> = ({ onClose, onS
         </div>
 
         <div className="space-y-2">
-          <label className="text-[10px] font-bold uppercase tracking-widest text-white/50 flex items-center gap-2">
+          <label className="text-xs font-bold uppercase tracking-widest text-white/50 flex items-center gap-2">
             <Brain className="w-3 h-3" />
             Persona (Estilo & Foco)
           </label>
@@ -98,7 +98,7 @@ export const CustomAgentModal: React.FC<CustomAgentModalProps> = ({ onClose, onS
         </div>
 
         <div className="space-y-2">
-          <label className="text-[10px] font-bold uppercase tracking-widest text-white/50 flex items-center gap-2">
+          <label className="text-xs font-bold uppercase tracking-widest text-white/50 flex items-center gap-2">
             <FileText className="w-3 h-3" />
             Descrição Curta
           </label>
@@ -112,7 +112,7 @@ export const CustomAgentModal: React.FC<CustomAgentModalProps> = ({ onClose, onS
         </div>
 
         <div className="space-y-2">
-          <label className="text-[10px] font-bold uppercase tracking-widest text-white/50 flex items-center gap-2">
+          <label className="text-xs font-bold uppercase tracking-widest text-white/50 flex items-center gap-2">
             <Brain className="w-3 h-3" />
             System Prompt (Instruções do Agente)
           </label>

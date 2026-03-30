@@ -319,7 +319,7 @@ ${selectedMemory.content}`;
                 Cérebro Sináptico: {agent?.name || "Global"}
                 {isSyncing && <Activity className="w-4 h-4 text-blue-400 animate-pulse" />}
               </h2>
-              <p className="text-[10px] uppercase tracking-widest text-blue-400 font-mono">
+              <p className="text-xs uppercase tracking-widest text-blue-400 font-mono">
                 Sincronizado com Obsidian & Firebase v2.1
               </p>
             </div>
@@ -332,7 +332,7 @@ ${selectedMemory.content}`;
         <div className="flex items-center gap-2 w-full md:w-auto overflow-x-auto custom-scrollbar pb-2 md:pb-0">
           <button 
             onClick={() => setIsNewNoteOpen(true)}
-            className="md:hidden px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-md text-[10px] font-bold uppercase flex items-center gap-2 shrink-0"
+            className="md:hidden px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-md text-xs font-bold uppercase flex items-center gap-2 shrink-0"
           >
             <Plus className="w-3 h-3" /> Nova Memória
           </button>
@@ -340,7 +340,7 @@ ${selectedMemory.content}`;
             <button 
               onClick={() => setView("graph")}
               className={cn(
-                "px-3 py-1.5 rounded-md text-[10px] uppercase font-bold transition-all flex items-center gap-2",
+                "px-3 py-1.5 rounded-md text-xs uppercase font-bold transition-all flex items-center gap-2",
                 view === "graph" ? "bg-blue-600 text-white" : "text-white/50 hover:text-white"
               )}
             >
@@ -349,7 +349,7 @@ ${selectedMemory.content}`;
             <button 
               onClick={() => setView("vault")}
               className={cn(
-                "px-3 py-1.5 rounded-md text-[10px] uppercase font-bold transition-all flex items-center gap-2",
+                "px-3 py-1.5 rounded-md text-xs uppercase font-bold transition-all flex items-center gap-2",
                 view === "vault" ? "bg-blue-600 text-white" : "text-white/50 hover:text-white"
               )}
             >
@@ -358,7 +358,7 @@ ${selectedMemory.content}`;
             <button 
               onClick={() => setView("neural")}
               className={cn(
-                "px-3 py-1.5 rounded-md text-[10px] uppercase font-bold transition-all flex items-center gap-2",
+                "px-3 py-1.5 rounded-md text-xs uppercase font-bold transition-all flex items-center gap-2",
                 view === "neural" ? "bg-blue-600 text-white" : "text-white/50 hover:text-white"
               )}
             >
@@ -367,7 +367,7 @@ ${selectedMemory.content}`;
             <button 
               onClick={() => setView("skills")}
               className={cn(
-                "px-3 py-1.5 rounded-md text-[10px] uppercase font-bold transition-all flex items-center gap-2",
+                "px-3 py-1.5 rounded-md text-xs uppercase font-bold transition-all flex items-center gap-2",
                 view === "skills" ? "bg-blue-600 text-white" : "text-white/50 hover:text-white"
               )}
             >
@@ -376,7 +376,7 @@ ${selectedMemory.content}`;
             <button 
               onClick={() => setView("analytics")}
               className={cn(
-                "px-3 py-1.5 rounded-md text-[10px] uppercase font-bold transition-all flex items-center gap-2",
+                "px-3 py-1.5 rounded-md text-xs uppercase font-bold transition-all flex items-center gap-2",
                 view === "analytics" ? "bg-blue-600 text-white" : "text-white/50 hover:text-white"
               )}
             >
@@ -421,7 +421,7 @@ ${selectedMemory.content}`;
                     </span>
                   ))}
                 </div>
-                <p className="text-[9px] text-white/40 mt-2 font-mono">
+                <p className="text-xs text-white/40 mt-2 font-mono">
                   {new Date(memory.createdAt).toLocaleDateString()}
                 </p>
               </button>
@@ -451,11 +451,11 @@ ${selectedMemory.content}`;
               <div className="absolute bottom-4 right-4 p-3 bg-black/60 backdrop-blur-md border border-white/10 rounded-lg flex gap-2">
                 <button 
                   onClick={analyzePatterns}
-                  className="px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded text-[10px] font-bold uppercase"
+                  className="px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded text-xs font-bold uppercase"
                 >
                   Analisar Padrões
                 </button>
-                <div className="flex items-center gap-4 text-[10px] uppercase font-mono tracking-widest text-white/60">
+                <div className="flex items-center gap-4 text-xs uppercase font-mono tracking-widest text-white/60">
                   <div className="flex items-center gap-2">
                     <div className="w-2 h-2 rounded-full bg-blue-500" /> Agente
                   </div>
@@ -495,7 +495,7 @@ ${selectedMemory.content}`;
                     onChange={e => setVaultFilter(e.target.value)}
                   />
                   <select 
-                    className="bg-transparent text-[10px] text-white/50 uppercase font-bold focus:outline-none"
+                    className="bg-transparent text-xs text-white/50 uppercase font-bold focus:outline-none"
                     value={vaultSort}
                     onChange={e => setVaultSort(e.target.value as "date" | "roi")}
                   >
@@ -574,7 +574,7 @@ ${selectedMemory.content}`;
                       />
                     </div>
                     <div className="space-y-1">
-                      <p className="text-[10px] uppercase tracking-[0.3em] font-mono text-blue-400">Carga de Processamento</p>
+                      <p className="text-xs uppercase tracking-[0.3em] font-mono text-blue-400">Carga de Processamento</p>
                       <p className="text-4xl font-bold text-white font-mono">{neuralPulse}%</p>
                     </div>
                     <div className="w-48 h-2 bg-white/10 rounded-full overflow-hidden mx-auto">
@@ -583,7 +583,7 @@ ${selectedMemory.content}`;
                         className="h-full bg-blue-500 shadow-[0_0_10px_#3b82f6]"
                       />
                     </div>
-                    <p className="text-[9px] text-white/40 font-mono max-w-[200px] mx-auto">
+                    <p className="text-xs text-white/40 font-mono max-w-[200px] mx-auto">
                       {neuralPulse > 70 ? "Alta atividade: Otimizando conexões..." : "Sistema operando em capacidade nominal."}
                     </p>
                   </div>
@@ -646,7 +646,7 @@ ${selectedMemory.content}`;
                             </div>
                             <button 
                               onClick={() => setEnabledSkills(prev => ({ ...prev, [skill]: !prev[skill] }))}
-                              className={cn("px-2 py-1 rounded text-[10px] font-bold uppercase", enabledSkills[skill] !== false ? "bg-blue-600 text-white" : "bg-white/10 text-white/40")}
+                              className={cn("px-2 py-1 rounded text-xs font-bold uppercase", enabledSkills[skill] !== false ? "bg-blue-600 text-white" : "bg-white/10 text-white/40")}
                             >
                               {enabledSkills[skill] !== false ? "Ativo" : "Inativo"}
                             </button>

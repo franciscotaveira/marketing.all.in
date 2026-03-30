@@ -13,7 +13,7 @@ import {
   Timestamp
 } from 'firebase/firestore';
 import { db, auth, handleFirestoreError, OperationType } from '../firebase';
-import { BrainMemory, Message, BrandProfile, KnowledgeItem, ChatSession } from '../types';
+import { BrainMemory, Message, KnowledgeItem, ChatSession } from '../types';
 import { generateEmbedding, cosineSimilarity } from '../services/embeddingService';
 
 export const firebaseService = {
@@ -195,52 +195,7 @@ export const firebaseService = {
     }
   },
 
-  // Brand Profiles
-  async saveBrandProfile(profile: BrandProfile) {
-    if (!auth.currentUser) return { error: 'User not authenticated' };
-    
-    // Use the provided ID or generate a new one
-    const profileId = profile.id || crypto.randomUUID();
-    const path = `users/${auth.currentUser.uid}/brandProfiles/${profileId}`;
-    
-    try {
-      const cleanProfile = JSON.parse(JSON.stringify({ ...profile, id: profileId }));
-      await setDoc(doc(db, path), cleanProfile);
-      return { data: cleanProfile, error: null };
-    } catch (error) {
-      handleFirestoreError(error, OperationType.WRITE, path);
-      return { data: null, error };
-    }
-  },
 
-  async getBrandProfiles() {
-    if (!auth.currentUser) return { data: [], error: 'User not authenticated' };
-    const path = `users/${auth.currentUser.uid}/brandProfiles`;
-    try {
-      const snapshot = await getDocs(collection(db, path));
-      const profiles = snapshot.docs.map(doc => ({
-        ...doc.data(),
-        id: doc.id
-      })) as BrandProfile[];
-      return { data: profiles, error: null };
-    } catch (error) {
-      handleFirestoreError(error, OperationType.GET, path);
-      return { data: [], error };
-    }
-  },
-
-  async deleteBrandProfile(profileId: string) {
-    if (!auth.currentUser) return { error: 'User not authenticated' };
-    const path = `users/${auth.currentUser.uid}/brandProfiles/${profileId}`;
-    try {
-      const { deleteDoc } = await import('firebase/firestore');
-      await deleteDoc(doc(db, path));
-      return { error: null };
-    } catch (error) {
-      handleFirestoreError(error, OperationType.DELETE, path);
-      return { error };
-    }
-  },
 
   // Knowledge Base
   async saveKnowledge(knowledge: Omit<KnowledgeItem, 'id' | 'createdAt'>) {

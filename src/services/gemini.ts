@@ -20,7 +20,7 @@ export class GeminiService {
     this.ai = new GoogleGenAI({ apiKey });
   }
 
-  async generateText(prompt: string, model: string = MODELS.GENERAL, systemInstruction?: string, tools?: any[]) {
+  async generateText(prompt: string | any[], model: string = MODELS.GENERAL, systemInstruction?: string, tools?: any[]) {
     const response = await this.ai.models.generateContent({
       model,
       contents: prompt,
@@ -44,84 +44,13 @@ export class GeminiService {
     return response;
   }
 
-  async generateImage(prompt: string, config: { aspectRatio?: string; imageSize?: string } = {}) {
-    const response = await this.ai.models.generateContent({
-      model: MODELS.IMAGE_GEN,
-      contents: { parts: [{ text: prompt }] },
-      config: {
-        imageConfig: {
-          aspectRatio: config.aspectRatio || "1:1",
-          imageSize: config.imageSize || "1K",
-        },
-      },
+
+  async embedContent(text: string) {
+    const result = await this.ai.models.embedContent({
+      model: 'gemini-embedding-2-preview',
+      contents: text,
     });
-    
-    for (const part of response.candidates?.[0]?.content?.parts || []) {
-      if (part.inlineData) {
-        return `data:image/png;base64,${part.inlineData.data}`;
-      }
-    }
-    return null;
-  }
-
-  async generateVideo(prompt: string, imageBase64?: string, aspectRatio: "16:9" | "9:16" = "16:9") {
-    let operation = await this.ai.models.generateVideos({
-      model: MODELS.VIDEO_GEN,
-      prompt,
-      image: imageBase64 ? {
-        imageBytes: imageBase64.split(',')[1],
-        mimeType: imageBase64.split(',')[0].split(':')[1].split(';')[0],
-      } : undefined,
-      config: {
-        numberOfVideos: 1,
-        resolution: '720p',
-        aspectRatio,
-      }
-    });
-
-    while (!operation.done) {
-      await new Promise(resolve => setTimeout(resolve, 5000));
-      operation = await this.ai.operations.getVideosOperation({ operation });
-    }
-
-    return operation.response?.generatedVideos?.[0]?.video?.uri;
-  }
-
-  async generateSpeech(text: string, voiceName: 'Puck' | 'Charon' | 'Kore' | 'Fenrir' | 'Zephyr' = 'Zephyr') {
-    const response = await this.ai.models.generateContent({
-      model: MODELS.TTS,
-      contents: [{ parts: [{ text }] }],
-      config: {
-        responseModalities: [Modality.AUDIO],
-        speechConfig: {
-          voiceConfig: {
-            prebuiltVoiceConfig: { voiceName },
-          },
-        },
-      },
-    });
-
-    const base64Audio = response.candidates?.[0]?.content?.parts?.[0]?.inlineData?.data;
-    if (base64Audio) {
-      return `data:audio/mp3;base64,${base64Audio}`;
-    }
-    return null;
-  }
-
-  async transcribeAudio(audioBase64: string) {
-    const response = await this.ai.models.generateContent({
-      model: MODELS.GENERAL,
-      contents: [
-        { text: "Transcreva este áudio exatamente como falado." },
-        {
-          inlineData: {
-            data: audioBase64.split(',')[1],
-            mimeType: audioBase64.split(',')[0].split(':')[1].split(';')[0],
-          }
-        }
-      ],
-    });
-    return response.text;
+    return result;
   }
 }
 

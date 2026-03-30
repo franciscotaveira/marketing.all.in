@@ -4,7 +4,7 @@
  */
 
 import { useState, useRef, useEffect } from "react";
-import { GoogleGenAI } from "@google/genai";
+
 import { motion, AnimatePresence } from "motion/react";
 import { orchestrateRequest } from "./services/orchestrator";
 import { 
@@ -65,11 +65,13 @@ import {
   Terminal,
   Trophy,
   HelpCircle,
+  CheckCircle2,
+  Building2,
 } from "lucide-react";
 import ReactMarkdown from "react-markdown";
-import { ArtifactRenderer } from "./components/MarketingVisuals";
+
 import { AgentBrain } from "./components/AgentBrain";
-import { AgentControlPanel } from "./components/AgentControlPanel";
+
 import { ErrorBoundary } from "./components/ErrorBoundary";
 import { ChatMessage } from "./components/ChatMessage";
 import { CustomAgentModal } from "./components/CustomAgentModal";
@@ -77,7 +79,7 @@ import { InputBar } from "./components/InputBar";
 import { AgentControls } from "./components/AgentControls";
 import { ChatHistory } from "./components/ChatHistory";
 import { MARKETING_SKILLS, MARKETING_FRAMEWORKS, CATEGORY_COLORS, CATEGORY_TEXT_COLORS, CATEGORY_BG_LIGHT_COLORS } from "./constants";
-import { MarketingSkill, SkillCategory, BrandProfile, Message, SkillTier, Artifact, BrainMemory } from "./types";
+import { MarketingSkill, SkillCategory, Message, SkillTier, Artifact, BrainMemory, Company } from "./types";
 import { cn } from "./lib/utils";
 import { firebaseService } from "./lib/firebaseService";
 import { auth, googleProvider, signInWithPopup, signOut, onAuthStateChanged, User as FirebaseUser } from "./firebase";
@@ -95,31 +97,38 @@ export default function App() {
   const [isCustomAgentModalOpen, setIsCustomAgentModalOpen] = useState(false);
   const [expandedCategory, setExpandedCategory] = useState<SkillCategory | null>(null);
   const [input, setInput] = useState("");
-  const [isProcessing, setIsProcessing] = useState(false);
+
   const [messages, setMessages] = useState<Message[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [isSidebarOpen, setIsSidebarOpen] = useState(window.innerWidth >= 768);
-  const [activeAgents, setActiveAgents] = useState<{id: string, status: 'idle' | 'thinking' | 'using_tool', tool?: string}[]>([]);
-  const [copiedId, setCopiedId] = useState<string | null>(null);
-  const [isBrandModalOpen, setIsBrandModalOpen] = useState(false);
-  const [selectedFramework, setSelectedFramework] = useState<string | null>(null);
-  const [brandProfiles, setBrandProfiles] = useState<BrandProfile[]>([]);
-  const [activeBrandProfileId, setActiveBrandProfileId] = useState<string | null>(null);
-  const [editingProfile, setEditingProfile] = useState<BrandProfile | null>(null);
 
-  const activeBrandProfile = brandProfiles.find(p => p.id === activeBrandProfileId) || {
-    id: "",
-    name: "",
-    audience: "",
-    tone: "",
-    messaging: "",
-    productDetails: "",
-    competitors: "",
-    dataSources: ""
-  };
+  const [copiedId, setCopiedId] = useState<string | null>(null);
+  const [selectedFramework, setSelectedFramework] = useState<string | null>(null);
   const [selectedImages, setSelectedImages] = useState<string[]>([]);
   const [useGrounding, setUseGrounding] = useState(false);
-  const [activeTooltip, setActiveTooltip] = useState<string | null>(null);
+  const [useSwarmMode, setUseSwarmMode] = useState(false);
+  const [companies, setCompanies] = useState<Company[]>(() => {
+    const saved = localStorage.getItem('companies');
+    return saved ? JSON.parse(saved) : [];
+  });
+  const [activeCompanyId, setActiveCompanyId] = useState<string | null>(() => {
+    return localStorage.getItem('active_company_id') || null;
+  });
+  const [editingCompanyId, setEditingCompanyId] = useState<string | null>(null);
+  const [isBrandContextModalOpen, setIsBrandContextModalOpen] = useState(false);
+
+  useEffect(() => {
+    localStorage.setItem('companies', JSON.stringify(companies));
+  }, [companies]);
+
+  useEffect(() => {
+    if (activeCompanyId) {
+      localStorage.setItem('active_company_id', activeCompanyId);
+    } else {
+      localStorage.removeItem('active_company_id');
+    }
+  }, [activeCompanyId]);
+
   
   // Agent Logs State
   const [agentLogs, setAgentLogs] = useState<{id: string, timestamp: Date, agentId: string, message: string, type: 'info' | 'action' | 'success' | 'error'}[]>([]);
@@ -137,10 +146,6 @@ export default function App() {
     setIsWorkspaceOpen(true);
   };
 
-  const [isGeneratingVideo, setIsGeneratingVideo] = useState(false);
-  const [isTranscribing, setIsTranscribing] = useState(false);
-  const [isSpeaking, setIsSpeaking] = useState(false);
-  const [imageConfig, setImageConfig] = useState({ aspectRatio: "1:1", size: "1K" });
   const [isBrainOpen, setIsBrainOpen] = useState(false);
   const [isChatHistoryOpen, setIsChatHistoryOpen] = useState(false);
   const [currentChatId, setCurrentChatId] = useState<string | null>(null);
@@ -173,14 +178,6 @@ export default function App() {
   useEffect(() => {
     if (user) {
       const loadData = async () => {
-        const profiles = await firebaseService.getBrandProfiles();
-        if (profiles.data) {
-          setBrandProfiles(profiles.data);
-          if (profiles.data.length > 0) {
-            setActiveBrandProfileId(profiles.data[0].id || null);
-          }
-        }
-        
         // Load messages for the current chat (using a default chat ID for now)
         if (currentChatId) {
           const chatMessages = await firebaseService.getMessages(currentChatId);
@@ -203,8 +200,6 @@ export default function App() {
     try {
       await signOut(auth);
       setMessages([]);
-      setBrandProfiles([]);
-      setActiveBrandProfileId(null);
     } catch (error) {
       console.error("Logout Error:", error);
     }
@@ -270,113 +265,10 @@ export default function App() {
     setSelectedImages(prev => prev.filter((_, i) => i !== index));
   };
 
-  const [isGeneratingImage, setIsGeneratingImage] = useState(false);
-
-  const handleGenerateImage = async () => {
-    if (!input.trim() || isLoading) return;
-    setIsLoading(true);
-    setIsGeneratingImage(true);
-    try {
-      const imageUrl = await gemini.generateImage(input, { 
-        aspectRatio: imageConfig.aspectRatio, 
-        imageSize: imageConfig.size 
-      });
-      
-      if (imageUrl) {
-        const artifact: Artifact = {
-          id: Math.random().toString(36).substr(2, 9),
-          type: "visual",
-          title: `Imagem: ${input.slice(0, 20)}...`,
-          content: imageUrl,
-          agentName: "Diretor Criativo",
-          metadata: { imageUrl }
-        };
-        setActiveArtifact(artifact);
-        setIsWorkspaceOpen(true);
-        const aiMsg: Omit<Message, 'createdAt'> = { 
-          role: "ai", 
-          content: "Aqui está o criativo visual que desenvolvi para sua campanha.",
-          agentName: "Diretor Criativo",
-          agentTier: SkillTier.CREATIVE,
-          artifacts: [artifact]
-        };
-        setMessages(prev => [...prev, aiMsg as Message]);
-        firebaseService.saveMessage("default", aiMsg);
-      }
-    } catch (error) {
-      console.error("Image Gen Error:", error);
-      setMessages(prev => [...prev, { role: "ai", content: "Erro ao gerar imagem. Verifique se você tem uma chave de API válida para o modelo de imagem." }]);
-    } finally {
-      setIsLoading(false);
-      setIsGeneratingImage(false);
-      setInput("");
-    }
-  };
-
-  const handleGenerateVideo = async () => {
-    if (!input.trim() && selectedImages.length === 0 || isLoading) return;
-    setIsLoading(true);
-    setIsGeneratingVideo(true);
-    try {
-      const videoUrl = await gemini.generateVideo(input, selectedImages[0]);
-      if (videoUrl) {
-        const artifact: Artifact = {
-          id: Math.random().toString(36).substr(2, 9),
-          type: "visual",
-          title: `Vídeo: ${input.slice(0, 20)}...`,
-          content: "Vídeo gerado com Veo 3.1",
-          agentName: "Produtor de Mídia",
-          metadata: { videoUrl }
-        };
-        setActiveArtifact(artifact);
-        setIsWorkspaceOpen(true);
-        const aiMsg: Omit<Message, 'createdAt'> = { 
-          role: "ai", 
-          content: "Aqui está o vídeo generativo que criei para sua estratégia.",
-          agentName: "Produtor de Mídia",
-          agentTier: SkillTier.CREATIVE,
-          artifacts: [artifact]
-        };
-        setMessages(prev => [...prev, aiMsg as Message]);
-        firebaseService.saveMessage("default", aiMsg);
-      }
-    } catch (error) {
-      console.error("Video Gen Error:", error);
-      setMessages(prev => [...prev, { role: "ai", content: "Erro ao gerar vídeo. Certifique-se de que o modelo Veo está disponível e configurado." }]);
-    } finally {
-      setIsLoading(false);
-      setIsGeneratingVideo(false);
-      setInput("");
-    }
-  };
-
-  const handleTTS = async (text: string) => {
-    setIsSpeaking(true);
-    try {
-      const audioUrl = await gemini.generateSpeech(text);
-      if (audioUrl) {
-        const artifact: Artifact = {
-          id: Math.random().toString(36).substr(2, 9),
-          type: "visual",
-          title: "Narração de IA",
-          content: "Áudio gerado com Gemini 2.5 TTS",
-          agentName: "Especialista em Humanização",
-          metadata: { audioUrl }
-        };
-        setActiveArtifact(artifact);
-        setIsWorkspaceOpen(true);
-      }
-    } catch (error) {
-      console.error("TTS Error:", error);
-    } finally {
-      setIsSpeaking(false);
-    }
-  };
-
   const COMMANDS = [
-    { id: 'imagem', label: 'Gerar Imagem', icon: ImageIcon, action: () => { handleGenerateImage(); setInput(""); setShowCommandMenu(false); } },
-    { id: 'video', label: 'Gerar Vídeo', icon: Video, action: () => { handleGenerateVideo(); setInput(""); setShowCommandMenu(false); } },
     { id: 'pesquisa', label: 'Alternar Pesquisa', icon: Globe, action: () => { setUseGrounding(!useGrounding); setInput(""); setShowCommandMenu(false); } },
+    { id: 'swarm', label: 'Alternar Modo Swarm', icon: Users, action: () => { setUseSwarmMode(!useSwarmMode); setInput(""); setShowCommandMenu(false); } },
+    { id: 'marca', label: 'Gerenciar Empresas', icon: Building2, action: () => { setIsBrandContextModalOpen(true); setInput(""); setShowCommandMenu(false); } },
     { id: 'limpar', label: 'Limpar Chat', icon: Trash2, action: () => { setMessages([]); setInput(""); setShowCommandMenu(false); } },
     { id: 'workspace', label: 'Abrir Workspace', icon: LayoutDashboard, action: () => { setIsWorkspaceOpen(true); setInput(""); setShowCommandMenu(false); } },
   ];
@@ -434,10 +326,6 @@ export default function App() {
     setIsLoading(true);
 
     try {
-      const brandContext = activeBrandProfile.name 
-        ? `\n\nPerfil da Marca:\n- Nome: ${activeBrandProfile.name}\n- Público: ${activeBrandProfile.audience}\n- Tom: ${activeBrandProfile.tone}\n- Mensagem: ${activeBrandProfile.messaging}\n- Detalhes: ${activeBrandProfile.productDetails}\n- Concorrentes: ${activeBrandProfile.competitors}${activeBrandProfile.dataSources ? `\n\nFONTES DE DADOS E INTEGRAÇÕES:\n${activeBrandProfile.dataSources}` : ''}`
-        : "";
-
       const skillContext = selectedSkill 
         ? `\n\nContexto da Habilidade (${selectedSkill.name}):\n${selectedSkill.prompt}`
         : "\n\nVocê é um Engenheiro de Automação multifacetado e experiente. Responda de forma abrangente, estratégica e prática, integrando conhecimentos de diversas áreas de automação e marketing conforme necessário.";
@@ -462,7 +350,7 @@ export default function App() {
         console.warn("Brain sync error:", e);
       }
 
-      const prompt = `Solicitação do Usuário: ${userMessage}${skillContext}${brandContext}${frameworkContext}${brainContext}`;
+      const prompt = `Solicitação do Usuário: ${userMessage}${skillContext}${frameworkContext}${brainContext}`;
 
       const contents: any[] = [];
       
@@ -481,8 +369,13 @@ export default function App() {
         });
       });
 
+      const activeCompany = companies.find(c => c.id === activeCompanyId);
+      const brandContextText = activeCompany ? `\n\nCONTEXTO DA MARCA ATIVA (${activeCompany.name}):\n${activeCompany.context}\n\n` : "";
+
       const systemInstruction = `Você é o Engenheiro de Automação de elite. 
       ${selectedSkill ? `Atualmente, você está assumindo a persona de: ${selectedSkill.persona} (${selectedSkill.name}).` : "Você está atuando como Engenheiro de Automação Geral."}
+      
+      ${brandContextText}
       
       SEMPRE que for gerar um plano, copy, roteiro, código ou qualquer material tático/prático, você DEVE extrair isso como um 'Artefato' usando blocos de código com a linguagem 'artifact' no formato exato:
       \`\`\`artifact:tipo:título
@@ -519,25 +412,19 @@ export default function App() {
       const model = selectedSkill?.model || "gemini-3.1-pro-preview";
       
       try {
-        setIsProcessing(true);
+
         const result = await orchestrateRequest(
           prompt,
           selectedSkill?.id || null,
-          false,
           model,
           systemInstruction,
           useGrounding,
-          (id, status, tool) => {
-            setActiveAgents(prev => {
-              const filtered = prev.filter(a => a.id !== id);
-              return [...filtered, { id, status, tool }];
-            });
-          },
+          useSwarmMode,
           addLog,
           currentImages,
           messages
         );
-        setIsProcessing(false);
+
         aiResponse = result.response;
       } catch (error) {
         console.error("Chat error:", error);
@@ -613,37 +500,7 @@ export default function App() {
         });
       }
 
-      // Process visual and video artifacts
-      for (const artifact of artifacts) {
-        if (artifact.type === 'visual' && !artifact.metadata?.imageUrl && !artifact.metadata?.videoUrl) {
-          addLog("system", `Gerando imagem para o artefato: ${artifact.title}...`, "action");
-          try {
-            const imageUrl = await gemini.generateImage(artifact.content, { 
-              aspectRatio: imageConfig.aspectRatio, 
-              imageSize: imageConfig.size 
-            });
-            if (imageUrl) {
-              artifact.metadata = { ...artifact.metadata, imageUrl };
-              artifact.content = imageUrl;
-              addLog("system", `Imagem gerada com sucesso.`, "success");
-            }
-          } catch (err) {
-            addLog("system", `Erro ao gerar imagem: ${err}`, "error");
-          }
-        } else if (artifact.type === 'video' && !artifact.metadata?.videoUrl) {
-          addLog("system", `Gerando vídeo para o artefato: ${artifact.title}...`, "action");
-          try {
-            const videoUrl = await gemini.generateVideo(artifact.content, currentImages[0]);
-            if (videoUrl) {
-              artifact.metadata = { ...artifact.metadata, videoUrl };
-              artifact.content = "Vídeo gerado com sucesso.";
-              addLog("system", `Vídeo gerado com sucesso.`, "success");
-            }
-          } catch (err) {
-            addLog("system", `Erro ao gerar vídeo: ${err}`, "error");
-          }
-        }
-      }
+
 
       if (artifacts.length > 0) {
         setActiveArtifact(artifacts[0]);
@@ -693,33 +550,7 @@ export default function App() {
     }
   };
 
-  const handleSaveBrandProfile = async () => {
-    if (!editingProfile) return;
-    
-    const result = await firebaseService.saveBrandProfile(editingProfile);
-    if (result.data) {
-      const savedProfile = result.data;
-      setBrandProfiles(prev => {
-        const exists = prev.find(p => p.id === savedProfile.id);
-        if (exists) {
-          return prev.map(p => p.id === savedProfile.id ? savedProfile : p);
-        }
-        return [...prev, savedProfile];
-      });
-      setActiveBrandProfileId(savedProfile.id || null);
-      setEditingProfile(null);
-    }
-  };
 
-  const handleDeleteBrandProfile = async (id: string) => {
-    const result = await firebaseService.deleteBrandProfile(id);
-    if (!result.error) {
-      setBrandProfiles(prev => prev.filter(p => p.id !== id));
-      if (activeBrandProfileId === id) {
-        setActiveBrandProfileId(null);
-      }
-    }
-  };
 
   if (!isAuthReady) {
     return (
@@ -774,7 +605,6 @@ export default function App() {
     <ErrorBoundary>
       <div 
         className="flex h-screen bg-[#E4E3E0] text-[#141414] font-sans overflow-hidden"
-        onClick={() => setActiveTooltip(null)}
       >
       {/* Sidebar */}
       {/* Overlay for mobile when sidebar is open */}
@@ -813,40 +643,16 @@ export default function App() {
           </button>
         </div>
         <div className="flex-1 overflow-y-auto custom-scrollbar p-4 space-y-8">
-          <AgentControlPanel activeAgents={activeAgents} />
+
           {/* Global Toggles */}
           <div className="space-y-3">
-            <h2 className="text-[10px] uppercase tracking-[0.2em] font-black text-white/30 px-2">Configurações</h2>
+            <h2 className="text-xs uppercase tracking-[0.2em] font-black text-white/30 px-2">Configurações</h2>
             <div className="space-y-1.5">
-              <div className="space-y-2 p-3 bg-white/5 rounded-xl border border-white/5">
-                <p className="text-[8px] font-black uppercase tracking-widest text-white/30 mb-2">Configurações de Imagem</p>
-                <div className="grid grid-cols-2 gap-2">
-                  <select 
-                    value={imageConfig.aspectRatio}
-                    onChange={(e) => setImageConfig(prev => ({ ...prev, aspectRatio: e.target.value }))}
-                    className="bg-black/40 border border-white/10 rounded-lg p-1.5 text-[9px] text-white/60 outline-none"
-                  >
-                    <option value="1:1">1:1 Quadrado</option>
-                    <option value="16:9">16:9 Widescreen</option>
-                    <option value="9:16">9:16 Retrato</option>
-                    <option value="4:3">4:3 Foto</option>
-                    <option value="21:9">21:9 Ultra</option>
-                  </select>
-                  <select 
-                    value={imageConfig.size}
-                    onChange={(e) => setImageConfig(prev => ({ ...prev, size: e.target.value }))}
-                    className="bg-black/40 border border-white/10 rounded-lg p-1.5 text-[9px] text-white/60 outline-none"
-                  >
-                    <option value="1K">Qualidade 1K</option>
-                    <option value="2K">Qualidade 2K</option>
-                    <option value="4K">Qualidade 4K</option>
-                  </select>
-                </div>
-              </div>
+
 
               <button 
                 onClick={() => setIsBrainOpen(true)}
-                className="w-full p-3.5 bg-blue-600/10 border border-blue-500/20 rounded-xl text-[10px] font-black uppercase tracking-widest text-blue-400 hover:bg-blue-600/20 transition-all flex items-center justify-between group"
+                className="w-full p-3.5 bg-blue-600/10 border border-blue-500/20 rounded-xl text-xs font-black uppercase tracking-widest text-blue-400 hover:bg-blue-600/20 transition-all flex items-center justify-between group"
               >
                 <div className="flex items-center gap-2.5">
                   <Brain className="w-4 h-4" />
@@ -859,23 +665,23 @@ export default function App() {
 
           {/* Framework Selector */}
           <div className="space-y-3">
-            <h2 className="text-[10px] uppercase tracking-[0.2em] font-black text-white/30 px-2">Framework</h2>
+            <h2 className="text-xs uppercase tracking-[0.2em] font-black text-white/50 px-2">Framework</h2>
             <div className="grid grid-cols-1 gap-1.5">
               {MARKETING_FRAMEWORKS.map((framework) => (
                 <button 
                   key={framework.id}
                   onClick={() => setSelectedFramework(selectedFramework === framework.id ? null : framework.id)}
                   className={cn(
-                    "p-3 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all text-left flex items-center justify-between group border",
+                    "p-3 rounded-xl text-xs font-black uppercase tracking-widest transition-all text-left flex items-center justify-between group border",
                     selectedFramework === framework.id 
                       ? "bg-blue-600 border-blue-500 text-white shadow-[0_0_15px_rgba(37,99,235,0.3)]" 
-                      : "bg-white/5 border-white/5 text-white/40 hover:bg-white/10"
+                      : "bg-white/10 border-white/10 text-white/70 hover:bg-white/20 hover:text-white"
                   )}
                 >
                   <div className="flex flex-col min-w-0">
                     <span className="truncate">{framework.name}</span>
                     <span className={cn(
-                      "text-[8px] opacity-50 truncate font-medium mt-0.5",
+                      "text-xs opacity-70 truncate font-medium mt-0.5",
                       selectedFramework === framework.id ? "text-blue-100" : ""
                     )}>{framework.description}</span>
                   </div>
@@ -887,10 +693,10 @@ export default function App() {
 
           {/* Skill Categories */}
           <div className="flex items-center justify-between px-2 mb-3 mt-6">
-            <h2 className="text-[10px] uppercase tracking-[0.2em] font-black text-white/30">Agentes Especialistas</h2>
+            <h2 className="text-xs uppercase tracking-[0.2em] font-black text-white/50">Agentes Especialistas</h2>
             <button 
               onClick={() => setIsCustomAgentModalOpen(true)}
-              className="p-1 hover:bg-white/10 rounded text-white/40 hover:text-white transition-colors"
+              className="p-1 hover:bg-white/20 rounded text-white/70 hover:text-white transition-colors"
               title="Criar Agente Personalizado"
             >
               <Plus className="w-3.5 h-3.5" />
@@ -908,14 +714,14 @@ export default function App() {
                 <button
                   onClick={() => setExpandedCategory(isExpanded ? null : category)}
                   className={cn(
-                    "w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-[10px] font-bold uppercase tracking-[0.15em] transition-all",
-                    isExpanded ? "bg-white/10 text-white" : "text-white/50 hover:text-white hover:bg-white/5"
+                    "w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-xs font-bold uppercase tracking-[0.15em] transition-all",
+                    isExpanded ? "bg-white/20 text-white" : "text-white/70 hover:text-white hover:bg-white/10"
                   )}
                 >
                   <div className="flex items-center gap-3">
                     <div className={cn(
                       "w-6 h-6 rounded-lg flex items-center justify-center transition-colors", 
-                      isExpanded ? CATEGORY_BG_LIGHT_COLORS[category] : "bg-white/5",
+                      isExpanded ? CATEGORY_BG_LIGHT_COLORS[category] : "bg-white/10",
                       CATEGORY_TEXT_COLORS[category]
                     )}>
                       {getCategoryIcon(category)}
@@ -943,20 +749,20 @@ export default function App() {
                           className={cn(
                             "w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all group relative overflow-hidden text-sm",
                             selectedSkill?.id === skill.id 
-                              ? "bg-white/10 text-white shadow-[0_2px_10px_rgba(255,255,255,0.05)]" 
-                              : "hover:bg-white/5 text-white/70 hover:text-white"
+                              ? "bg-white/20 text-white shadow-sm" 
+                              : "hover:bg-white/10 text-white/80 hover:text-white"
                           )}
                         >
                           <div className={cn(
                             "w-7 h-7 rounded-md flex items-center justify-center transition-all",
-                            selectedSkill?.id === skill.id ? CATEGORY_BG_LIGHT_COLORS[category] : "bg-white/5 group-hover:bg-white/10",
+                            selectedSkill?.id === skill.id ? CATEGORY_BG_LIGHT_COLORS[category] : "bg-white/10 group-hover:bg-white/20",
                             CATEGORY_TEXT_COLORS[category]
                           )}>
                             {getCategoryIcon(skill.category)}
                           </div>
                           <div className="flex flex-col items-start min-w-0">
                             <span className="font-medium truncate w-full">{skill.name}</span>
-                            <span className="text-[10px] opacity-60 font-medium truncate w-full uppercase tracking-tight">{skill.persona}</span>
+                            <span className="text-xs opacity-80 font-medium truncate w-full uppercase tracking-tight">{skill.persona}</span>
                           </div>
                           {selectedSkill?.id === skill.id && (
                             <motion.div 
@@ -974,32 +780,23 @@ export default function App() {
           })}
         </div>
 
-        <div className="p-4 border-t border-white/5 space-y-3 bg-black/40 backdrop-blur-xl">
-          <button 
-            onClick={() => setIsBrandModalOpen(true)}
-            className="w-full flex items-center gap-3 px-4 py-3.5 rounded-xl bg-white/5 hover:bg-white/10 transition-all border border-white/5 group shadow-inner"
-          >
-            <Settings className="w-4 h-4 text-white/40 group-hover:text-white transition-colors group-hover:rotate-90 duration-500" />
-            <span className="text-[11px] font-black uppercase tracking-[0.1em]">Configurar Marca</span>
-            {activeBrandProfile.name && <div className="ml-auto w-1.5 h-1.5 bg-blue-500 rounded-full animate-pulse" />}
-          </button>
-
-          <div className="flex items-center gap-3 p-3 bg-white/5 rounded-2xl border border-white/5">
-            <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center font-black text-white text-[10px] shadow-lg">
+        <div className="p-4 border-t border-white/10 space-y-3 bg-black/60 backdrop-blur-xl">
+          <div className="flex items-center gap-3 p-3 bg-white/10 rounded-2xl border border-white/10">
+            <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center font-black text-white text-xs shadow-lg">
               {user?.displayName?.[0] || user?.email?.[0] || "U"}
             </div>
             <div className="flex flex-col overflow-hidden">
-              <span className="text-[10px] font-black text-white truncate">{user?.displayName || "Usuário"}</span>
-              <span className="text-[8px] font-bold text-white/30 truncate">{user?.email}</span>
+              <span className="text-xs font-black text-white truncate">{user?.displayName || "Usuário"}</span>
+              <span className="text-xs font-bold text-white/50 truncate">{user?.email}</span>
             </div>
             <div className="relative group/btn ml-auto">
               <button 
                 onClick={handleLogout}
-                className="p-2 hover:bg-white/10 rounded-lg transition-colors text-white/40 hover:text-rose-500"
+                className="p-2 hover:bg-white/20 rounded-lg transition-colors text-white/60 hover:text-rose-400"
               >
                 <LogOut className="w-3.5 h-3.5" />
               </button>
-              <div className="absolute bottom-full right-0 mb-2 hidden group-hover/btn:block w-32 p-2 bg-black text-white text-[10px] rounded-xl shadow-xl z-50 pointer-events-none leading-relaxed text-center border border-white/10">
+              <div className="absolute bottom-full right-0 mb-2 hidden group-hover/btn:block w-32 p-2 bg-black text-white text-xs rounded-xl shadow-xl z-50 pointer-events-none leading-relaxed text-center border border-white/10">
                 <strong className="block text-rose-400 mb-1">Sair</strong>
                 Encerrar a sessão atual.
               </div>
@@ -1007,7 +804,7 @@ export default function App() {
           </div>
 
           <div className="flex items-center justify-between px-2 py-1">
-            <span className="text-[9px] font-black text-white/20 uppercase tracking-widest">v2.1.0-PRO-MAX</span>
+            <span className="text-xs font-black text-white/30 uppercase tracking-widest">v2.1.0-PRO-MAX</span>
             <div className="flex gap-1.5">
               <div className="w-1 h-1 bg-green-500 rounded-full animate-pulse shadow-[0_0_5px_rgba(34,197,94,0.8)]" />
               <div className="w-1 h-1 bg-green-500 rounded-full animate-pulse delay-75 shadow-[0_0_5px_rgba(34,197,94,0.8)]" />
@@ -1020,24 +817,24 @@ export default function App() {
       {/* Main Content */}
       <main className="flex-1 flex flex-col relative min-w-0">
         {/* Header */}
-        <header className="min-h-[4rem] py-3 bg-white/70 backdrop-blur-2xl border-b border-black/5 flex flex-col md:flex-row items-start md:items-center justify-between px-4 md:px-6 sticky top-0 z-30 shadow-[0_1px_3px_rgba(0,0,0,0.02)] gap-4 md:gap-0">
+        <header className="min-h-[4rem] py-3 bg-white/90 backdrop-blur-2xl border-b border-gray-200 flex flex-col md:flex-row items-start md:items-center justify-between px-4 md:px-6 sticky top-0 z-30 shadow-sm gap-4 md:gap-0">
           <div className="flex items-center gap-2 md:gap-4 w-full md:w-auto">
             {!isSidebarOpen && (
               <button 
                 onClick={() => setIsSidebarOpen(true)}
-                className="p-2 md:p-2.5 hover:bg-black/5 rounded-xl transition-all active:scale-95 group shadow-sm bg-white border border-black/5"
+                className="p-2 md:p-2.5 hover:bg-gray-100 rounded-xl transition-all active:scale-95 group shadow-sm bg-white border border-gray-300"
               >
-                <Menu className="w-5 h-5 text-black/60 group-hover:text-black" />
+                <Menu className="w-5 h-5 text-gray-700 group-hover:text-black" />
               </button>
             )}
             <button
               onClick={() => setIsChatHistoryOpen(true)}
-              className="p-2 md:p-2.5 hover:bg-black/5 rounded-xl transition-all active:scale-95 group shadow-sm bg-white border border-black/5 hidden md:block"
+              className="p-2 md:p-2.5 hover:bg-gray-100 rounded-xl transition-all active:scale-95 group shadow-sm bg-white border border-gray-300 hidden md:block"
             >
-              <History className="w-5 h-5 text-black/60 group-hover:text-black" />
+              <History className="w-5 h-5 text-gray-700 group-hover:text-black" />
             </button>
             <div className="flex flex-col">
-              <div className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-widest text-black/40 mb-1">
+              <div className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-widest text-gray-500 mb-1">
                 <button 
                   onClick={() => {
                     setSelectedSkill(null);
@@ -1067,13 +864,13 @@ export default function App() {
                 {selectedSkill ? selectedSkill.name : "Inteligência de Marketing"}
                 <button 
                   onClick={() => setMessages([])}
-                  className="text-[8px] font-black uppercase tracking-widest text-black/30 hover:text-red-500 transition-colors ml-4"
+                  className="text-xs font-black uppercase tracking-widest text-gray-400 hover:text-red-500 transition-colors ml-4"
                 >
                   Limpar Conversa
                 </button>
                 <span className="w-1.5 h-1.5 bg-blue-500 rounded-full animate-pulse shadow-[0_0_8px_rgba(59,130,246,0.6)]" />
               </h1>
-              <p className="text-[10px] text-black/40 font-bold uppercase tracking-tighter">
+              <p className="text-xs text-gray-500 font-bold uppercase tracking-tighter">
                 {selectedSkill ? selectedSkill.persona : "Selecione uma habilidade para começar"}
               </p>
             </div>
@@ -1083,11 +880,16 @@ export default function App() {
             selectedSkill={selectedSkill}
             useGrounding={useGrounding}
             setUseGrounding={setUseGrounding}
+            useSwarmMode={useSwarmMode}
+            setUseSwarmMode={setUseSwarmMode}
             setIsBrainOpen={setIsBrainOpen}
             isWorkspaceOpen={isWorkspaceOpen}
             setIsWorkspaceOpen={setIsWorkspaceOpen}
             isTerminalOpen={isTerminalOpen}
             setIsTerminalOpen={setIsTerminalOpen}
+            activeCompanyId={activeCompanyId}
+            companies={companies}
+            setIsBrandContextModalOpen={setIsBrandContextModalOpen}
           />
         </header>
 
@@ -1099,6 +901,153 @@ export default function App() {
               agent={selectedSkill} 
               onClose={() => setIsBrainOpen(false)} 
             />
+          )}
+        </AnimatePresence>
+
+        {/* Brand Context Modal */}
+        <AnimatePresence>
+          {isBrandContextModalOpen && (
+            <motion.div 
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4"
+            >
+              <motion.div 
+                initial={{ scale: 0.95, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                exit={{ scale: 0.95, opacity: 0 }}
+                className="bg-white rounded-[2rem] shadow-2xl w-full max-w-4xl overflow-hidden flex flex-col max-h-[90vh]"
+              >
+                <div className="p-6 md:p-8 border-b border-gray-200 flex items-center justify-between bg-[#F8F9FA]">
+                  <div className="flex items-center gap-4">
+                    <div className="w-12 h-12 bg-blue-100 rounded-2xl flex items-center justify-center text-blue-600">
+                      <Building2 className="w-6 h-6" />
+                    </div>
+                    <div>
+                      <h2 className="text-xl font-black tracking-tighter text-black/90">Empresas e Contextos</h2>
+                      <p className="text-xs font-black uppercase tracking-widest text-gray-500">Memória de Longo Prazo</p>
+                    </div>
+                  </div>
+                  <button 
+                    onClick={() => setIsBrandContextModalOpen(false)}
+                    className="p-3 hover:bg-black/5 rounded-xl transition-all active:scale-90"
+                  >
+                    <X className="w-5 h-5 text-gray-500" />
+                  </button>
+                </div>
+                
+                <div className="flex flex-1 overflow-hidden h-[500px]">
+                  {/* Sidebar */}
+                  <div className="w-1/3 border-r border-gray-200 bg-[#F8F9FA] p-4 overflow-y-auto flex flex-col">
+                    <div className="flex justify-between items-center mb-4">
+                      <h3 className="text-xs font-black uppercase tracking-widest text-gray-500">Suas Empresas</h3>
+                      <button 
+                        onClick={() => {
+                          const newCompany = { id: Date.now().toString(), name: "Nova Empresa", context: "" };
+                          setCompanies([...companies, newCompany]);
+                          setEditingCompanyId(newCompany.id);
+                        }} 
+                        className="p-1.5 hover:bg-black/10 rounded-lg transition-colors text-black/60"
+                      >
+                        <Plus className="w-4 h-4" />
+                      </button>
+                    </div>
+                    <div className="space-y-2 flex-1">
+                      {companies.map(c => (
+                        <button 
+                          key={c.id} 
+                          onClick={() => setEditingCompanyId(c.id)} 
+                          className={cn(
+                            "w-full text-left p-3 rounded-xl text-sm font-medium flex justify-between items-center transition-all", 
+                            editingCompanyId === c.id ? "bg-white shadow-sm border border-gray-300" : "hover:bg-gray-100 text-gray-600",
+                            activeCompanyId === c.id && editingCompanyId !== c.id && "border border-green-500/30"
+                          )}
+                        >
+                          <span className="truncate pr-2">{c.name || "Sem Nome"}</span>
+                          {activeCompanyId === c.id && <CheckCircle2 className="w-4 h-4 text-green-500 flex-shrink-0" />}
+                        </button>
+                      ))}
+                      {companies.length === 0 && (
+                        <div className="text-center py-8">
+                          <p className="text-xs text-gray-500 font-medium">Nenhuma empresa cadastrada</p>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Editor */}
+                  <div className="w-2/3 p-6 md:p-8 flex flex-col bg-white overflow-y-auto">
+                    {(() => {
+                      const editingCompany = companies.find(c => c.id === editingCompanyId);
+                      if (!editingCompany) {
+                        return (
+                          <div className="flex-1 flex flex-col items-center justify-center text-gray-400">
+                            <Building2 className="w-12 h-12 mb-4 opacity-20" />
+                            <p className="text-sm font-medium">Selecione ou crie uma empresa para editar</p>
+                          </div>
+                        );
+                      }
+
+                      return (
+                        <>
+                          <input 
+                            value={editingCompany.name} 
+                            onChange={(e) => {
+                              setCompanies(companies.map(c => c.id === editingCompany.id ? { ...c, name: e.target.value } : c));
+                            }} 
+                            className="text-2xl font-black mb-6 bg-transparent border-b border-black/10 focus:border-blue-500 outline-none pb-2 text-black/90 placeholder:text-black/20" 
+                            placeholder="Nome da Empresa" 
+                          />
+                          <p className="text-xs text-gray-500 mb-2 font-black uppercase tracking-widest">Contexto da Marca</p>
+                          <textarea 
+                            value={editingCompany.context} 
+                            onChange={(e) => {
+                              setCompanies(companies.map(c => c.id === editingCompany.id ? { ...c, context: e.target.value } : c));
+                            }} 
+                            className="flex-1 min-h-[200px] resize-none bg-[#F8F9FA] border border-gray-300 rounded-2xl p-4 text-sm outline-none focus:ring-2 focus:ring-blue-500/20 text-gray-800 placeholder:text-gray-400" 
+                            placeholder="Ex: Somos uma startup de SaaS focada em gestão de tempo para equipes remotas. Nosso tom de voz é profissional, mas acessível. Nosso principal diferencial é a integração com o WhatsApp..." 
+                          />
+                          
+                          <div className="flex justify-between items-center mt-6 pt-6 border-t border-gray-200">
+                            <button 
+                              onClick={() => {
+                                setCompanies(companies.filter(c => c.id !== editingCompany.id));
+                                if (activeCompanyId === editingCompany.id) setActiveCompanyId(null);
+                                setEditingCompanyId(null);
+                              }} 
+                              className="flex items-center gap-2 text-red-500 hover:bg-red-50 px-4 py-2 rounded-xl text-xs font-black uppercase tracking-widest transition-all"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                              <span className="hidden sm:inline">Excluir</span>
+                            </button>
+                            
+                            <button 
+                              onClick={() => setActiveCompanyId(editingCompany.id)} 
+                              className={cn(
+                                "px-6 py-3 rounded-xl text-xs font-black uppercase tracking-widest transition-all shadow-sm flex items-center gap-2", 
+                                activeCompanyId === editingCompany.id 
+                                  ? "bg-green-500 text-white shadow-green-200" 
+                                  : "bg-black/5 hover:bg-black/10 text-black/60"
+                              )}
+                            >
+                              {activeCompanyId === editingCompany.id ? (
+                                <>
+                                  <CheckCircle2 className="w-4 h-4" />
+                                  Empresa Ativa no Chat
+                                </>
+                              ) : (
+                                "Definir como Ativa"
+                              )}
+                            </button>
+                          </div>
+                        </>
+                      );
+                    })()}
+                  </div>
+                </div>
+              </motion.div>
+            </motion.div>
           )}
         </AnimatePresence>
 
@@ -1130,233 +1079,10 @@ export default function App() {
           )}
         </AnimatePresence>
 
-        {/* Brand Modal */}
+        {/* Modals */}
         <AnimatePresence>
-          {isBrandModalOpen && (
-            <motion.div 
-              key="brand-modal"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm"
-            >
-              <motion.div 
-                initial={{ opacity: 0, scale: 0.95, y: 20 }}
-                animate={{ opacity: 1, scale: 1, y: 0 }}
-                exit={{ opacity: 0, scale: 0.95, y: 20 }}
-                className="bg-white rounded-[2.5rem] shadow-[0_30px_100px_rgba(0,0,0,0.2)] w-full max-w-2xl overflow-hidden border border-black/5"
-              >
-                <div className="p-6 md:p-8 border-b border-black/5 flex items-center justify-between bg-black text-white">
-                  <div className="flex items-center gap-3 md:gap-4">
-                    <div className="w-8 h-8 md:w-10 md:h-10 bg-blue-600 rounded-xl flex items-center justify-center shadow-lg shadow-blue-500/20 shrink-0">
-                      <Target className="w-4 h-4 md:w-5 md:h-5 text-white" />
-                    </div>
-                    <div>
-                      <h3 className="font-black text-xs md:text-sm uppercase tracking-widest">
-                        {editingProfile ? 'Editar Perfil Estratégico' : 'Perfis de Marca'}
-                      </h3>
-                      <p className="text-[8px] md:text-[9px] font-black text-white/40 uppercase tracking-tighter">
-                        {editingProfile ? 'Contexto para os Agentes' : 'Gerencie suas empresas'}
-                      </p>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-1 md:gap-2">
-                    {editingProfile && (
-                      <button 
-                        onClick={() => setEditingProfile(null)}
-                        className="px-3 py-2 md:px-4 md:py-2 bg-white/10 hover:bg-white/20 rounded-xl transition-colors text-[9px] md:text-[10px] font-black uppercase tracking-wider"
-                      >
-                        Voltar
-                      </button>
-                    )}
-                    <button 
-                      onClick={() => {
-                        setIsBrandModalOpen(false);
-                        setEditingProfile(null);
-                      }}
-                      className="p-2 hover:bg-white/10 rounded-xl transition-colors"
-                    >
-                      <X className="w-5 h-5 md:w-6 md:h-6" />
-                    </button>
-                  </div>
-                </div>
-                
-                {!editingProfile ? (
-                  <div className="p-6 md:p-10 space-y-6 max-h-[70vh] overflow-y-auto custom-scrollbar">
-                    <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 mb-6">
-                      <h4 className="text-xs font-black uppercase tracking-widest text-black/50">Seus Perfis</h4>
-                      <button
-                        onClick={() => setEditingProfile({
-                          id: "", name: "", audience: "", tone: "", messaging: "", productDetails: "", competitors: "", dataSources: ""
-                        })}
-                        className="flex items-center justify-center gap-2 px-4 py-3 sm:py-2 bg-blue-50 text-blue-600 rounded-xl hover:bg-blue-100 transition-colors text-[10px] font-black uppercase tracking-wider w-full sm:w-auto"
-                      >
-                        <Plus className="w-3 h-3" />
-                        Novo Perfil
-                      </button>
-                    </div>
-                    
-                    {brandProfiles.length === 0 ? (
-                      <div className="text-center py-12 bg-black/5 rounded-3xl border border-black/5 border-dashed">
-                        <Target className="w-12 h-12 text-black/20 mx-auto mb-4" />
-                        <p className="text-sm font-medium text-black/40">Nenhum perfil de marca criado ainda.</p>
-                      </div>
-                    ) : (
-                      <div className="grid grid-cols-1 gap-4">
-                        {brandProfiles.map(profile => (
-                          <div 
-                            key={profile.id} 
-                            className={cn(
-                              "p-4 md:p-6 rounded-2xl border transition-all flex flex-col sm:flex-row sm:items-center justify-between group gap-4",
-                              activeBrandProfileId === profile.id 
-                                ? "bg-blue-50 border-blue-200 shadow-sm" 
-                                : "bg-white border-black/5 hover:border-black/10 hover:shadow-md"
-                            )}
-                          >
-                            <div className="flex items-center gap-3 md:gap-4">
-                              <div className={cn(
-                                "w-10 h-10 md:w-12 md:h-12 rounded-xl flex items-center justify-center font-black text-base md:text-lg shrink-0",
-                                activeBrandProfileId === profile.id ? "bg-blue-600 text-white" : "bg-black/5 text-black/40"
-                              )}>
-                                {profile.name.charAt(0).toUpperCase() || "B"}
-                              </div>
-                              <div className="min-w-0">
-                                <h5 className="font-bold text-black truncate">{profile.name || "Perfil sem nome"}</h5>
-                                <p className="text-xs text-black/50 line-clamp-1">{profile.audience || "Público não definido"}</p>
-                              </div>
-                            </div>
-                            
-                            <div className="flex items-center gap-2 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity w-full sm:w-auto justify-end">
-                              {activeBrandProfileId !== profile.id && (
-                                <button
-                                  onClick={() => setActiveBrandProfileId(profile.id || null)}
-                                  className="flex-1 sm:flex-none px-4 py-2.5 sm:py-2 bg-black text-white rounded-xl text-[10px] font-black uppercase tracking-wider hover:scale-105 transition-transform text-center"
-                                >
-                                  Selecionar
-                                </button>
-                              )}
-                              {activeBrandProfileId === profile.id && (
-                                <span className="flex-1 sm:flex-none px-4 py-2.5 sm:py-2 bg-blue-100 text-blue-700 rounded-xl text-[10px] font-black uppercase tracking-wider flex items-center justify-center gap-1">
-                                  <Check className="w-3 h-3" /> Ativo
-                                </span>
-                              )}
-                              <button
-                                onClick={() => setEditingProfile(profile)}
-                                className="p-2.5 sm:p-2 bg-black/5 hover:bg-black/10 text-black/60 rounded-xl transition-colors shrink-0"
-                                title="Editar"
-                              >
-                                <Settings className="w-4 h-4" />
-                              </button>
-                              <button
-                                onClick={() => profile.id && handleDeleteBrandProfile(profile.id)}
-                                className="p-2.5 sm:p-2 bg-red-50 hover:bg-red-100 text-red-500 rounded-xl transition-colors shrink-0"
-                                title="Excluir"
-                              >
-                                <Trash2 className="w-4 h-4" />
-                              </button>
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                ) : (
-                  <>
-                    <div className="p-6 md:p-10 space-y-6 md:space-y-8 max-h-[70vh] overflow-y-auto custom-scrollbar">
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8">
-                        <div className="space-y-2">
-                          <label className="text-[10px] font-black uppercase tracking-[0.2em] text-black/30">Nome da Marca</label>
-                          <input 
-                            type="text" 
-                            value={editingProfile.name}
-                            onChange={(e) => setEditingProfile({...editingProfile, name: e.target.value})}
-                            placeholder="ex: Acme SaaS"
-                            className="w-full p-4 bg-black/5 border border-transparent rounded-2xl focus:bg-white focus:border-blue-500/20 outline-none text-sm font-medium transition-all"
-                          />
-                        </div>
-                        <div className="space-y-2">
-                          <label className="text-[10px] font-black uppercase tracking-[0.2em] text-black/30">Público-Alvo</label>
-                          <input 
-                            type="text"
-                            value={editingProfile.audience}
-                            onChange={(e) => setEditingProfile({...editingProfile, audience: e.target.value})}
-                            placeholder="ex: Gerentes de marketing..."
-                            className="w-full p-4 bg-black/5 border border-transparent rounded-2xl focus:bg-white focus:border-blue-500/20 outline-none text-sm font-medium transition-all"
-                          />
-                        </div>
-                      </div>
-                      
-                      <div className="space-y-2">
-                        <label className="text-[10px] font-black uppercase tracking-[0.2em] text-black/30">Tom de Voz</label>
-                        <input 
-                          type="text" 
-                          value={editingProfile.tone}
-                          onChange={(e) => setEditingProfile({...editingProfile, tone: e.target.value})}
-                          placeholder="ex: Profissional, autoritário, mas acessível"
-                          className="w-full p-4 bg-black/5 border border-transparent rounded-2xl focus:bg-white focus:border-blue-500/20 outline-none text-sm font-medium transition-all"
-                        />
-                      </div>
-                      
-                      <div className="space-y-2">
-                        <label className="text-[10px] font-black uppercase tracking-[0.2em] text-black/30">Mensagem Principal</label>
-                        <textarea 
-                          value={editingProfile.messaging}
-                          onChange={(e) => setEditingProfile({...editingProfile, messaging: e.target.value})}
-                          placeholder="ex: Ajudamos equipes a automatizar fluxos de marketing..."
-                          className="w-full p-4 bg-black/5 border border-transparent rounded-2xl focus:bg-white focus:border-blue-500/20 outline-none text-sm font-medium min-h-[100px] resize-none transition-all"
-                        />
-                      </div>
-                      
-                      <div className="space-y-2">
-                        <label className="text-[10px] font-black uppercase tracking-[0.2em] text-black/30">Detalhes do Produto/Serviço</label>
-                        <textarea 
-                          value={editingProfile.productDetails}
-                          onChange={(e) => setEditingProfile({...editingProfile, productDetails: e.target.value})}
-                          placeholder="Descreva o que você vende, preços, diferenciais..."
-                          className="w-full p-4 bg-black/5 border border-transparent rounded-2xl focus:bg-white focus:border-blue-500/20 outline-none text-sm font-medium min-h-[100px] resize-none transition-all"
-                        />
-                      </div>
-                      
-                      <div className="space-y-2">
-                        <label className="text-[10px] font-black uppercase tracking-[0.2em] text-black/30">Concorrentes</label>
-                        <input 
-                          type="text"
-                          value={editingProfile.competitors}
-                          onChange={(e) => setEditingProfile({...editingProfile, competitors: e.target.value})}
-                          placeholder="ex: Empresa A, Empresa B..."
-                          className="w-full p-4 bg-black/5 border border-transparent rounded-2xl focus:bg-white focus:border-blue-500/20 outline-none text-sm font-medium transition-all"
-                        />
-                      </div>
-
-                      <div className="space-y-2">
-                        <label className="text-[10px] font-black uppercase tracking-[0.2em] text-black/30 flex items-center gap-2">
-                          <Globe className="w-3 h-3" />
-                          Fontes de Dados & Integrações (Links, APIs, Documentos)
-                        </label>
-                        <textarea 
-                          value={editingProfile.dataSources || ""}
-                          onChange={(e) => setEditingProfile({...editingProfile, dataSources: e.target.value})}
-                          placeholder="Cole aqui links do Google Drive, NotebookLM, sites, documentação de API (ex: API do sistema de agendamento), ou qualquer outra fonte de dados que o Enxame deva consultar."
-                          className="w-full p-4 bg-black/5 border border-transparent rounded-2xl focus:bg-white focus:border-blue-500/20 outline-none text-sm font-medium min-h-[120px] resize-none transition-all font-mono"
-                        />
-                      </div>
-                    </div>
-                    <div className="p-6 md:p-8 bg-black/5 border-t border-black/5 flex justify-end gap-3">
-                      <button 
-                        onClick={handleSaveBrandProfile}
-                        className="w-full sm:w-auto px-8 py-4 bg-black text-white rounded-2xl font-black text-[10px] uppercase tracking-[0.2em] hover:scale-105 active:scale-95 transition-all shadow-xl shadow-black/10"
-                      >
-                        Salvar Perfil Estratégico
-                      </button>
-                    </div>
-                  </>
-                )}
-              </motion.div>
-            </motion.div>
-          )}
+          {/* Brand Modal Removed */}
         </AnimatePresence>
-
-
 
         {/* Workspace + Chat Split */}
         <div className="flex-1 flex overflow-hidden">
@@ -1382,7 +1108,7 @@ export default function App() {
                     <h1 className="text-6xl font-black tracking-tighter text-black/90 leading-none">
                       Marketing <span className="text-blue-600">Swarm</span> <span className="text-black/20 italic">v2.1</span>
                     </h1>
-                    <p className="text-xl text-black/40 max-w-2xl mx-auto font-medium leading-relaxed">
+                    <p className="text-xl text-gray-500 max-w-2xl mx-auto font-medium leading-relaxed">
                       Sua central de inteligência orquestrada por agentes especialistas. 
                       <span className="block mt-2 text-blue-500/60 font-black uppercase tracking-widest text-xs">Powered by UI/UX Pro Max Skill</span>
                     </p>
@@ -1400,13 +1126,13 @@ export default function App() {
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ delay: i * 0.1 }}
                         whileHover={{ y: -8 }}
-                        className="p-8 bg-white border border-black/5 rounded-[2rem] shadow-sm space-y-5 group transition-all hover:shadow-xl"
+                        className="p-8 bg-white border border-gray-200 rounded-[2rem] shadow-sm space-y-5 group transition-all hover:shadow-xl"
                       >
                         <div className={cn("w-14 h-14 rounded-2xl flex items-center justify-center transition-transform group-hover:scale-110 duration-500", item.color)}>
                           {item.icon}
                         </div>
                         <h3 className="font-black uppercase tracking-widest text-xs text-black/80">{item.title}</h3>
-                        <p className="text-sm text-black/40 leading-relaxed font-medium">
+                        <p className="text-sm text-gray-500 leading-relaxed font-medium">
                           {item.desc}
                         </p>
                       </motion.div>
@@ -1418,7 +1144,7 @@ export default function App() {
                       <button 
                         key={q}
                         onClick={() => setInput(q)}
-                        className="px-6 py-3 bg-white border border-black/5 rounded-2xl text-xs font-black uppercase tracking-widest hover:bg-black hover:text-white transition-all shadow-sm hover:shadow-xl active:scale-95"
+                        className="px-6 py-3 bg-white border border-gray-300 rounded-2xl text-xs font-black uppercase tracking-widest hover:bg-black hover:text-white transition-all shadow-sm hover:shadow-xl active:scale-95"
                       >
                         {q}
                       </button>
@@ -1432,10 +1158,8 @@ export default function App() {
                   key={i}
                   msg={msg}
                   index={i}
-                  isSpeaking={isSpeaking}
                   copiedId={copiedId}
                   onArtifactClick={handleArtifactClick}
-                  onTTSClick={handleTTS}
                   onCopyClick={copyToClipboard}
                 />
               ))}
@@ -1467,8 +1191,6 @@ export default function App() {
               removeImage={removeImage}
               handleImageUpload={handleImageUpload}
               handleSend={handleSend}
-              handleGenerateImage={handleGenerateImage}
-              handleGenerateVideo={handleGenerateVideo}
               setMessages={setMessages}
               handlePaste={handlePaste}
               handleInputKeyDown={handleInputKeyDown}
@@ -1487,7 +1209,7 @@ export default function App() {
                 animate={{ y: 0, opacity: 1 }}
                 exit={{ y: "100%", opacity: 0 }}
                 transition={{ type: "spring", damping: 25, stiffness: 200 }}
-                className="absolute bottom-24 left-4 right-4 md:left-8 md:right-auto md:w-96 h-64 bg-[#0A0A0A]/95 backdrop-blur-xl border border-white/10 rounded-2xl flex flex-col shadow-[0_20px_50px_rgba(0,0,0,0.5)] z-50 font-mono overflow-hidden"
+                className="absolute bottom-24 left-4 right-4 md:left-8 md:right-auto md:w-80 h-64 bg-[#0A0A0A]/95 backdrop-blur-xl border border-white/10 rounded-2xl flex flex-col shadow-[0_20px_50px_rgba(0,0,0,0.5)] z-50 font-mono overflow-hidden"
               >
                 <div className="h-10 border-b border-white/10 flex items-center justify-between px-4 bg-white/5 sticky top-0 z-10">
                   <div className="flex items-center gap-2 text-white/50 text-xs">
@@ -1507,7 +1229,7 @@ export default function App() {
                     <div className="text-white/30 text-xs italic">Aguardando execução de agentes...</div>
                   ) : (
                     agentLogs.map((log) => (
-                      <div key={log.id} className="text-[10px] flex gap-2">
+                      <div key={log.id} className="text-xs flex gap-2">
                         <span className="text-white/30 shrink-0">
                           [{log.timestamp.toLocaleTimeString([], { hour12: false, hour: '2-digit', minute: '2-digit', second: '2-digit' })}]
                         </span>
@@ -1540,23 +1262,23 @@ export default function App() {
                 animate={{ x: 0 }}
                 exit={{ x: "100%" }}
                 transition={{ type: "spring", damping: 25, stiffness: 200 }}
-                className="absolute md:relative inset-0 md:inset-auto w-full md:w-1/2 border-l border-black/5 bg-[#F8F9FA] flex flex-col shadow-[-20px_0_50px_rgba(0,0,0,0.05)] z-40"
+                className="absolute md:relative inset-0 md:inset-auto w-full md:w-1/2 border-l border-gray-200 bg-[#F8F9FA] flex flex-col shadow-[-20px_0_50px_rgba(0,0,0,0.05)] z-40"
               >
-                <div className="h-20 border-b border-black/5 flex items-center justify-between px-4 md:px-8 bg-white/80 backdrop-blur-xl sticky top-0 z-10">
+                <div className="h-20 border-b border-gray-200 flex items-center justify-between px-4 md:px-8 bg-white/80 backdrop-blur-xl sticky top-0 z-10">
                   <div className="flex items-center gap-4">
                     <div className="w-10 h-10 bg-blue-600 rounded-xl flex items-center justify-center shadow-lg shadow-blue-200">
                       <LayoutDashboard className="w-5 h-5 text-white" />
                     </div>
                     <div>
                       <h3 className="font-black tracking-tighter uppercase text-sm text-black/90">Estúdio de Artefatos</h3>
-                      <p className="text-[9px] font-black text-black/30 uppercase tracking-widest">Espaço de Trabalho de Produção</p>
+                      <p className="text-xs font-black text-gray-500 uppercase tracking-widest">Espaço de Trabalho de Produção</p>
                     </div>
                   </div>
                   <button 
                     onClick={() => setIsWorkspaceOpen(false)}
                     className="p-3 hover:bg-black/5 rounded-2xl transition-all active:scale-90"
                   >
-                    <X className="w-6 h-6 text-black/40" />
+                    <X className="w-6 h-6 text-gray-500" />
                   </button>
                 </div>
                 
@@ -1566,10 +1288,10 @@ export default function App() {
                       <div className="flex items-start justify-between">
                         <div className="space-y-3">
                           <div className="flex items-center gap-2">
-                            <span className="px-3 py-1 bg-blue-50 text-blue-700 rounded-full text-[9px] font-black uppercase tracking-widest border border-blue-100">
+                            <span className="px-3 py-1 bg-blue-50 text-blue-700 rounded-full text-xs font-black uppercase tracking-widest border border-blue-200">
                               {activeArtifact.type}
                             </span>
-                            <span className="text-[9px] font-black text-black/20 uppercase tracking-widest">
+                            <span className="text-xs font-black text-gray-500 uppercase tracking-widest">
                               Gerado por {activeArtifact.agentName}
                             </span>
                           </div>
@@ -1580,9 +1302,9 @@ export default function App() {
                         <div className="flex gap-2">
                           <button 
                             onClick={() => copyToClipboard(activeArtifact.content, activeArtifact.id)}
-                            className="p-4 bg-white border border-black/5 rounded-2xl hover:bg-black hover:text-white transition-all shadow-sm active:scale-90 group/copy"
+                            className="p-4 bg-white border border-gray-300 rounded-2xl hover:bg-black hover:text-white transition-all shadow-sm active:scale-90 group/copy"
                           >
-                            {copiedId === activeArtifact.id ? <Check className="w-5 h-5 text-green-500" /> : <Copy className="w-5 h-5 text-black/40 group-hover/copy:text-white" />}
+                            {copiedId === activeArtifact.id ? <Check className="w-5 h-5 text-green-500" /> : <Copy className="w-5 h-5 text-gray-500 group-hover/copy:text-white" />}
                           </button>
                         </div>
                       </div>
@@ -1590,14 +1312,29 @@ export default function App() {
                       <motion.div 
                         initial={{ opacity: 0, y: 20 }}
                         animate={{ opacity: 1, y: 0 }}
-                        className="bg-white p-6 md:p-10 rounded-[2.5rem] shadow-xl shadow-black/5 border border-black/5 min-h-[600px] relative overflow-hidden"
+                        className="bg-white p-6 md:p-10 rounded-[2.5rem] shadow-xl shadow-black/5 border border-gray-200 min-h-[600px] relative overflow-hidden"
                       >
                         <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-blue-600 to-indigo-600" />
-                        <ArtifactRenderer artifact={activeArtifact} />
+                        <div className="prose prose-sm max-w-none p-10 bg-white rounded-[2.5rem] border border-gray-200 shadow-xl shadow-black/5">
+                          <div className="flex items-center gap-3 mb-8 border-b border-gray-200 pb-6">
+                            <div className="w-10 h-10 bg-black/5 rounded-xl flex items-center justify-center">
+                              <FileText className="w-5 h-5 text-gray-500" />
+                            </div>
+                            <div>
+                              <h3 className="text-sm font-black uppercase tracking-widest text-black/80">Documento de Estratégia</h3>
+                              <p className="text-xs font-black text-gray-500 uppercase tracking-tighter">Conteúdo Gerado por IA</p>
+                            </div>
+                          </div>
+                          <div className="text-black/70 leading-relaxed font-medium overflow-hidden break-words">
+                            <div className="prose prose-sm max-w-none prose-headings:font-black prose-headings:tracking-tighter prose-a:text-blue-500 prose-strong:text-inherit prose-pre:bg-black/5 prose-pre:text-black/80 prose-code:text-blue-600">
+                              <ReactMarkdown>{activeArtifact.content}</ReactMarkdown>
+                            </div>
+                          </div>
+                        </div>
                       </motion.div>
                       
-                      <div className="flex items-center justify-center gap-4 py-8 border-t border-black/5">
-                        <p className="text-[9px] font-black text-black/20 uppercase tracking-[0.4em]">Fim do Documento • UI/UX Pro Max v2.1</p>
+                      <div className="flex items-center justify-center gap-4 py-8 border-t border-gray-200">
+                        <p className="text-xs font-black text-gray-500 uppercase tracking-[0.4em]">Fim do Documento • UI/UX Pro Max v2.1</p>
                       </div>
                     </div>
                   ) : (

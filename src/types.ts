@@ -33,22 +33,19 @@ export interface MarketingSkill {
   model?: string; // Adicionado
 }
 
-export interface BrandProfile {
-  id: string;
-  name: string;
-  audience: string;
-  tone: string;
-  messaging: string;
-  productDetails: string;
-  competitors: string;
-  dataSources?: string;
-}
+
 
 export interface ChatSession {
   id: string;
   title: string;
   createdAt: string;
   updatedAt: string;
+}
+
+export interface Company {
+  id: string;
+  name: string;
+  context: string;
 }
 
 export interface Message {
@@ -68,26 +65,15 @@ export interface DataPoint {
   color?: string;
 }
 
-export interface FunnelStep {
-  label: string;
-  value: number;
-  percentage: number;
-  color: string;
-}
 
-export type SocialPlatform = "instagram" | "linkedin" | "tiktok" | "facebook" | "twitter";
 
 export interface Artifact {
   id: string;
   title: string;
-  type: "copy" | "plan" | "code" | "data" | "script" | "visual" | "video" | "campaign" | "funnel" | "social" | "design-system" | "research" | "automation" | "architecture" | "n8n";
+  type: "copy" | "plan" | "code" | "data" | "script" | "campaign" | "research" | "automation" | "architecture" | "n8n";
   content: string;
   agentName: string;
   metadata?: {
-    funnelSteps?: FunnelStep[];
-    socialPlatform?: SocialPlatform;
-    socialHandle?: string;
-    socialImage?: string;
     chartType?: "bar" | "line" | "pie";
     dataPoints?: DataPoint[];
     campaignTimeline?: { date: string; task: string; status: string }[];

@@ -1,7 +1,5 @@
-import { GoogleGenAI, ThinkingLevel } from "@google/genai";
 import { Message } from "../types";
-
-const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY || "" });
+import { gemini } from "./gemini";
 
 export async function sendMessageToAgent(
   agentId: string, 
@@ -11,8 +9,7 @@ export async function sendMessageToAgent(
   tools?: any[],
   images?: string[],
   history?: Message[],
-  useGrounding?: boolean,
-  isHighThinking?: boolean
+  useGrounding?: boolean
 ) {
   // If model is Gemini, use SDK
   if (model.startsWith("gemini")) {
@@ -64,16 +61,10 @@ export async function sendMessageToAgent(
       config.tools.push({ googleSearch: {} });
     }
 
-    if (isHighThinking) {
-      model = "gemini-3.1-pro-preview";
-      config.thinkingConfig = { thinkingLevel: ThinkingLevel.HIGH };
-    }
+    // Add URL context tool by default to allow reading URLs
+    config.tools.push({ urlContext: {} });
 
-    const response = await ai.models.generateContent({
-      model: model,
-      contents: contents,
-      config: config,
-    });
+    const response = await gemini.generateText(contents, model, systemInstruction, config.tools);
     return response.text || "Sem resposta.";
   }
 
@@ -83,7 +74,7 @@ export async function sendMessageToAgent(
     headers: {
       "Content-Type": "application/json",
     },
-    body: JSON.stringify({ agentId, message, systemInstruction, tools, images, history, useGrounding, isHighThinking }),
+    body: JSON.stringify({ agentId, message, systemInstruction, tools, images, history, useGrounding }),
   });
 
   if (!response.ok) {

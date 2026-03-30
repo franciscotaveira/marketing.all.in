@@ -113,8 +113,8 @@ service cloud.firestore {
 
     function isValidMessage(data) {
       return hasRequiredFields(['role', 'content', 'createdAt']) &&
-             data.role in ['user', 'ai'] &&
-             data.content is string && data.content.size() <= 10000 &&
+             data.role in ['user', 'ai', 'system'] &&
+             data.content is string && data.content.size() <= 100000 &&
              data.createdAt is timestamp;
     }
 
@@ -122,7 +122,7 @@ service cloud.firestore {
       return hasRequiredFields(['agentId', 'title', 'content', 'createdAt']) &&
              data.agentId is string &&
              data.title is string && data.title.size() <= 200 &&
-             data.content is string && data.content.size() <= 5000 &&
+             data.content is string && data.content.size() <= 100000 &&
              data.createdAt is timestamp;
     }
 
@@ -130,7 +130,7 @@ service cloud.firestore {
       return hasRequiredFields(['agentId', 'topic', 'content', 'confidence', 'tags', 'createdAt']) &&
              data.agentId is string &&
              data.topic is string && data.topic.size() <= 200 &&
-             data.content is string && data.content.size() <= 5000 &&
+             data.content is string && data.content.size() <= 100000 &&
              data.confidence is number && data.confidence >= 0 && data.confidence <= 1 &&
              data.tags is list && data.tags.size() <= 20 &&
              data.createdAt is timestamp;

@@ -85,14 +85,14 @@ export function ChatHistory({ isOpen, onClose, setMessages, setCurrentChatId }: 
             className="w-full max-w-2xl bg-white rounded-3xl overflow-hidden shadow-2xl flex flex-col max-h-[80vh]"
           >
             {/* Header */}
-            <div className="p-6 border-b border-black/5 flex items-center justify-between bg-black/5">
+            <div className="p-6 border-b border-gray-200 flex items-center justify-between bg-gray-100">
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 bg-black text-white rounded-xl flex items-center justify-center shadow-lg">
                   <History className="w-5 h-5" />
                 </div>
                 <div>
                   <h2 className="text-lg font-black tracking-tighter text-black/90">Histórico de Chats</h2>
-                  <p className="text-[10px] font-black text-black/40 uppercase tracking-widest">Suas conversas anteriores</p>
+                  <p className="text-xs font-black text-black/40 uppercase tracking-widest">Suas conversas anteriores</p>
                 </div>
               </div>
               <button 
@@ -104,7 +104,7 @@ export function ChatHistory({ isOpen, onClose, setMessages, setCurrentChatId }: 
             </div>
 
             {/* Search */}
-            <div className="p-4 border-b border-black/5">
+            <div className="p-4 border-b border-gray-200">
               <div className="relative">
                 <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-black/40" />
                 <input 
@@ -140,12 +140,12 @@ export function ChatHistory({ isOpen, onClose, setMessages, setCurrentChatId }: 
                       initial={{ opacity: 0, y: 10 }}
                       animate={{ opacity: 1, y: 0 }}
                       onClick={() => handleLoadSession(session)}
-                      className="group p-4 rounded-2xl border border-black/5 hover:border-blue-500/30 hover:bg-blue-50/50 cursor-pointer transition-all flex items-start justify-between gap-4"
+                      className="group p-4 rounded-2xl border border-gray-300 hover:border-blue-500/30 hover:bg-blue-50/50 cursor-pointer transition-all flex items-start justify-between gap-4"
                     >
                       <div className="flex-1 min-w-0 space-y-1">
                         <div className="flex items-center gap-2">
                           <h3 className="font-bold text-sm text-black/90 truncate">{session.title}</h3>
-                          <span className="text-[10px] font-bold text-black/40 flex items-center gap-1">
+                          <span className="text-xs font-bold text-black/40 flex items-center gap-1">
                             <Clock className="w-3 h-3" />
                             {new Date(session.updatedAt || session.createdAt).toLocaleDateString()}
                           </span>
