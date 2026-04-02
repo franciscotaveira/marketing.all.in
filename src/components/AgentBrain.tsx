@@ -30,9 +30,10 @@ import { ABSORBED_SKILLS } from "../constants";
 interface AgentBrainProps {
   agent: MarketingSkill | null;
   onClose: () => void;
+  isDarkMode?: boolean;
 }
 
-export function AgentBrain({ agent, onClose }: AgentBrainProps) {
+export function AgentBrain({ agent, onClose, isDarkMode = true }: AgentBrainProps) {
   const [view, setView] = useState<"graph" | "vault" | "neural" | "skills" | "analytics">("graph");
   const [memories, setMemories] = useState<BrainMemory[]>([]);
   const [selectedMemory, setSelectedMemory] = useState<BrainMemory | null>(null);
@@ -300,91 +301,91 @@ ${selectedMemory.content}`;
       initial={{ opacity: 0, scale: 0.95 }}
       animate={{ opacity: 1, scale: 1 }}
       exit={{ opacity: 0, scale: 0.95 }}
-      className="fixed inset-4 z-50 bg-[#141414] border border-[#E4E3E0]/20 rounded-xl shadow-2xl overflow-hidden flex flex-col"
+      className="fixed inset-4 z-50 liquid-glass-panel overflow-hidden flex flex-col"
     >
       {/* Header */}
-      <div className="p-4 border-b border-[#E4E3E0]/10 flex flex-col md:flex-row items-start md:items-center justify-between bg-black/40 gap-4 md:gap-0">
+      <div className="p-6 border-b border-theme-glass flex flex-col md:flex-row items-start md:items-center justify-between bg-theme-glass/20 gap-4 md:gap-0 shadow-2xl">
         <div className="flex items-center gap-4 w-full md:w-auto justify-between md:justify-start">
           <div className="flex items-center gap-4">
-            <div className="w-10 h-10 bg-blue-600 rounded-lg flex items-center justify-center relative overflow-hidden shrink-0">
-              <Brain className="w-6 h-6 text-white relative z-10" />
+            <div className="w-14 h-14 bg-theme-blue rounded-2xl flex items-center justify-center relative overflow-hidden shrink-0 shadow-[0_0_30px_rgba(37,99,235,0.5)] border border-theme-glass">
+              <Brain className="w-8 h-8 text-white relative z-10" />
               <motion.div 
-                animate={{ scale: [1, 1.5, 1], opacity: [0.2, 0.5, 0.2] }}
+                animate={{ scale: [1, 1.8, 1], opacity: [0.2, 0.6, 0.2] }}
                 transition={{ duration: 2, repeat: Infinity }}
-                className="absolute inset-0 bg-white"
+                className="absolute inset-0 bg-white/20"
               />
             </div>
             <div>
-              <h2 className="text-lg font-bold tracking-tight text-white flex items-center gap-2">
-                Cérebro Sináptico: {agent?.name || "Global"}
-                {isSyncing && <Activity className="w-4 h-4 text-blue-400 animate-pulse" />}
+              <h2 className="text-2xl font-black tracking-tight text-theme-primary flex items-center gap-2 italic uppercase">
+                Cérebro <span className="text-theme-blue">Sináptico</span>
+                {isSyncing && <Activity className="w-5 h-5 text-theme-blue animate-pulse" />}
               </h2>
-              <p className="text-xs uppercase tracking-widest text-blue-400 font-mono">
-                Sincronizado com Obsidian & Firebase v2.1
+              <p className="text-[10px] uppercase tracking-[0.4em] text-theme-secondary font-black">
+                {agent?.name || "Global"} • Sincronizado v2.2
               </p>
             </div>
           </div>
-          <button onClick={onClose} className="p-2 hover:bg-white/10 rounded-full transition-all md:hidden shrink-0">
-            <X className="w-5 h-5 text-white/50 hover:text-white" />
+          <button onClick={onClose} className="p-2 hover:bg-theme-glass rounded-full transition-all md:hidden shrink-0">
+            <X className="w-6 h-6 text-theme-secondary hover:text-theme-primary" />
           </button>
         </div>
 
-        <div className="flex items-center gap-2 w-full md:w-auto overflow-x-auto custom-scrollbar pb-2 md:pb-0">
+        <div className="flex items-center gap-4 w-full md:w-auto overflow-x-auto custom-scrollbar pb-2 md:pb-0">
           <button 
             onClick={() => setIsNewNoteOpen(true)}
-            className="md:hidden px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-md text-xs font-bold uppercase flex items-center gap-2 shrink-0"
+            className="px-5 py-2.5 bg-theme-blue hover:opacity-90 text-white rounded-xl text-[10px] font-black uppercase tracking-widest flex items-center gap-2 shrink-0 shadow-[0_10px_25px_rgba(37,99,235,0.4)] border border-white/20 transition-all active:scale-95"
           >
-            <Plus className="w-3 h-3" /> Nova Memória
+            <Plus className="w-4 h-4" /> Nova Memória
           </button>
-          <div className="flex bg-white/5 p-1 rounded-lg border border-white/10 min-w-max">
+          <div className="flex bg-theme-glass p-1.5 rounded-2xl border border-theme-glass min-w-max shadow-[inset_0_2px_4px_rgba(0,0,0,0.1)]">
             <button 
               onClick={() => setView("graph")}
               className={cn(
-                "px-3 py-1.5 rounded-md text-xs uppercase font-bold transition-all flex items-center gap-2",
-                view === "graph" ? "bg-blue-600 text-white" : "text-white/50 hover:text-white"
+                "px-5 py-2.5 rounded-xl text-[10px] uppercase font-black tracking-widest transition-all flex items-center gap-2",
+                view === "graph" ? "bg-theme-blue text-white shadow-[0_8px_20px_rgba(37,99,235,0.4)] border border-white/20" : "text-theme-secondary hover:text-theme-primary hover:bg-theme-glass"
               )}
             >
-              <Network className="w-3 h-3" /> Grafo
+              <Network className="w-4 h-4" /> Grafo
             </button>
             <button 
               onClick={() => setView("vault")}
               className={cn(
-                "px-3 py-1.5 rounded-md text-xs uppercase font-bold transition-all flex items-center gap-2",
-                view === "vault" ? "bg-blue-600 text-white" : "text-white/50 hover:text-white"
+                "px-5 py-2.5 rounded-xl text-[10px] uppercase font-black tracking-widest transition-all flex items-center gap-2",
+                view === "vault" ? "bg-theme-blue text-white shadow-[0_8px_20px_rgba(37,99,235,0.4)] border border-white/20" : "text-theme-secondary hover:text-theme-primary hover:bg-theme-glass"
               )}
             >
-              <Database className="w-3 h-3" /> Vault
+              <Database className="w-4 h-4" /> Vault
             </button>
             <button 
               onClick={() => setView("neural")}
               className={cn(
-                "px-3 py-1.5 rounded-md text-xs uppercase font-bold transition-all flex items-center gap-2",
-                view === "neural" ? "bg-blue-600 text-white" : "text-white/50 hover:text-white"
+                "px-5 py-2.5 rounded-xl text-[10px] uppercase font-black tracking-widest transition-all flex items-center gap-2",
+                view === "neural" ? "bg-theme-blue text-white shadow-[0_8px_20px_rgba(37,99,235,0.4)] border border-white/20" : "text-theme-secondary hover:text-theme-primary hover:bg-theme-glass"
               )}
             >
-              <Cpu className="w-3 h-3" /> Neural
+              <Cpu className="w-4 h-4" /> Neural
             </button>
             <button 
               onClick={() => setView("skills")}
               className={cn(
-                "px-3 py-1.5 rounded-md text-xs uppercase font-bold transition-all flex items-center gap-2",
-                view === "skills" ? "bg-blue-600 text-white" : "text-white/50 hover:text-white"
+                "px-5 py-2.5 rounded-xl text-[10px] uppercase font-black tracking-widest transition-all flex items-center gap-2",
+                view === "skills" ? "bg-theme-blue text-white shadow-[0_8px_20px_rgba(37,99,235,0.4)] border border-white/20" : "text-theme-secondary hover:text-theme-primary hover:bg-theme-glass"
               )}
             >
-              <Library className="w-3 h-3" /> Skills
+              <Library className="w-4 h-4" /> Skills
             </button>
             <button 
               onClick={() => setView("analytics")}
               className={cn(
-                "px-3 py-1.5 rounded-md text-xs uppercase font-bold transition-all flex items-center gap-2",
-                view === "analytics" ? "bg-blue-600 text-white" : "text-white/50 hover:text-white"
+                "px-5 py-2.5 rounded-xl text-[10px] uppercase font-black tracking-widest transition-all flex items-center gap-2",
+                view === "analytics" ? "bg-theme-blue text-white shadow-[0_8px_20px_rgba(37,99,235,0.4)] border border-white/20" : "text-theme-secondary hover:text-theme-primary hover:bg-theme-glass"
               )}
             >
-              <Activity className="w-3 h-3" /> Analytics
+              <Activity className="w-4 h-4" /> Analytics
             </button>
           </div>
-          <button onClick={onClose} className="p-2 hover:bg-white/10 rounded-full transition-all hidden md:block shrink-0">
-            <X className="w-5 h-5 text-white/50" />
+          <button onClick={onClose} className="p-2 hover:bg-theme-glass rounded-full transition-all hidden md:block shrink-0 group">
+            <X className="w-7 h-7 text-theme-secondary opacity-40 group-hover:text-theme-primary group-hover:rotate-90 transition-all" />
           </button>
         </div>
       </div>
@@ -392,78 +393,81 @@ ${selectedMemory.content}`;
       {/* Main Content */}
       <div className="flex-1 flex overflow-hidden">
         {/* Sidebar: Memories List */}
-        <div className="hidden md:flex w-80 border-r border-[#E4E3E0]/10 bg-black/20 flex-col shrink-0">
-          <div className="p-4 border-b border-[#E4E3E0]/10">
+        <div className="hidden md:flex w-80 border-r border-theme-glass bg-theme-glass/10 flex-col shrink-0 shadow-2xl">
+          <div className="p-6 border-b border-theme-glass bg-theme-glass/10">
             <button 
               onClick={() => setIsNewNoteOpen(true)}
-              className="w-full py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-xs font-bold uppercase flex items-center justify-center gap-2 transition-all"
+              className="w-full py-3.5 bg-theme-blue hover:opacity-90 text-white rounded-2xl text-[10px] font-black uppercase tracking-widest flex items-center justify-center gap-2 transition-all shadow-lg shadow-blue-500/30 border border-white/10"
             >
               <Plus className="w-4 h-4" /> Nova Memória
             </button>
           </div>
-          <div className="flex-1 overflow-y-auto p-2 space-y-2 custom-scrollbar">
+          <div className="flex-1 overflow-y-auto p-4 space-y-4 custom-scrollbar">
             {memories.map(memory => (
               <button
                 key={memory.id}
                 onClick={() => setSelectedMemory(memory)}
                 className={cn(
-                  "w-full p-3 rounded-lg text-left transition-all border group",
+                  "w-full p-5 rounded-2xl text-left transition-all border group shadow-xl relative overflow-hidden",
                   selectedMemory?.id === memory.id 
-                    ? "bg-blue-600/20 border-blue-600/50" 
-                    : "bg-white/5 border-transparent hover:border-white/10"
+                    ? "bg-theme-blue/30 border-theme-blue/60 shadow-blue-500/20" 
+                    : "bg-theme-glass border-theme-glass hover:border-theme-glass/80 hover:bg-theme-glass/20 shadow-inner"
                 )}
               >
-                <h3 className="text-sm font-bold text-white truncate">{memory.title}</h3>
-                <div className="flex flex-wrap gap-1 mt-2">
+                <h3 className="text-sm font-black text-theme-primary truncate group-hover:text-theme-blue transition-all uppercase tracking-tight">{memory.title}</h3>
+                <div className="flex flex-wrap gap-1.5 mt-4">
                   {memory.tags.map(tag => (
-                    <span key={tag} className="text-[8px] px-1.5 py-0.5 bg-white/10 rounded text-blue-300 font-mono">
+                    <span key={tag} className="text-[8px] px-2.5 py-1 bg-theme-blue/10 rounded-full text-theme-blue font-black uppercase tracking-wider border border-theme-blue/20">
                       #{tag}
                     </span>
                   ))}
                 </div>
-                <p className="text-xs text-white/40 mt-2 font-mono">
-                  {new Date(memory.createdAt).toLocaleDateString()}
-                </p>
+                <div className="flex items-center justify-between mt-4">
+                  <p className="text-[9px] text-theme-secondary opacity-40 font-black uppercase tracking-widest">
+                    {new Date(memory.createdAt).toLocaleDateString()}
+                  </p>
+                  <ChevronRight className={cn("w-3 h-3 transition-all", selectedMemory?.id === memory.id ? "text-theme-blue translate-x-0" : "text-theme-secondary opacity-10 -translate-x-2 group-hover:translate-x-0 group-hover:text-theme-secondary/40")} />
+                </div>
               </button>
             ))}
           </div>
         </div>
 
         {/* Center: Viewport */}
-        <div className="flex-1 relative bg-[#0a0a0a]">
+        <div className="flex-1 relative bg-theme-glass/5">
           {view === "graph" && (
             <div className="w-full h-full">
               <ForceGraph2D
                 ref={graphRef}
                 graphData={graphData}
                 nodeLabel="label"
-                nodeColor={(n: any) => highlightNodes.has(n) ? "#ffffff" : n.color}
+                nodeColor={(n: any) => highlightNodes.has(n) ? (isDarkMode ? "#ffffff" : "#000000") : n.color}
                 nodeVal={(n: any) => highlightNodes.has(n) ? n.val * 1.5 : n.val}
-                linkColor={(l: any) => highlightLinks.has(l) ? "#ffffff" : "rgba(255,255,255,0.1)"}
+                linkColor={(l: any) => highlightLinks.has(l) ? (isDarkMode ? "#ffffff" : "#000000") : (isDarkMode ? "rgba(255,255,255,0.1)" : "rgba(0,0,0,0.1)")}
                 linkWidth={(l: any) => highlightLinks.has(l) ? 2 : l.strength}
-                backgroundColor="#0a0a0a"
+                backgroundColor="transparent"
                 onNodeHover={(node: any) => updateHighlight(node, graphData.links)}
                 onNodeClick={(node: any) => {
                   const mem = memories.find(m => m.id === node.id);
                   if (mem) setSelectedMemory(mem);
                 }}
               />
-              <div className="absolute bottom-4 right-4 p-3 bg-black/60 backdrop-blur-md border border-white/10 rounded-lg flex gap-2">
+              <div className="absolute bottom-8 right-8 p-6 bg-theme-glass backdrop-blur-2xl border border-theme-glass rounded-3xl flex flex-col gap-6 shadow-2xl">
                 <button 
                   onClick={analyzePatterns}
-                  className="px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded text-xs font-bold uppercase"
+                  className="px-6 py-3 bg-theme-blue hover:opacity-90 text-white rounded-2xl text-[10px] font-black uppercase tracking-widest shadow-lg shadow-blue-500/40 border border-white/10 transition-all active:scale-95"
                 >
-                  Analisar Padrões
+                  Analisar Padrões Neurais
                 </button>
-                <div className="flex items-center gap-4 text-xs uppercase font-mono tracking-widest text-white/60">
-                  <div className="flex items-center gap-2">
-                    <div className="w-2 h-2 rounded-full bg-blue-500" /> Agente
+                <div className="flex items-center gap-6 text-[9px] uppercase font-black tracking-[0.25em] text-theme-secondary">
+                  <div className="flex items-center gap-3">
+                    <div className="w-2.5 h-2.5 rounded-full bg-blue-500 shadow-[0_0_10px_rgba(59,130,246,0.8)]" /> Agente
                   </div>
-                  <div className="flex items-center gap-2">
-                    <div className="w-2 h-2 rounded-full bg-orange-500" /> Insight
+                  <div className="flex items-center gap-3">
+                    <div className="w-2.5 h-2.5 rounded-full bg-orange-500 shadow-[0_0_10px_rgba(249,115,22,0.8)]" /> Insight
                   </div>
-                  <div className="flex items-center gap-2">
-                    <div className="w-2 h-2 rounded-full bg-emerald-500" /> Métrica
+                  <div className="flex items-center gap-3">
+                    <div className="w-2.5 h-2.5 rounded-full bg-emerald-500 shadow-[0_0_10px_rgba(16,185,129,0.8)]" /> Métrica
                   </div>
                 </div>
               </div>
@@ -472,39 +476,40 @@ ${selectedMemory.content}`;
 
           {view === "vault" && (
             <div className="w-full h-full flex flex-col p-8 overflow-y-auto custom-scrollbar">
-              <div className="max-w-3xl mx-auto w-full space-y-6">
+              <div className="max-w-3xl mx-auto w-full space-y-8">
                 <div className="flex justify-between items-center">
-                  <h2 className="text-xl font-bold text-white">Cofre de Memórias</h2>
+                  <h2 className="text-2xl font-black uppercase tracking-tighter text-theme-primary italic">Cofre de <span className="text-theme-blue">Memórias</span></h2>
                   {agent?.id === "automation-engineer" && (
                     <button
                       onClick={injectN8nExperiences}
                       disabled={isSyncing}
-                      className="px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold uppercase tracking-wider rounded-lg flex items-center gap-2 transition-all disabled:opacity-50"
+                      className="px-5 py-2.5 bg-theme-blue hover:opacity-90 text-white text-[10px] font-black uppercase tracking-widest rounded-xl flex items-center gap-2 transition-all disabled:opacity-50 shadow-lg shadow-blue-500/20"
                     >
                       <Database className="w-4 h-4" />
                       Injetar Experiências (n8n)
                     </button>
                   )}
                 </div>
-                <div className="flex items-center gap-4 bg-black/40 p-2 rounded-lg border border-white/10">
+                <div className="flex items-center gap-4 bg-theme-glass p-4 rounded-2xl border border-theme-glass shadow-[inset_0_2px_4px_rgba(0,0,0,0.3)]">
+                  <Search className="w-5 h-5 text-theme-secondary opacity-40" />
                   <input 
                     type="text"
                     placeholder="Filtrar por tags ou título..."
-                    className="flex-1 bg-transparent text-sm text-white placeholder:text-white/30 focus:outline-none"
+                    className="flex-1 bg-transparent text-sm text-theme-primary placeholder:text-theme-secondary/30 focus:outline-none font-bold tracking-tight"
                     value={vaultFilter}
                     onChange={e => setVaultFilter(e.target.value)}
                   />
                   <select 
-                    className="bg-transparent text-xs text-white/50 uppercase font-bold focus:outline-none"
+                    className="bg-theme-glass px-4 py-2 rounded-xl text-[10px] text-theme-primary uppercase font-black tracking-widest focus:outline-none border border-theme-glass cursor-pointer hover:bg-theme-glass/80 transition-all"
                     value={vaultSort}
                     onChange={e => setVaultSort(e.target.value as "date" | "roi")}
                   >
-                    <option value="date">Data</option>
-                    <option value="roi">ROI</option>
+                    <option value="date" className="bg-theme-main">Data</option>
+                    <option value="roi" className="bg-theme-main">ROI</option>
                   </select>
                 </div>
                 
-                <div className="space-y-4">
+                <div className="space-y-6">
                   {memories
                     .filter(m => m.title.toLowerCase().includes(vaultFilter.toLowerCase()) || m.tags.some(t => t.toLowerCase().includes(vaultFilter.toLowerCase())))
                     .sort((a, b) => vaultSort === "date" ? new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime() : (b.roi || 0) - (a.roi || 0))
@@ -513,19 +518,19 @@ ${selectedMemory.content}`;
                         key={memory.id}
                         onClick={() => setSelectedMemory(memory)}
                         className={cn(
-                          "w-full p-4 rounded-xl text-left transition-all border group",
+                          "w-full p-8 rounded-3xl text-left transition-all border group shadow-2xl relative overflow-hidden",
                           selectedMemory?.id === memory.id 
-                            ? "bg-blue-600/20 border-blue-600/50" 
-                            : "bg-white/5 border-transparent hover:border-white/10"
+                            ? "bg-theme-blue/30 border-theme-blue/60 shadow-theme-blue/30" 
+                            : "bg-theme-glass border-theme-glass hover:border-theme-glass/80 hover:bg-theme-glass/20 shadow-inner"
                         )}
                       >
                         <div className="flex justify-between items-start">
-                          <h3 className="text-sm font-bold text-white">{memory.title}</h3>
-                          {memory.roi && <span className="text-xs font-mono text-emerald-400">ROI: {memory.roi}%</span>}
+                          <h3 className="text-lg font-black text-theme-primary group-hover:text-theme-blue transition-all uppercase tracking-tight italic">{memory.title}</h3>
+                          {memory.roi && <span className="text-[10px] font-black text-theme-emerald bg-theme-emerald/20 px-3 py-1.5 rounded-xl border border-theme-emerald/40 shadow-[0_0_15px_rgba(52,211,153,0.3)]">ROI: {memory.roi}%</span>}
                         </div>
-                        <div className="flex flex-wrap gap-1 mt-2">
+                        <div className="flex flex-wrap gap-2.5 mt-6">
                           {memory.tags.map(tag => (
-                            <span key={tag} className="text-[8px] px-1.5 py-0.5 bg-white/10 rounded text-blue-300 font-mono">
+                            <span key={tag} className="text-[9px] px-3 py-1.5 bg-theme-blue/10 rounded-full text-theme-blue font-black uppercase tracking-wider border border-theme-blue/20">
                               #{tag}
                             </span>
                           ))}
@@ -534,22 +539,42 @@ ${selectedMemory.content}`;
                     ))}
                 </div>
                 {selectedMemory && (
-                  <div className="mt-8 p-6 bg-black/40 border border-white/10 rounded-xl space-y-4">
+                  <motion.div 
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="mt-12 p-10 bg-theme-card backdrop-blur-3xl border border-theme-glass rounded-[2.5rem] space-y-8 shadow-[0_40px_100px_rgba(0,0,0,0.8)] relative"
+                  >
                     <div className="flex justify-between items-center">
-                      <h3 className="text-xl font-bold text-white">{selectedMemory.title}</h3>
-                      <button onClick={() => setSelectedMemory(null)} className="text-white/50 hover:text-white">Fechar</button>
+                      <h3 className="text-3xl font-black text-theme-primary italic uppercase tracking-tighter drop-shadow-[0_0_10px_rgba(255,255,255,0.2)]">{selectedMemory.title}</h3>
+                      <button 
+                        onClick={() => setSelectedMemory(null)} 
+                        className="p-3 hover:bg-theme-glass rounded-full text-theme-secondary opacity-40 hover:text-theme-primary transition-all border border-transparent hover:border-theme-glass"
+                      >
+                        <X className="w-6 h-6" />
+                      </button>
                     </div>
-                    <div className="prose prose-invert max-w-none prose-sm overflow-hidden break-words prose-pre:bg-white/10 prose-pre:text-white prose-code:text-blue-300">
+                    <div className={cn(
+                      "prose max-w-none prose-lg overflow-hidden break-words prose-pre:bg-theme-glass/10 prose-pre:border prose-pre:border-theme-glass prose-pre:text-theme-primary prose-code:text-theme-blue font-medium leading-relaxed text-theme-secondary",
+                      isDarkMode ? "prose-invert" : ""
+                    )}>
                       <ReactMarkdown>{selectedMemory.content}</ReactMarkdown>
                     </div>
-                  </div>
+                    <div className="flex justify-end pt-6 border-t border-theme-glass">
+                      <button 
+                        onClick={handleObsidianSync}
+                        className="px-6 py-3 bg-theme-glass hover:bg-theme-glass/80 text-theme-primary rounded-2xl text-[10px] font-black uppercase tracking-widest flex items-center gap-2 transition-all border border-theme-glass shadow-lg"
+                      >
+                        <FileText className="w-4 h-4" /> Exportar para Obsidian
+                      </button>
+                    </div>
+                  </motion.div>
                 )}
               </div>
             </div>
           )}
 
           {view === "neural" && (
-            <div className="w-full h-full flex items-center justify-center bg-black">
+            <div className="w-full h-full flex items-center justify-center bg-theme-glass/10">
               <div className="relative w-96 h-96">
                 {/* Neural Pulse Visualization */}
                 <motion.div 
@@ -564,47 +589,49 @@ ${selectedMemory.content}`;
                 />
                 
                 <div className="absolute inset-0 flex items-center justify-center">
-                  <div className="text-center space-y-4">
+                  <div className="text-center space-y-6">
                     <div className="relative">
-                      <Zap className={cn("w-16 h-16 text-blue-500 mx-auto transition-all duration-300", neuralPulse > 50 ? "scale-110" : "scale-100")} />
+                      <Zap className={cn("w-24 h-24 text-theme-blue mx-auto transition-all duration-300 drop-shadow-[0_0_35px_rgba(59,130,246,0.9)]", neuralPulse > 50 ? "scale-110" : "scale-100")} />
                       <motion.div 
-                        animate={{ scale: [1, 1.5, 1], opacity: [0.5, 0, 0.5] }}
-                        transition={{ duration: 1 - (neuralPulse / 100), repeat: Infinity }}
-                        className="absolute inset-0 bg-blue-500 rounded-full blur-xl"
+                        animate={{ scale: [1, 2.2, 1], opacity: [0.6, 0, 0.6] }}
+                        transition={{ duration: 1.2 - (neuralPulse / 100), repeat: Infinity }}
+                        className="absolute inset-0 bg-theme-blue rounded-full blur-[60px]"
                       />
                     </div>
-                    <div className="space-y-1">
-                      <p className="text-xs uppercase tracking-[0.3em] font-mono text-blue-400">Carga de Processamento</p>
-                      <p className="text-4xl font-bold text-white font-mono">{neuralPulse}%</p>
+                    <div className="space-y-3">
+                      <p className="text-[11px] uppercase tracking-[0.5em] font-black text-theme-blue">Carga de Processamento</p>
+                      <p className="text-7xl font-black text-theme-primary font-mono tracking-tighter drop-shadow-[0_0_20px_rgba(255,255,255,0.4)]">{neuralPulse}%</p>
                     </div>
-                    <div className="w-48 h-2 bg-white/10 rounded-full overflow-hidden mx-auto">
+                    <div className="w-64 h-4 bg-theme-glass rounded-full overflow-hidden mx-auto border border-theme-glass shadow-[inset_0_2px_8px_rgba(0,0,0,0.6)]">
                       <motion.div 
                         animate={{ width: `${neuralPulse}%` }}
-                        className="h-full bg-blue-500 shadow-[0_0_10px_#3b82f6]"
-                      />
+                        className="h-full bg-gradient-to-r from-theme-blue via-blue-400 to-theme-blue shadow-[0_0_25px_#3b82f6] relative"
+                      >
+                        <div className="absolute inset-0 bg-gradient-to-b from-white/30 to-transparent" />
+                      </motion.div>
                     </div>
-                    <p className="text-xs text-white/40 font-mono max-w-[200px] mx-auto">
-                      {neuralPulse > 70 ? "Alta atividade: Otimizando conexões..." : "Sistema operando em capacidade nominal."}
+                    <p className="text-[11px] text-theme-secondary opacity-60 font-black uppercase tracking-widest max-w-[280px] mx-auto leading-relaxed italic">
+                      {neuralPulse > 70 ? "ALERTA: Otimizando conexões neurais críticas..." : "SISTEMA OPERANDO EM CAPACIDADE NOMINAL ESTÁVEL."}
                     </p>
                   </div>
                 </div>
 
                 {/* Dynamic Neurons */}
-                {[...Array(12)].map((_, i) => (
+                {[...Array(20)].map((_, i) => (
                   <motion.div
                     key={i}
                     animate={{ 
-                      x: [0, Math.cos(i * 30) * (100 + neuralPulse), 0], 
-                      y: [0, Math.sin(i * 30) * (100 + neuralPulse), 0],
+                      x: [0, Math.cos(i * 18) * (140 + neuralPulse), 0], 
+                      y: [0, Math.sin(i * 18) * (140 + neuralPulse), 0],
                       opacity: [0, 1, 0],
                       scale: [0.5, 1.5, 0.5]
                     }}
                     transition={{ 
-                      duration: 2 - (neuralPulse / 100), 
+                      duration: 3 - (neuralPulse / 100), 
                       repeat: Infinity,
-                      delay: i * 0.2
+                      delay: i * 0.12
                     }}
-                    className="absolute top-1/2 left-1/2 w-2 h-2 bg-blue-400 rounded-full"
+                    className="absolute top-1/2 left-1/2 w-2.5 h-2.5 bg-blue-400 rounded-full shadow-[0_0_12px_#60a5fa]"
                   />
                 ))}
               </div>
@@ -612,41 +639,49 @@ ${selectedMemory.content}`;
           )}
 
           {view === "skills" && (
-            <div className="w-full h-full p-8 overflow-y-auto custom-scrollbar bg-[#0a0a0a]">
-              <div className="max-w-5xl mx-auto space-y-8">
-                <div className="text-center space-y-2">
-                  <h2 className="text-3xl font-black uppercase tracking-tighter text-white">Repositório de Habilidades Absorvidas</h2>
-                  <p className="text-blue-400 font-mono text-xs uppercase tracking-[0.3em]">Inteligência Coletiva do Enxame</p>
+            <div className="w-full h-full p-12 overflow-y-auto custom-scrollbar bg-transparent">
+              <div className="max-w-5xl mx-auto space-y-12">
+                <div className="text-center space-y-4">
+                  <h2 className="text-4xl font-black uppercase tracking-tighter text-theme-primary italic">Repositório de <span className="text-theme-blue">Habilidades</span></h2>
+                  <p className="text-theme-blue font-black text-[10px] uppercase tracking-[0.4em]">Inteligência Coletiva do Enxame</p>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                   {ABSORBED_SKILLS.map((group, idx) => (
                     <motion.div 
                       key={idx}
                       initial={{ opacity: 0, y: 20 }}
                       animate={{ opacity: 1, y: 0 }}
                       transition={{ delay: idx * 0.1 }}
-                      className="p-6 bg-white/5 border border-white/10 rounded-2xl hover:border-blue-500/50 transition-all group"
+                      className="liquid-glass-card p-8 group relative overflow-hidden bg-theme-glass/20 border border-theme-glass"
                     >
-                      <div className="flex items-center gap-4 mb-6">
-                        <div className="w-12 h-12 bg-blue-600/20 rounded-xl flex items-center justify-center group-hover:bg-blue-600 transition-colors">
-                          {group.icon === "Cpu" && <Cpu className="w-6 h-6 text-blue-400 group-hover:text-white" />}
-                          {group.icon === "Video" && <Video className="w-6 h-6 text-blue-400 group-hover:text-white" />}
-                          {group.icon === "Microscope" && <Microscope className="w-6 h-6 text-blue-400 group-hover:text-white" />}
-                          {group.icon === "Network" && <Network className="w-6 h-6 text-blue-400 group-hover:text-white" />}
+                      <div className="absolute top-0 right-0 w-32 h-32 bg-theme-blue/5 blur-3xl -mr-16 -mt-16 group-hover:bg-theme-blue/10 transition-all" />
+                      
+                      <div className="flex items-center gap-5 mb-8 relative z-10">
+                        <div className="w-16 h-16 bg-theme-blue/20 rounded-2xl flex items-center justify-center group-hover:bg-theme-blue transition-all shadow-xl border border-theme-glass relative overflow-hidden">
+                          <div className="absolute inset-0 bg-gradient-to-br from-white/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+                          {group.icon === "Cpu" && <Cpu className="w-8 h-8 text-theme-blue group-hover:text-white relative z-10" />}
+                          {group.icon === "Video" && <Video className="w-8 h-8 text-theme-blue group-hover:text-white relative z-10" />}
+                          {group.icon === "Microscope" && <Microscope className="w-8 h-8 text-theme-blue group-hover:text-white relative z-10" />}
+                          {group.icon === "Network" && <Network className="w-8 h-8 text-theme-blue group-hover:text-white relative z-10" />}
                         </div>
-                        <h3 className="text-xl font-bold text-white">{group.source}</h3>
+                        <h3 className="text-3xl font-black text-theme-primary italic uppercase tracking-tighter drop-shadow-[0_0_15px_rgba(255,255,255,0.2)]">{group.source}</h3>
                       </div>
-                      <ul className="space-y-3">
+                      <ul className="space-y-5 relative z-10">
                         {group.skills.map((skill, sIdx) => (
-                          <li key={sIdx} className="flex items-center justify-between text-sm text-white/60 group-hover:text-white/80 transition-colors">
-                            <div className="flex items-center gap-3">
-                              <div className="w-1.5 h-1.5 bg-blue-500 rounded-full shadow-[0_0_8px_rgba(59,130,246,0.6)]" />
-                              {skill}
+                          <li key={sIdx} className="flex items-center justify-between text-sm text-theme-secondary opacity-50 group-hover:text-theme-primary group-hover:opacity-100 transition-colors">
+                            <div className="flex items-center gap-4">
+                              <div className="w-2.5 h-2.5 bg-theme-blue rounded-full shadow-[0_0_15px_rgba(59,130,246,1)]" />
+                              <span className="font-black uppercase tracking-tight">{skill}</span>
                             </div>
                             <button 
                               onClick={() => setEnabledSkills(prev => ({ ...prev, [skill]: !prev[skill] }))}
-                              className={cn("px-2 py-1 rounded text-xs font-bold uppercase", enabledSkills[skill] !== false ? "bg-blue-600 text-white" : "bg-white/10 text-white/40")}
+                              className={cn(
+                                "px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all shadow-xl border active:scale-95",
+                                enabledSkills[skill] !== false 
+                                  ? "bg-theme-blue text-white border-white/30 shadow-[0_5px_15px_rgba(37,99,235,0.4)]" 
+                                  : "bg-theme-glass text-theme-secondary opacity-40 border-theme-glass hover:bg-theme-glass/80 hover:opacity-60 shadow-inner"
+                              )}
                             >
                               {enabledSkills[skill] !== false ? "Ativo" : "Inativo"}
                             </button>
@@ -661,25 +696,46 @@ ${selectedMemory.content}`;
           )}
 
           {view === "analytics" && (
-            <div className="w-full h-full p-8 overflow-y-auto custom-scrollbar bg-[#0a0a0a]">
-              <div className="max-w-5xl mx-auto space-y-8">
-                <div className="text-center space-y-2">
-                  <h2 className="text-3xl font-black uppercase tracking-tighter text-white">Previsão de Performance</h2>
-                  <p className="text-blue-400 font-mono text-xs uppercase tracking-[0.3em]">Análise Preditiva de ROI</p>
+            <div className="w-full h-full p-12 overflow-y-auto custom-scrollbar bg-transparent">
+              <div className="max-w-5xl mx-auto space-y-12">
+                <div className="text-center space-y-4">
+                  <h2 className="text-4xl font-black uppercase tracking-tighter text-theme-primary italic">Previsão de <span className="text-theme-blue">Performance</span></h2>
+                  <p className="text-theme-blue font-black text-[10px] uppercase tracking-[0.4em]">Análise Preditiva de ROI em Tempo Real</p>
                 </div>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                  <div className="p-6 bg-white/5 border border-white/10 rounded-2xl">
-                    <h3 className="text-sm font-bold text-white mb-2">ROI Projetado</h3>
-                    <p className="text-4xl font-black text-emerald-400">+24.5%</p>
-                  </div>
-                  <div className="p-6 bg-white/5 border border-white/10 rounded-2xl">
-                    <h3 className="text-sm font-bold text-white mb-2">Conversão Estimada</h3>
-                    <p className="text-4xl font-black text-blue-400">3.8%</p>
-                  </div>
-                  <div className="p-6 bg-white/5 border border-white/10 rounded-2xl">
-                    <h3 className="text-sm font-bold text-white mb-2">Custo por Aquisição</h3>
-                    <p className="text-4xl font-black text-orange-400">$12.40</p>
-                  </div>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+                  <motion.div 
+                    whileHover={{ y: -8, scale: 1.02 }}
+                    className="p-10 liquid-glass-card relative overflow-hidden group bg-theme-glass/20 border border-theme-glass"
+                  >
+                    <div className="absolute top-0 left-0 w-1.5 h-full bg-theme-emerald shadow-[0_0_25px_rgba(16,185,129,0.9)]" />
+                    <h3 className="text-[11px] font-black text-theme-secondary opacity-50 uppercase tracking-[0.3em] mb-6">ROI Projetado</h3>
+                    <p className="text-6xl font-black text-theme-emerald tracking-tighter italic">+24.5%</p>
+                    <div className="mt-6 flex items-center gap-3 text-[10px] font-black text-theme-emerald opacity-80 uppercase tracking-widest">
+                      <Activity className="w-4 h-4" /> Tendência de Alta
+                    </div>
+                  </motion.div>
+                  <motion.div 
+                    whileHover={{ y: -8, scale: 1.02 }}
+                    className="p-10 liquid-glass-card relative overflow-hidden group bg-theme-glass/20 border border-theme-glass"
+                  >
+                    <div className="absolute top-0 left-0 w-1.5 h-full bg-theme-blue shadow-[0_0_25px_rgba(59,130,246,0.9)]" />
+                    <h3 className="text-[11px] font-black text-theme-secondary opacity-50 uppercase tracking-[0.3em] mb-6">Conversão Estimada</h3>
+                    <p className="text-6xl font-black text-theme-blue tracking-tighter italic">3.8%</p>
+                    <div className="mt-6 flex items-center gap-3 text-[10px] font-black text-theme-blue opacity-80 uppercase tracking-widest">
+                      <Zap className="w-4 h-4" /> Otimizado por IA
+                    </div>
+                  </motion.div>
+                  <motion.div 
+                    whileHover={{ y: -8, scale: 1.02 }}
+                    className="p-10 liquid-glass-card relative overflow-hidden group bg-theme-glass/20 border border-theme-glass"
+                  >
+                    <div className="absolute top-0 left-0 w-1.5 h-full bg-theme-orange shadow-[0_0_25px_rgba(249,115,22,0.9)]" />
+                    <h3 className="text-[11px] font-black text-theme-secondary opacity-50 uppercase tracking-[0.3em] mb-6">Custo por Aquisição</h3>
+                    <p className="text-6xl font-black text-theme-orange tracking-tighter italic drop-shadow-[0_0_20px_rgba(251,146,60,0.5)]">$12.40</p>
+                    <div className="mt-6 flex items-center gap-3 text-[10px] font-black text-theme-orange opacity-80 uppercase tracking-widest">
+                      <Database className="w-4 h-4" /> Base Histórica
+                    </div>
+                  </motion.div>
                 </div>
               </div>
             </div>
@@ -692,54 +748,67 @@ ${selectedMemory.content}`;
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
-                className="absolute inset-0 z-20 bg-black/80 backdrop-blur-md flex items-center justify-center p-8"
+                className="absolute inset-0 z-20 bg-theme-main/80 backdrop-blur-2xl flex items-center justify-center p-8"
               >
-                <div className="bg-[#1a1a1a] border border-white/10 rounded-xl p-6 w-full max-w-2xl space-y-4 shadow-2xl">
+                <motion.div 
+                  initial={{ scale: 0.9, y: 20 }}
+                  animate={{ scale: 1, y: 0 }}
+                  className="liquid-glass-panel p-10 w-full max-w-2xl space-y-8 shadow-[0_50px_150px_rgba(0,0,0,0.9)]"
+                >
                   <div className="flex items-center justify-between">
-                    <h3 className="text-lg font-bold text-white flex items-center gap-2">
-                      <Plus className="w-5 h-5 text-blue-500" /> Nova Memória Sináptica
+                    <h3 className="text-2xl font-black text-theme-primary flex items-center gap-4 italic uppercase">
+                      <Plus className="w-8 h-8 text-theme-blue" /> Nova Memória <span className="text-theme-blue">Sináptica</span>
                     </h3>
-                    <button onClick={() => setIsNewNoteOpen(false)} className="text-white/40 hover:text-white">
-                      <X className="w-5 h-5" />
+                    <button onClick={() => setIsNewNoteOpen(false)} className="p-3 hover:bg-theme-glass rounded-full text-theme-secondary opacity-30 hover:opacity-100 transition-all">
+                      <X className="w-7 h-7" />
                     </button>
                   </div>
-                  <div className="space-y-4">
-                    <input 
-                      type="text" 
-                      placeholder="Título da Insight (ex: Padrão de Conversão Meta Ads)"
-                      className="w-full bg-white/5 border border-white/10 rounded-lg p-3 text-white focus:outline-none focus:border-blue-500 transition-all font-bold"
-                      value={newNote.title}
-                      onChange={e => setNewNote(prev => ({ ...prev, title: e.target.value }))}
-                    />
-                    <textarea 
-                      placeholder="Conteúdo (Markdown suportado)..."
-                      className="w-full bg-white/5 border border-white/10 rounded-lg p-3 text-white h-64 focus:outline-none focus:border-blue-500 transition-all resize-none font-mono text-sm"
-                      value={newNote.content}
-                      onChange={e => setNewNote(prev => ({ ...prev, content: e.target.value }))}
-                    />
-                    <input 
-                      type="text" 
-                      placeholder="Tags (separadas por vírgula: roi, meta, conversion)"
-                      className="w-full bg-white/5 border border-white/10 rounded-lg p-3 text-white text-xs focus:outline-none focus:border-blue-500 transition-all font-mono"
-                      value={newNote.tags}
-                      onChange={e => setNewNote(prev => ({ ...prev, tags: e.target.value }))}
-                    />
+                  <div className="space-y-8">
+                    <div className="space-y-3">
+                      <label className="text-[11px] font-black uppercase tracking-[0.3em] text-theme-secondary opacity-40 ml-4">Título do Insight</label>
+                      <input 
+                        type="text" 
+                        placeholder="Ex: Padrão de Conversão Meta Ads Q1"
+                        className="w-full bg-theme-glass border border-theme-glass rounded-2xl p-5 text-theme-primary focus:outline-none focus:border-theme-blue/50 transition-all font-bold shadow-inner text-lg"
+                        value={newNote.title}
+                        onChange={e => setNewNote(prev => ({ ...prev, title: e.target.value }))}
+                      />
+                    </div>
+                    <div className="space-y-3">
+                      <label className="text-[11px] font-black uppercase tracking-[0.3em] text-theme-secondary opacity-40 ml-4">Conteúdo Estratégico</label>
+                      <textarea 
+                        placeholder="Descreva o insight técnico aqui (Markdown suportado)..."
+                        className="w-full bg-theme-glass border border-theme-glass rounded-2xl p-6 text-theme-primary h-64 focus:outline-none focus:border-theme-blue/50 transition-all resize-none font-medium text-base shadow-inner leading-relaxed"
+                        value={newNote.content}
+                        onChange={e => setNewNote(prev => ({ ...prev, content: e.target.value }))}
+                      />
+                    </div>
+                    <div className="space-y-3">
+                      <label className="text-[11px] font-black uppercase tracking-[0.3em] text-theme-secondary opacity-40 ml-4">Tags de Indexação</label>
+                      <input 
+                        type="text" 
+                        placeholder="roi, meta, conversion, strategy"
+                        className="w-full bg-theme-glass border border-theme-glass rounded-2xl p-5 text-theme-primary text-sm focus:outline-none focus:border-theme-blue/50 transition-all font-mono shadow-inner"
+                        value={newNote.tags}
+                        onChange={e => setNewNote(prev => ({ ...prev, tags: e.target.value }))}
+                      />
+                    </div>
                   </div>
-                  <div className="flex justify-end gap-3">
+                  <div className="flex justify-end gap-6 pt-6">
                     <button 
                       onClick={() => setIsNewNoteOpen(false)}
-                      className="px-6 py-2 text-white/60 hover:text-white text-xs font-bold uppercase"
+                      className="px-8 py-4 text-theme-secondary opacity-40 hover:opacity-100 text-[11px] font-black uppercase tracking-[0.2em] transition-all"
                     >
                       Cancelar
                     </button>
                     <button 
                       onClick={handleSaveNote}
-                      className="px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-xs font-bold uppercase flex items-center gap-2"
+                      className="px-10 py-4 bg-theme-blue hover:opacity-90 text-white rounded-2xl text-[11px] font-black uppercase tracking-[0.2em] flex items-center gap-3 shadow-[0_15px_35px_rgba(37,99,235,0.4)] transition-all active:scale-95 border border-white/20"
                     >
-                      <Save className="w-4 h-4" /> Gravar no Cérebro
+                      <Save className="w-5 h-5" /> Gravar no Cérebro
                     </button>
                   </div>
-                </div>
+                </motion.div>
               </motion.div>
             )}
           </AnimatePresence>

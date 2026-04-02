@@ -4,6 +4,7 @@ import path from "path";
 import { z } from "zod";
 import admin from "firebase-admin";
 import dotenv from "dotenv";
+import { google } from "googleapis";
 
 dotenv.config();
 
@@ -18,6 +19,101 @@ async function startServer() {
   const PORT = 3000;
 
   app.use(express.json());
+
+  const oauth2Client = new google.auth.OAuth2(
+    process.env.GOOGLE_CLIENT_ID,
+    process.env.GOOGLE_CLIENT_SECRET,
+    process.env.GOOGLE_REDIRECT_URI
+  );
+
+  // Google Drive Auth Routes
+  app.get("/api/auth/google/url", (req, res) => {
+    const url = oauth2Client.generateAuthUrl({
+      access_type: "offline",
+      scope: [
+        "https://www.googleapis.com/auth/drive.readonly",
+        "https://www.googleapis.com/auth/userinfo.email",
+        "https://www.googleapis.com/auth/userinfo.profile"
+      ],
+      prompt: "consent"
+    });
+    res.json({ url });
+  });
+
+  app.get("/api/auth/google/callback", async (req, res) => {
+    const { code } = req.query;
+    try {
+      const { tokens } = await oauth2Client.getToken(code as string);
+      res.send(`
+        <html>
+          <body style="background: #0A0A0A; color: white; font-family: sans-serif; display: flex; align-items: center; justify-content: center; height: 100vh; margin: 0;">
+            <div style="text-align: center;">
+              <h2 style="color: #3b82f6;">Autenticação Concluída!</h2>
+              <p style="color: #9ca3af;">Esta janela fechará automaticamente.</p>
+              <script>
+                if (window.opener) {
+                  window.opener.postMessage({ type: 'GOOGLE_AUTH_SUCCESS', tokens: ${JSON.stringify(tokens)} }, '*');
+                  setTimeout(() => window.close(), 1000);
+                } else {
+                  window.location.href = '/';
+                }
+              </script>
+            </div>
+          </body>
+        </html>
+      `);
+    } catch (error) {
+      console.error("OAuth callback error:", error);
+      res.status(500).send("Authentication failed");
+    }
+  });
+
+  app.post("/api/drive/read-folder", async (req, res) => {
+    const { folderId, tokens } = req.body;
+    if (!tokens) return res.status(401).json({ error: "No tokens provided" });
+
+    const auth = new google.auth.OAuth2(
+      process.env.GOOGLE_CLIENT_ID,
+      process.env.GOOGLE_CLIENT_SECRET,
+      process.env.GOOGLE_REDIRECT_URI
+    );
+    auth.setCredentials(tokens);
+    const drive = google.drive({ version: "v3", auth });
+
+    try {
+      const response = await drive.files.list({
+        q: `'${folderId}' in parents and trashed = false`,
+        fields: "files(id, name, mimeType)",
+      });
+
+      const files = response.data.files || [];
+      const fileContents = await Promise.all(files.map(async (file) => {
+        try {
+          if (file.mimeType === "application/vnd.google-apps.document") {
+            const docResponse = await drive.files.export({
+              fileId: file.id!,
+              mimeType: "text/plain",
+            });
+            return { name: file.name, content: docResponse.data as string };
+          } else if (file.mimeType === "text/plain" || file.mimeType === "application/json" || file.mimeType?.startsWith("text/")) {
+             const fileResponse = await drive.files.get({
+               fileId: file.id!,
+               alt: "media"
+             });
+             return { name: file.name, content: typeof fileResponse.data === 'string' ? fileResponse.data : JSON.stringify(fileResponse.data) };
+          }
+          return { name: file.name, content: `[Arquivo do tipo ${file.mimeType} não suportado para leitura direta automática]` };
+        } catch (e) {
+          return { name: file.name, content: `[Erro ao ler arquivo: ${(e as Error).message}]` };
+        }
+      }));
+
+      res.json({ files: fileContents });
+    } catch (error) {
+      console.error("Drive API error:", error);
+      res.status(500).json({ error: "Failed to read Drive folder" });
+    }
+  });
 
   // API routes
   app.get("/api/agent-config/:agentId", async (req, res) => {

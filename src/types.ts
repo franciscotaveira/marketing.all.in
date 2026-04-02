@@ -12,6 +12,7 @@ export enum SkillCategory {
   AI_ENGINEERING = "AI Engineering & LLMs",
   MEDIA_PRODUCTION = "Generative Media & Creative AI",
   RESEARCH = "Deep Research & Intelligence",
+  OPERATIONS = "Operations & Productivity",
 }
 
 export enum SkillTier {
@@ -46,6 +47,10 @@ export interface Company {
   id: string;
   name: string;
   context: string;
+  website?: string;
+  industry?: string;
+  targetAudience?: string;
+  createdAt?: any;
 }
 
 export interface WorkflowStep {
@@ -59,6 +64,8 @@ export interface WorkflowStep {
 export interface Workflow {
   id: string;
   name: string;
+  category: string;
+  color: string;
   description: string;
   initialPrompt: string;
   steps: WorkflowStep[];
@@ -140,4 +147,58 @@ export interface BrainMemory {
   createdAt: string;
   roi?: number;
   embedding?: number[]; // Adicionado para RAG
+}
+
+export interface Task {
+  id: string;
+  title: string;
+  description?: string;
+  status: "todo" | "in-progress" | "done";
+  priority: "low" | "medium" | "high";
+  tags?: string[];
+  image?: string;
+  assignedTo?: string;
+  reminderAt?: any;
+  dueDate?: any;
+  createdAt: any;
+  updatedAt?: any;
+}
+
+export interface Routine {
+  id: string;
+  title: string;
+  frequency: "daily" | "weekly" | "monthly";
+  startTime: string;
+  endTime: string;
+  days: string[];
+  createdAt: any;
+  updatedAt?: any;
+}
+
+export interface BrandPersona {
+  name: string;
+  tagline: string;
+  toneOfVoice: {
+    traits: string[];
+    description: string;
+  };
+  targetAudience: {
+    segments: string[];
+    description: string;
+  };
+  differentiation: {
+    points: string[];
+    description: string;
+  };
+  values: string[];
+}
+
+export interface Notification {
+  id: string;
+  title: string;
+  message: string;
+  type: "info" | "warning" | "success" | "error" | "task";
+  read: boolean;
+  createdAt: any;
+  metadata?: any;
 }

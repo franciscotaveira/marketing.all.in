@@ -13,7 +13,7 @@ import {
   Timestamp
 } from 'firebase/firestore';
 import { db, auth, handleFirestoreError, OperationType } from '../firebase';
-import { BrainMemory, Message, KnowledgeItem, ChatSession } from '../types';
+import { BrainMemory, Message, KnowledgeItem, ChatSession, MarketingSkill } from '../types';
 import { generateEmbedding, cosineSimilarity } from '../services/embeddingService';
 
 export const firebaseService = {
@@ -229,6 +229,68 @@ export const firebaseService = {
     } catch (error) {
       handleFirestoreError(error, OperationType.GET, path);
       return { data: [], error };
+    }
+  },
+
+  // Custom Agents
+  async saveCustomAgent(agent: Omit<MarketingSkill, 'id'>) {
+    if (!auth.currentUser) return { error: 'User not authenticated' };
+    const path = `users/${auth.currentUser.uid}/customAgents`;
+    try {
+      const cleanAgent = JSON.parse(JSON.stringify(agent));
+      const docRef = await addDoc(collection(db, path), {
+        ...cleanAgent,
+        createdAt: serverTimestamp(),
+        updatedAt: serverTimestamp()
+      });
+      return { data: { ...cleanAgent, id: docRef.id }, error: null };
+    } catch (error) {
+      handleFirestoreError(error, OperationType.WRITE, path);
+      return { data: null, error };
+    }
+  },
+
+  async getCustomAgents() {
+    if (!auth.currentUser) return { data: [], error: 'User not authenticated' };
+    const path = `users/${auth.currentUser.uid}/customAgents`;
+    try {
+      const q = query(collection(db, path), orderBy('createdAt', 'desc'));
+      const snapshot = await getDocs(q);
+      const agents = snapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data(),
+        createdAt: (doc.data().createdAt as Timestamp)?.toDate().toISOString() || new Date().toISOString()
+      })) as unknown as MarketingSkill[];
+      return { data: agents, error: null };
+    } catch (error) {
+      handleFirestoreError(error, OperationType.GET, path);
+      return { data: [], error };
+    }
+  },
+
+  async updateCustomAgent(agentId: string, data: Partial<MarketingSkill>) {
+    if (!auth.currentUser) return { error: 'User not authenticated' };
+    const path = `users/${auth.currentUser.uid}/customAgents/${agentId}`;
+    try {
+      const cleanData = JSON.parse(JSON.stringify(data));
+      await setDoc(doc(db, path), { ...cleanData, updatedAt: serverTimestamp() }, { merge: true });
+      return { error: null };
+    } catch (error) {
+      handleFirestoreError(error, OperationType.UPDATE, path);
+      return { error };
+    }
+  },
+
+  async deleteCustomAgent(agentId: string) {
+    if (!auth.currentUser) return { error: 'User not authenticated' };
+    const path = `users/${auth.currentUser.uid}/customAgents/${agentId}`;
+    try {
+      const { deleteDoc } = await import('firebase/firestore');
+      await deleteDoc(doc(db, path));
+      return { error: null };
+    } catch (error) {
+      handleFirestoreError(error, OperationType.DELETE, path);
+      return { error };
     }
   }
 };

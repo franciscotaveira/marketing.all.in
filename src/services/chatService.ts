@@ -1,6 +1,22 @@
 import { Message } from "../types";
 import { gemini } from "./gemini";
 
+// Intelligent Cache System
+const CACHE_PREFIX = "agent_cache_";
+const CACHE_EXPIRATION = 1000 * 60 * 60; // 1 hour
+
+function getCacheKey(agentId: string, message: string, systemInstruction?: string, history?: Message[]) {
+  const data = JSON.stringify({ agentId, message, systemInstruction, history: history?.slice(-3) });
+  // Simple hash function
+  let hash = 0;
+  for (let i = 0; i < data.length; i++) {
+    const char = data.charCodeAt(i);
+    hash = ((hash << 5) - hash) + char;
+    hash = hash & hash; // Convert to 32bit integer
+  }
+  return `${CACHE_PREFIX}${hash}`;
+}
+
 export async function sendMessageToAgent(
   agentId: string, 
   message: string, 
@@ -11,6 +27,27 @@ export async function sendMessageToAgent(
   history?: Message[],
   useGrounding?: boolean
 ) {
+  // Check Cache first (only for non-grounding and non-image requests for simplicity)
+  const isCacheable = !useGrounding && (!images || images.length === 0);
+  const cacheKey = getCacheKey(agentId, message, systemInstruction, history);
+
+  if (isCacheable) {
+    const cached = localStorage.getItem(cacheKey);
+    if (cached) {
+      try {
+        const { response, timestamp } = JSON.parse(cached);
+        if (Date.now() - timestamp < CACHE_EXPIRATION) {
+          console.log(`[Cache Hit] Agent: ${agentId}`);
+          return response;
+        }
+      } catch (e) {
+        localStorage.removeItem(cacheKey);
+      }
+    }
+  }
+
+  let finalResponse = "";
+
   // If model is Gemini, use SDK
   if (model.startsWith("gemini")) {
     const contents: any[] = [];
@@ -65,28 +102,42 @@ export async function sendMessageToAgent(
     config.tools.push({ urlContext: {} });
 
     const response = await gemini.generateText(contents, model, systemInstruction, config.tools);
-    return response.text || "Sem resposta.";
-  }
+    finalResponse = response.text || "Sem resposta.";
+  } else {
+    // Otherwise, call backend proxy
+    const response = await fetch("/api/chat", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ agentId, message, systemInstruction, tools, images, history, useGrounding }),
+    });
 
-  // Otherwise, call backend proxy
-  const response = await fetch("/api/chat", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({ agentId, message, systemInstruction, tools, images, history, useGrounding }),
-  });
-
-  if (!response.ok) {
-    let errorData;
-    try {
-      errorData = await response.json();
-    } catch (e) {
-      errorData = { message: response.statusText };
+    if (!response.ok) {
+      let errorData;
+      try {
+        errorData = await response.json();
+      } catch (e) {
+        errorData = { message: response.statusText };
+      }
+      throw new Error(`Chat error: ${JSON.stringify(errorData)}`);
     }
-    throw new Error(`Chat error: ${JSON.stringify(errorData)}`);
+
+    const data = await response.json();
+    finalResponse = data.response;
   }
 
-  const data = await response.json();
-  return data.response;
+  // Save to Cache
+  if (isCacheable && finalResponse) {
+    try {
+      localStorage.setItem(cacheKey, JSON.stringify({
+        response: finalResponse,
+        timestamp: Date.now()
+      }));
+    } catch (e) {
+      console.warn("Failed to save to cache", e);
+    }
+  }
+
+  return finalResponse;
 }

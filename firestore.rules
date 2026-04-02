@@ -61,6 +61,40 @@ service cloud.firestore {
     //   - dataSources: string (optional)
     //   - id: string (optional)
     //
+    // Collection: users/{userId}/tasks
+    // Document ID: {taskId}
+    // Fields:
+    //   - title: string (required)
+    //   - description: string (optional)
+    //   - status: string (required, ['todo', 'in-progress', 'done'])
+    //   - priority: string (required, ['low', 'medium', 'high'])
+    //   - tags: list (optional)
+    //   - reminderAt: timestamp (optional)
+    //   - dueDate: timestamp (optional)
+    //   - assignedTo: string (optional)
+    //   - image: string (optional, base64)
+    //   - createdAt: timestamp (required)
+    //   - updatedAt: timestamp (optional)
+    //
+    // Collection: users/{userId}/routines
+    // Document ID: {routineId}
+    // Fields:
+    //   - title: string (required)
+    //   - frequency: string (required, ['daily', 'weekly', 'monthly'])
+    //   - time: string (optional)
+    //   - days: list (optional)
+    //   - createdAt: timestamp (required)
+    //
+    // Collection: users/{userId}/notifications
+    // Document ID: {notificationId}
+    // Fields:
+    //   - title: string (required, max 100)
+    //   - message: string (required, max 500)
+    //   - type: string (required, ['info', 'warning', 'success', 'error', 'task'])
+    //   - read: boolean (required)
+    //   - createdAt: timestamp (required)
+    //   - metadata: map (optional)
+    //
     // ===============================================================
 
     // ===============================================================
@@ -77,8 +111,10 @@ service cloud.firestore {
 
     function isAdmin() {
       return isAuthenticated() &&
-        (get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin' ||
-          (request.auth.token.email == "franciscotaveira.rios@gmail.com" && request.auth.token.email_verified == true));
+        (
+          (request.auth.token.email == "franciscotaveira.rios@gmail.com" && request.auth.token.email_verified == true) ||
+          (exists(/databases/$(database)/documents/users/$(request.auth.uid)) && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin')
+        );
     }
 
     function hasRequiredFields(fields) {
@@ -148,6 +184,53 @@ service cloud.firestore {
              (!('dataSources' in data) || data.dataSources is string);
     }
 
+    function isValidTask(data) {
+      return hasRequiredFields(['title', 'status', 'priority', 'createdAt']) &&
+             data.title is string && data.title.size() <= 200 &&
+             (!('description' in data) || (data.description is string && data.description.size() <= 2000)) &&
+             data.status in ['todo', 'in-progress', 'done'] &&
+             data.priority in ['low', 'medium', 'high'] &&
+             (!('tags' in data) || (data.tags is list && data.tags.size() <= 20)) &&
+             (!('reminderAt' in data) || data.reminderAt is timestamp) &&
+             (!('dueDate' in data) || data.dueDate is timestamp) &&
+             (!('assignedTo' in data) || (data.assignedTo is string && data.assignedTo.size() <= 100)) &&
+             (!('image' in data) || (data.image is string && data.image.size() <= 1000000)) &&
+             data.createdAt is timestamp &&
+             (!('updatedAt' in data) || data.updatedAt is timestamp);
+    }
+
+    function isValidRoutine(data) {
+      return hasRequiredFields(['title', 'frequency', 'createdAt']) &&
+             data.title is string && data.title.size() <= 200 &&
+             data.frequency in ['daily', 'weekly', 'monthly'] &&
+             (!('time' in data) || data.time is string) &&
+             (!('days' in data) || data.days is list) &&
+             data.createdAt is timestamp;
+    }
+
+    function isValidNotification(data) {
+      return hasRequiredFields(['title', 'message', 'type', 'read', 'createdAt']) &&
+             data.title is string && data.title.size() <= 100 &&
+             data.message is string && data.message.size() <= 500 &&
+             data.type in ['info', 'warning', 'success', 'error', 'task'] &&
+             data.read is bool &&
+             data.createdAt is timestamp &&
+             (!('metadata' in data) || data.metadata is map);
+    }
+
+    function isValidCustomAgent(data) {
+      return hasRequiredFields(['name', 'category', 'tier', 'persona', 'description', 'prompt', 'createdAt']) &&
+             data.name is string && data.name.size() <= 100 &&
+             data.category is string &&
+             data.tier is string &&
+             data.persona is string && data.persona.size() <= 500 &&
+             data.description is string && data.description.size() <= 1000 &&
+             data.prompt is string && data.prompt.size() <= 10000 &&
+             (!('model' in data) || data.model is string) &&
+             data.createdAt is timestamp &&
+             (!('updatedAt' in data) || data.updatedAt is timestamp);
+    }
+
     // ===============================================================
     // Rules
     // ===============================================================
@@ -189,6 +272,35 @@ service cloud.firestore {
         allow read: if isOwner(userId) || isAdmin();
         allow create: if isOwner(userId) && isValidBrandProfile(request.resource.data);
         allow update: if isOwner(userId) && isValidBrandProfile(request.resource.data);
+        allow delete: if isOwner(userId) || isAdmin();
+      }
+
+      match /tasks/{taskId} {
+        allow read: if isOwner(userId) || isAdmin();
+        allow create: if isOwner(userId) && isValidTask(request.resource.data);
+        allow update: if isOwner(userId) && isValidTask(request.resource.data);
+        allow delete: if isOwner(userId) || isAdmin();
+      }
+
+      match /routines/{routineId} {
+        allow read: if isOwner(userId) || isAdmin();
+        allow create: if isOwner(userId) && isValidRoutine(request.resource.data);
+        allow update: if isOwner(userId) && isValidRoutine(request.resource.data);
+        allow delete: if isOwner(userId) || isAdmin();
+      }
+
+      match /notifications/{notificationId} {
+        allow read: if isOwner(userId) || isAdmin();
+        allow create: if isOwner(userId) && isValidNotification(request.resource.data);
+        allow update: if isOwner(userId) && isValidNotification(request.resource.data) &&
+                      request.resource.data.diff(resource.data).affectedKeys().hasOnly(['read']);
+        allow delete: if isOwner(userId) || isAdmin();
+      }
+
+      match /customAgents/{agentId} {
+        allow read: if isOwner(userId) || isAdmin();
+        allow create: if isOwner(userId) && isValidCustomAgent(request.resource.data);
+        allow update: if isOwner(userId) && isValidCustomAgent(request.resource.data);
         allow delete: if isOwner(userId) || isAdmin();
       }
     }

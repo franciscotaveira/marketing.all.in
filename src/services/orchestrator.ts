@@ -1,6 +1,5 @@
-import { MARKETING_SKILLS } from "../constants";
 import { sendMessageToAgent } from "./chatService";
-import { Message } from "../types";
+import { Message, MarketingSkill } from "../types";
 
 
 
@@ -17,6 +16,7 @@ export async function orchestrateRequest(
   useGrounding: boolean,
   useSwarmMode: boolean,
   onLog: (agentId: string, message: string, type: 'info' | 'action' | 'success' | 'error') => void,
+  allSkills: MarketingSkill[],
   images?: string[],
   history?: Message[]
 ): Promise<OrchestrationResult> {
@@ -29,9 +29,9 @@ export async function orchestrateRequest(
     
     // Selecionar 3 agentes diversos para o brainstorming
     const swarmAgents = [
-      MARKETING_SKILLS.find(s => s.id === "strategist") || MARKETING_SKILLS[0],
-      MARKETING_SKILLS.find(s => s.id === "growth-hacker") || MARKETING_SKILLS[1],
-      MARKETING_SKILLS.find(s => s.id === "copywriter") || MARKETING_SKILLS[2]
+      allSkills.find(s => s.id === "strategist") || allSkills[0],
+      allSkills.find(s => s.id === "growth-hacker") || allSkills[1],
+      allSkills.find(s => s.id === "copywriter") || allSkills[2]
     ];
 
     onLog("orchestrator", `Agentes convocados: ${swarmAgents.map(a => a.name).join(", ")}`, "action");
@@ -81,7 +81,7 @@ Como Orquestrador, sintetize essas visões em uma estratégia única, coesa e ac
 
   } else {
     // Modo Individual
-    const skill = MARKETING_SKILLS.find(s => s.id === targetAgentId) || MARKETING_SKILLS[0];
+    const skill = allSkills.find(s => s.id === targetAgentId) || allSkills[0];
     
     if (useGrounding) {
       onLog(targetAgentId, "Realizando pesquisa em tempo real...", "action");

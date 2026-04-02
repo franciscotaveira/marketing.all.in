@@ -102,6 +102,69 @@
         "role": { "type": "string", "enum": ["admin", "client"] },
         "createdAt": { "type": "string", "format": "date-time" }
       }
+    },
+    "Task": {
+      "title": "Task",
+      "description": "A task in the user's management system.",
+      "type": "object",
+      "properties": {
+        "title": { "type": "string" },
+        "description": { "type": "string" },
+        "status": { "type": "string", "enum": ["todo", "in-progress", "done"] },
+        "priority": { "type": "string", "enum": ["low", "medium", "high"] },
+        "tags": { "type": "array", "items": { "type": "string" } },
+        "reminderAt": { "type": "string", "format": "date-time" },
+        "dueDate": { "type": "string", "format": "date-time" },
+        "assignedTo": { "type": "string", "description": "The user ID or name the task is assigned to." },
+        "image": { "type": "string", "description": "Base64 encoded image attachment." },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["title", "status", "priority", "createdAt"]
+    },
+    "Routine": {
+      "title": "Routine",
+      "description": "A recurring routine or habit.",
+      "type": "object",
+      "properties": {
+        "title": { "type": "string" },
+        "frequency": { "type": "string", "enum": ["daily", "weekly", "monthly"] },
+        "time": { "type": "string" },
+        "days": { "type": "array", "items": { "type": "string" } },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["title", "frequency", "createdAt"]
+    },
+    "Notification": {
+      "title": "Notification",
+      "description": "An in-app notification for the user.",
+      "type": "object",
+      "properties": {
+        "title": { "type": "string" },
+        "message": { "type": "string" },
+        "type": { "type": "string", "enum": ["info", "warning", "success", "error", "task"] },
+        "read": { "type": "boolean" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "metadata": { "type": "object" }
+      },
+      "required": ["title", "message", "type", "read", "createdAt"]
+    },
+    "CustomAgent": {
+      "title": "CustomAgent",
+      "description": "A custom AI agent created by the user.",
+      "type": "object",
+      "properties": {
+        "name": { "type": "string" },
+        "category": { "type": "string" },
+        "tier": { "type": "string" },
+        "persona": { "type": "string" },
+        "description": { "type": "string" },
+        "prompt": { "type": "string" },
+        "model": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["name", "category", "tier", "persona", "description", "prompt", "createdAt"]
     }
   },
   "firestore": {
@@ -124,6 +187,22 @@
     "/users/{userId}/brandProfiles/{profileId}": {
       "schema": "BrandProfile",
       "description": "The brand profiles for the user."
+    },
+    "/users/{userId}/tasks/{taskId}": {
+      "schema": "Task",
+      "description": "User's tasks."
+    },
+    "/users/{userId}/routines/{routineId}": {
+      "schema": "Routine",
+      "description": "User's routines."
+    },
+    "/users/{userId}/notifications/{notificationId}": {
+      "schema": "Notification",
+      "description": "User's in-app notifications."
+    },
+    "/users/{userId}/customAgents/{agentId}": {
+      "schema": "CustomAgent",
+      "description": "User's custom AI agents."
     }
   }
 }

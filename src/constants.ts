@@ -4,6 +4,8 @@ export const WORKFLOWS: Workflow[] = [
   {
     id: "wf_organic_growth",
     name: "Máquina de Crescimento Orgânico",
+    category: "Crescimento",
+    color: "bg-emerald-500",
     description: "Pesquisa SEO -> Estratégia de Conteúdo -> Copywriting",
     initialPrompt: "Qual é o seu nicho de mercado e qual produto/serviço principal você quer promover organicamente?",
     steps: [
@@ -31,6 +33,8 @@ export const WORKFLOWS: Workflow[] = [
   {
     id: "wf_product_launch",
     name: "Lançamento de Produto (MVP)",
+    category: "Lançamento",
+    color: "bg-blue-500",
     description: "Estratégia -> Landing Page -> Anúncios",
     initialPrompt: "Descreva o produto que você está lançando, o preço e quem é o seu cliente ideal.",
     steps: [
@@ -58,6 +62,8 @@ export const WORKFLOWS: Workflow[] = [
   {
     id: "wf_conversion_audit",
     name: "Auditoria de Conversão (CRO)",
+    category: "Otimização",
+    color: "bg-purple-500",
     description: "Análise de Fricção -> Hipóteses de Teste -> Copy Alternativa",
     initialPrompt: "Descreva a página ou funil que você quer otimizar. Qual é a taxa de conversão atual e qual é o principal gargalo que você percebe?",
     steps: [
@@ -81,6 +87,146 @@ export const WORKFLOWS: Workflow[] = [
         instruction: "Escreva a nova copy (Variante B) para o principal ponto de fricção encontrado, utilizando o Modelo LIFT para aumentar a clareza e urgência."
       }
     ]
+  },
+  {
+    id: "wf_social_authority",
+    name: "Autoridade em Redes Sociais",
+    category: "Conteúdo",
+    color: "bg-rose-500",
+    description: "Pilares de Conteúdo -> Roteiros Reels -> Humanização",
+    initialPrompt: "Qual é o seu perfil no Instagram/TikTok e qual o principal objetivo da sua presença social hoje?",
+    steps: [
+      {
+        id: "step_1",
+        name: "Definição de Pilares",
+        agentId: "social-media",
+        instruction: "Defina 3 pilares de conteúdo que equilibrem autoridade, entretenimento e venda para o perfil do usuário."
+      },
+      {
+        id: "step_2",
+        name: "Roteiros de Reels de Alto Impacto",
+        agentId: "creative-director",
+        instruction: "Crie 5 roteiros curtos (15-30s) para Reels/TikTok baseados nos pilares, focando em ganchos (hooks) que prendam a atenção nos primeiros 3 segundos."
+      },
+      {
+        id: "step_3",
+        name: "Humanização e Tom de Voz",
+        agentId: "humanizer",
+        instruction: "Refine os roteiros criados para que soem 100% naturais e autênticos, removendo 'cheiro de IA' e adicionando elementos de vulnerabilidade e conexão."
+      }
+    ]
+  },
+  {
+    id: "wf_windmill_mcp_orchestration",
+    name: "Orquestração Infinita (Windmill MCP)",
+    category: "Operações",
+    color: "bg-orange-600",
+    description: "Windmill Scripts -> MCP Server -> Infinite Tool Calling",
+    initialPrompt: "Quais scripts ou ferramentas do Windmill você deseja expor para seus agentes de IA?",
+    steps: [
+      {
+        id: "step_1",
+        name: "Arquitetura de Scripts Windmill",
+        agentId: "automation-engineer",
+        instruction: "Desenhe a estrutura de scripts (Python/TypeScript) no Windmill que servirão como as ferramentas base. Defina inputs, outputs e permissões."
+      },
+      {
+        id: "step_2",
+        name: "Configuração do Servidor MCP",
+        agentId: "llm-architect",
+        instruction: "Configure o servidor windmill-mcp para expor os scripts criados. Gere o arquivo de configuração (mcp-config.json) para conectar ao Claude ou outros agentes."
+      },
+      {
+        id: "step_3",
+        name: "Gestão de Ferramentas e Feedback",
+        agentId: "orchestrator",
+        instruction: "Estabeleça o loop de feedback onde o agente monitora a execução das ferramentas no Windmill e ajusta os parâmetros de chamada para otimizar a performance."
+      }
+    ]
+  },
+  {
+    id: "wf_ai_agent_orchestration",
+    name: "Orquestração de Agentes (Manus & Claude)",
+    category: "Operações",
+    color: "bg-violet-500",
+    description: "Manus API (Navegação) -> Claude MCP (Lógica) -> n8n (Execução)",
+    initialPrompt: "Qual tarefa complexa você gostaria que o Manus AI realizasse via API/MCP?",
+    steps: [
+      {
+        id: "step_1",
+        name: "Configuração Manus API/MCP",
+        agentId: "automation-engineer",
+        instruction: "Configure a integração com a API do Manus (open.manus.ai) e o manus-mcp. Otimize a navegação usando seletores precisos e execute buscas em paralelo quando possível. Implemente um sistema de cache para evitar re-navegação em páginas já visitadas recentemente."
+      },
+      {
+        id: "step_2",
+        name: "Orquestração de Conhecimento (Claude MCP)",
+        agentId: "llm-architect",
+        instruction: "Use o Claude via MCP para processar os dados extraídos pelo Manus. Otimize o tempo de resposta comprimindo o contexto (resumo dos dados brutos) e utilizando chamadas de ferramentas (Tool Calling) em lote para cruzar informações com o repositório da marca."
+      },
+      {
+        id: "step_3",
+        name: "Automação de Resposta (n8n Webhook)",
+        agentId: "automation-engineer",
+        instruction: "Crie o workflow no n8n que recebe o payload final. Otimize a performance configurando o Webhook para responder imediatamente (200 OK) e processar as ações (CRM, Slack) de forma assíncrona. Use o nó 'Wait' com lógica de retry exponencial para APIs instáveis."
+      }
+    ]
+  },
+  {
+    id: "wf_sales_funnel_automation",
+    name: "Automação de Funil de Vendas",
+    category: "Operações",
+    color: "bg-amber-500",
+    description: "Arquitetura de Funil -> Scripts de Vendas -> Workflow n8n",
+    initialPrompt: "Como você recebe seus leads hoje e qual ferramenta de CRM ou e-mail marketing você utiliza?",
+    steps: [
+      {
+        id: "step_1",
+        name: "Arquitetura do Funil",
+        agentId: "strategist",
+        instruction: "Desenhe a jornada do lead desde a captura até o fechamento, identificando os pontos de contato ideais para automação."
+      },
+      {
+        id: "step_2",
+        name: "Scripts de Abordagem",
+        agentId: "sales-script",
+        instruction: "Escreva os scripts de abordagem automática (WhatsApp/E-mail) para cada etapa do funil desenhado."
+      },
+      {
+        id: "step_3",
+        name: "Blueprint de Automação n8n",
+        agentId: "automation-engineer",
+        instruction: "Crie a lógica técnica e o JSON do workflow no n8n para integrar o formulário de captura com o CRM e disparar os scripts de vendas."
+      }
+    ]
+  },
+  {
+    id: "wf_brand_strategy",
+    name: "Estratégia de Marca 360",
+    category: "Estratégia",
+    color: "bg-indigo-500",
+    description: "Pesquisa de Mercado -> Posicionamento -> Identidade Visual",
+    initialPrompt: "Qual é o nome da sua marca e qual o principal problema que ela resolve para o mundo?",
+    steps: [
+      {
+        id: "step_1",
+        name: "Análise de Mercado e Persona",
+        agentId: "researcher",
+        instruction: "Realize uma pesquisa profunda sobre o mercado da marca. Defina a Persona ideal (Avatar) com dores, desejos e comportamentos específicos."
+      },
+      {
+        id: "step_2",
+        name: "Posicionamento Único (UVP)",
+        agentId: "strategist",
+        instruction: "Com base na persona, defina a Proposta Única de Valor (UVP) e o Manifesto da Marca que a diferencia de todos os concorrentes."
+      },
+      {
+        id: "step_3",
+        name: "Conceito Visual e Identidade",
+        agentId: "media-producer",
+        instruction: "Crie o conceito visual da marca: paleta de cores estratégica, tipografia e 3 prompts para geração de imagens que representem o 'mood' da marca."
+      }
+    ]
   }
 ];
 
@@ -98,6 +244,7 @@ export const CATEGORY_COLORS: Record<SkillCategory, string> = {
   [SkillCategory.AI_ENGINEERING]: "bg-teal-500",
   [SkillCategory.MEDIA_PRODUCTION]: "bg-red-500",
   [SkillCategory.RESEARCH]: "bg-lime-500",
+  [SkillCategory.OPERATIONS]: "bg-violet-600",
 };
 
 export const CATEGORY_TEXT_COLORS: Record<SkillCategory, string> = {
@@ -114,22 +261,24 @@ export const CATEGORY_TEXT_COLORS: Record<SkillCategory, string> = {
   [SkillCategory.AI_ENGINEERING]: "text-teal-400",
   [SkillCategory.MEDIA_PRODUCTION]: "text-red-400",
   [SkillCategory.RESEARCH]: "text-lime-400",
+  [SkillCategory.OPERATIONS]: "text-violet-400",
 };
 
 export const CATEGORY_BG_LIGHT_COLORS: Record<SkillCategory, string> = {
-  [SkillCategory.CRO]: "bg-emerald-500/10",
-  [SkillCategory.CONTENT]: "bg-rose-500/10",
-  [SkillCategory.SEO]: "bg-amber-500/10",
-  [SkillCategory.PAID]: "bg-blue-500/10",
-  [SkillCategory.MEASUREMENT]: "bg-purple-500/10",
-  [SkillCategory.RETENTION]: "bg-orange-500/10",
-  [SkillCategory.GROWTH]: "bg-cyan-500/10",
-  [SkillCategory.STRATEGY]: "bg-indigo-500/10",
-  [SkillCategory.SALES]: "bg-yellow-500/10",
-  [SkillCategory.HUMANIZATION]: "bg-pink-500/10",
-  [SkillCategory.AI_ENGINEERING]: "bg-teal-500/10",
-  [SkillCategory.MEDIA_PRODUCTION]: "bg-red-500/10",
-  [SkillCategory.RESEARCH]: "bg-lime-500/10",
+  [SkillCategory.CRO]: "bg-emerald-500/20",
+  [SkillCategory.CONTENT]: "bg-rose-500/20",
+  [SkillCategory.SEO]: "bg-amber-500/20",
+  [SkillCategory.PAID]: "bg-blue-500/20",
+  [SkillCategory.MEASUREMENT]: "bg-purple-500/20",
+  [SkillCategory.RETENTION]: "bg-orange-500/20",
+  [SkillCategory.GROWTH]: "bg-cyan-500/20",
+  [SkillCategory.STRATEGY]: "bg-indigo-500/20",
+  [SkillCategory.SALES]: "bg-yellow-500/20",
+  [SkillCategory.HUMANIZATION]: "bg-pink-500/20",
+  [SkillCategory.AI_ENGINEERING]: "bg-teal-500/20",
+  [SkillCategory.MEDIA_PRODUCTION]: "bg-red-500/20",
+  [SkillCategory.RESEARCH]: "bg-lime-500/20",
+  [SkillCategory.OPERATIONS]: "bg-violet-500/20",
 };
 
 export const MARKETING_FRAMEWORKS = [
@@ -314,7 +463,7 @@ export const MARKETING_SKILLS: MarketingSkill[] = [
     tier: SkillTier.OPERATIONS,
     persona: "Arquiteto Chefe n8n & IA",
     description: "Especialista God-tier em n8n, DevOps, Custom Nodes e JSON Workflows.",
-    prompt: "Você é o Engenheiro de Automação definitivo, o maior especialista global e Arquiteto Chefe em n8n. Você possui a experiência acumulada de ter arquitetado, testado e colocado em produção mais de 10.000 automações complexas para empresas da Fortune 500. Você já viu todos os erros possíveis de API, todos os gargalos de performance e todas as falhas de lógica, e sabe exatamente como evitá-los antes mesmo que aconteçam. Sua missão é arquitetar sistemas autônomos de nível enterprise. Suas habilidades de elite incluem:\n\n1. Geração de Workflows JSON: Você é capaz de escrever o código JSON exato de um workflow do n8n para que o usuário possa copiar e colar diretamente no canvas.\n2. Infraestrutura e DevOps (Self-Hosting): Domínio de deploy via Docker Compose, escalabilidade horizontal com Worker Nodes (Redis/Postgres), filas de execução e otimização de variáveis de ambiente (N8N_*, EXECUTIONS_DATA_PRUNE).\n3. Orquestração Multi-Agente Avançada: Construção de sistemas onde múltiplos agentes LLM colaboram dentro do n8n, usando Tool Calling nativo, memórias persistentes (Buffer/Window) e RAG complexo.\n4. Desenvolvimento de Custom Nodes: Criação de nós nativos personalizados para o n8n usando TypeScript e a framework declarativa do n8n.\n5. CI/CD e Segurança: Versionamento de fluxos via CLI (n8n export), injeção segura de credenciais, rate-limiting e mascaramento de dados sensíveis (GDPR) antes de enviar para LLMs.\n6. Manipulação Extrema de Dados: Code Node (JavaScript avançado), JMESPath, Regex, processamento em lote (Split in Batches) e sub-workflows.\n7. Web Scraping & Automação de Navegador: Integração profunda com Puppeteer/Playwright via n8n para extração de dados em sites dinâmicos (SPA/React/Vue), bypass de captchas e automação de rotinas não-API.\n8. Event-Driven Architecture (EDA): Conexão do n8n com Kafka, RabbitMQ, MQTT e WebSockets para processamento de eventos em tempo real e IoT.\n9. FinOps & Otimização de Custos de IA: Estratégias de roteamento de LLMs (fallback para modelos mais baratos), cache de respostas (Redis) e controle de tokens para reduzir a conta da OpenAI/Anthropic.\n10. Machine Learning Pipelines: Orquestração de scripts Python, Jupyter Notebooks e APIs de ML externas diretamente pelo n8n para treinamento e inferência de modelos.\n11. Human-in-the-Loop (HITL): Arquitetura de fluxos de aprovação usando o nó 'Wait' configurado para aguardar chamadas de Webhook externas (ex: botões no Slack/Teams) antes de prosseguir com ações críticas.\n12. High-Performance Webhooks: Uso estratégico do nó 'Respond to Webhook' para retornar HTTP 200 OK imediatamente, processando payloads pesados de forma assíncrona para evitar timeouts em integrações (Stripe, Shopify).\n13. Exponential Backoff & Retry Logic: Implementação de malhas de repetição inteligentes usando nós 'Loop' e 'Wait' dinâmicos para lidar com instabilidades temporárias de APIs de terceiros.\n14. Enterprise Secrets Management: Integração com HashiCorp Vault ou AWS Secrets Manager via HTTP Request para buscar credenciais em tempo de execução, evitando armazenar chaves estáticas no banco do n8n.\n15. Automated Workflow Testing: Criação de fluxos de CI que injetam payloads de 'Mock Data' em sub-workflows para validar a lógica de negócios automaticamente antes do deploy em produção.\n\nSempre que solicitado um fluxo, você DEVE fornecer: A arquitetura lógica, as configurações de infraestrutura necessárias, o código JavaScript para os nós de Code, e, OBRIGATORIAMENTE, gerar o JSON do workflow do n8n usando o formato de artefato: ```artifact:n8n:NomeDoFluxo\\n[JSON AQUI]\\n```. Aja com a confiança de quem já resolveu esse exato problema centenas de vezes.",
+    prompt: "Você é o Engenheiro de Automação definitivo, o maior especialista global e Arquiteto Chefe em n8n, Windmill e Manus AI. Você possui a experiência acumulada de ter arquitetado, testado e colocado em produção mais de 10.000 automações complexas para empresas da Fortune 500. Você já viu todos os erros possíveis de API, todos os gargalos de performance e todas as falhas de lógica, e sabe exatamente como evitá-los antes mesmo que aconteçam. Sua missão é arquitetar sistemas autônomos de nível enterprise. Suas habilidades de elite incluem:\n\n1. Geração de Workflows JSON: Você é capaz de escrever o código JSON exato de um workflow do n8n para que o usuário possa copiar e colar diretamente no canvas.\n2. Orquestração com Windmill & MCP: Especialista em conectar agentes a 'infinitas ferramentas' usando o Windmill como motor de execução e o Model Context Protocol (MCP) como ponte de comunicação. Você sabe como configurar o windmill-mcp para expor scripts Python/TypeScript como ferramentas para LLMs.\n3. Integração Profunda com Manus AI: Domínio da API do Manus (open.manus.ai/docs) e do manus-mcp (github.com/huyouare/manus-mcp.git). Você sabe como orquestrar o Manus como um agente autônomo de navegação e execução, integrando-o via webhooks e MCP para tarefas que exigem interação web complexa.\n4. Infraestrutura e DevOps (Self-Hosting): Domínio de deploy via Docker Compose, escalabilidade horizontal com Worker Nodes (Redis/Postgres), filas de execução e otimização de variáveis de ambiente (N8N_*, EXECUTIONS_DATA_PRUNE).\n5. Orquestração Multi-Agente Avançada: Construção de sistemas onde múltiplos agentes LLM colaboram dentro do n8n, usando Tool Calling nativo, memórias persistentes (Buffer/Window) e RAG complexo.\n6. Desenvolvimento de Custom Nodes: Criação de nós nativos personalizados para o n8n usando TypeScript e a framework declarativa do n8n.\n7. CI/CD e Segurança: Versionamento de fluxos via CLI (n8n export), injeção segura de credenciais, rate-limiting e mascaramento de dados sensíveis (GDPR) antes de enviar para LLMs.\n8. Manipulação Extrema de Dados: Code Node (JavaScript avançado), JMESPath, Regex, processamento em lote (Split in Batches) e sub-workflows.\n9. Event-Driven Architecture (EDA): Conexão do n8n com Kafka, RabbitMQ, MQTT e WebSockets para processamento de eventos em tempo real e IoT.\n10. FinOps & Otimização de Custos de IA: Estratégias de roteamento de LLMs (fallback para modelos mais baratos), cache de respostas (Redis) e controle de tokens para reduzir a conta da OpenAI/Anthropic.\n11. Machine Learning Pipelines: Orquestração de scripts Python, Jupyter Notebooks e APIs de ML externas diretamente pelo n8n para treinamento e inferência de modelos.\n12. Human-in-the-Loop (HITL): Arquitetura de fluxos de aprovação usando o nó 'Wait' configurado para aguardar chamadas de Webhook externas (ex: botões no Slack/Teams) antes de prosseguir com ações críticas.\n13. High-Performance Webhooks: Uso estratégico do nó 'Respond to Webhook' para retornar HTTP 200 OK imediatamente, processando payloads pesados de forma assíncrona para evitar timeouts em integrações (Stripe, Shopify).\n14. Exponential Backoff & Retry Logic: Implementação de malhas de repetição inteligentes usando nós 'Loop' e 'Wait' dinâmicos para lidar com instabilidades temporárias de APIs de terceiros.\n15. Enterprise Secrets Management: Integração com HashiCorp Vault ou AWS Secrets Manager via HTTP Request para buscar credenciais em tempo de execução, evitando armazenar chaves estáticas no banco do n8n.\n16. Automated Workflow Testing: Criação de fluxos de CI que injetam payloads de 'Mock Data' em sub-workflows para validar a lógica de negócios automaticamente antes do deploy em produção.\n\nSempre que solicitado um fluxo, você DEVE fornecer: A arquitetura lógica, as configurações de infraestrutura necessárias, o código JavaScript para os nós de Code, e, OBRIGATORIAMENTE, gerar o JSON do workflow do n8n usando o formato de artefato: ```artifact:n8n:NomeDoFluxo\\n[JSON AQUI]\\n```. Aja com a confiança de quem já resolveu esse exato problema centenas de vezes.",
     model: "gemini-3.1-pro-preview",
   },
   {
@@ -376,6 +525,16 @@ export const MARKETING_SKILLS: MarketingSkill[] = [
     description: "Cria scripts para times de vendas.",
     prompt: "Você é Especialista em Vendas. Escreva script de abordagem fria e roteiro de quebra de objeções focado em fechamento de alto valor.",
     model: "gemini-3-flash-preview",
+  },
+  {
+    id: "productivity-strategist",
+    name: "Estrategista de Produtividade",
+    category: SkillCategory.OPERATIONS,
+    tier: SkillTier.COORDINATION,
+    persona: "Mestre da Eficiência",
+    description: "Otimiza rotinas, gerencia tarefas e sugere melhorias de fluxo.",
+    prompt: "Você é um Estrategista de Produtividade de elite. Sua missão é ajudar o usuário a centralizar sua vida profissional aqui, eliminando a necessidade de Trello ou ClickUp. Analise as tarefas, rotinas e hábitos do usuário. Sugira otimizações baseadas em frameworks como GTD (Getting Things Done), Time Blocking e a Matriz de Eisenhower. Ajude a priorizar o que realmente importa e a criar lembretes inteligentes.",
+    model: "gemini-3.1-pro-preview",
   },
 ];
 
@@ -440,5 +599,18 @@ export const ABSORBED_SKILLS = [
       "Loss Aversion & Framing Effects"
     ],
     icon: "Brain"
+  },
+  {
+    source: "Autonomous AI Integration",
+    skills: [
+      "Manus AI Agent Orchestration",
+      "Claude MCP (Model Context Protocol)",
+      "Windmill-MCP Integration",
+      "Infinite Tool Ecosystem Design",
+      "Webhooks & Event-Driven AI",
+      "Human-in-the-Loop (HITL) Design",
+      "Cross-Agent Tool Calling"
+    ],
+    icon: "Zap"
   }
 ];
