@@ -2,19 +2,86 @@ import { Message } from "../types";
 import { gemini } from "./gemini";
 
 // Intelligent Cache System
-const CACHE_PREFIX = "agent_cache_";
-const CACHE_EXPIRATION = 1000 * 60 * 60; // 1 hour
+const CACHE_PREFIX = "agent_cache_v2_";
+const CACHE_EXPIRATION = 1000 * 60 * 60 * 24; // 24 hours
+const SIMILARITY_THRESHOLD = 0.98; // Very high similarity for semantic cache
 
-function getCacheKey(agentId: string, message: string, systemInstruction?: string, history?: Message[]) {
-  const data = JSON.stringify({ agentId, message, systemInstruction, history: history?.slice(-3) });
-  // Simple hash function
-  let hash = 0;
-  for (let i = 0; i < data.length; i++) {
-    const char = data.charCodeAt(i);
-    hash = ((hash << 5) - hash) + char;
-    hash = hash & hash; // Convert to 32bit integer
+export async function getSemanticCache(message: string): Promise<string | null> {
+  try {
+    const cacheIndex = localStorage.getItem(`${CACHE_PREFIX}index`);
+    if (!cacheIndex) return null;
+
+    const index: { key: string; embedding: number[]; timestamp: number }[] = JSON.parse(cacheIndex);
+    
+    // Clean up expired entries
+    const now = Date.now();
+    const validIndex = index.filter(item => now - item.timestamp < CACHE_EXPIRATION);
+    if (validIndex.length !== index.length) {
+      localStorage.setItem(`${CACHE_PREFIX}index`, JSON.stringify(validIndex));
+    }
+
+    if (validIndex.length === 0) return null;
+
+    // Get embedding for current message
+    const { embeddings } = await gemini.embedContent(message);
+    const currentEmbedding = embeddings[0].values;
+
+    // Find most similar
+    let bestMatch = null;
+    let maxSimilarity = -1;
+
+    for (const item of validIndex) {
+      const similarity = cosineSimilarity(currentEmbedding, item.embedding);
+      if (similarity > maxSimilarity) {
+        maxSimilarity = similarity;
+        bestMatch = item;
+      }
+    }
+
+    if (bestMatch && maxSimilarity >= SIMILARITY_THRESHOLD) {
+      console.log(`[Semantic Cache Hit] Similarity: ${(maxSimilarity * 100).toFixed(2)}%`);
+      return localStorage.getItem(bestMatch.key);
+    }
+  } catch (e) {
+    console.warn("Semantic cache error:", e);
   }
-  return `${CACHE_PREFIX}${hash}`;
+  return null;
+}
+
+function cosineSimilarity(vecA: number[], vecB: number[]): number {
+  let dotProduct = 0;
+  let mA = 0;
+  let mB = 0;
+  for (let i = 0; i < vecA.length; i++) {
+    dotProduct += vecA[i] * vecB[i];
+    mA += vecA[i] * vecA[i];
+    mB += vecB[i] * vecB[i];
+  }
+  return dotProduct / (Math.sqrt(mA) * Math.sqrt(mB));
+}
+
+export async function saveToSemanticCache(message: string, response: string) {
+  try {
+    const { embeddings } = await gemini.embedContent(message);
+    const embedding = embeddings[0].values;
+    const key = `${CACHE_PREFIX}${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+    
+    localStorage.setItem(key, response);
+
+    const cacheIndex = localStorage.getItem(`${CACHE_PREFIX}index`);
+    const index = cacheIndex ? JSON.parse(cacheIndex) : [];
+    index.push({ key, embedding, timestamp: Date.now() });
+    
+    // Limit index size to 50 entries to avoid localStorage bloat
+    if (index.length > 50) {
+      const removed = index.shift();
+      localStorage.removeItem(removed.key);
+    }
+
+    localStorage.setItem(`${CACHE_PREFIX}index`, JSON.stringify(index));
+  } catch (e) {
+    console.warn("Failed to save to semantic cache:", e);
+  }
 }
 
 export async function sendMessageToAgent(
@@ -25,25 +92,15 @@ export async function sendMessageToAgent(
   tools?: any[],
   images?: string[],
   history?: Message[],
-  useGrounding?: boolean
+  useGrounding?: boolean,
+  responseMimeType?: string
 ) {
-  // Check Cache first (only for non-grounding and non-image requests for simplicity)
-  const isCacheable = !useGrounding && (!images || images.length === 0);
-  const cacheKey = getCacheKey(agentId, message, systemInstruction, history);
-
+  // Check Cache first
+  const isCacheable = !useGrounding && (!images || images.length === 0) && !responseMimeType && (!history || history.length === 0);
+  
   if (isCacheable) {
-    const cached = localStorage.getItem(cacheKey);
-    if (cached) {
-      try {
-        const { response, timestamp } = JSON.parse(cached);
-        if (Date.now() - timestamp < CACHE_EXPIRATION) {
-          console.log(`[Cache Hit] Agent: ${agentId}`);
-          return response;
-        }
-      } catch (e) {
-        localStorage.removeItem(cacheKey);
-      }
-    }
+    const cachedResponse = await getSemanticCache(message);
+    if (cachedResponse) return cachedResponse;
   }
 
   let finalResponse = "";
@@ -101,7 +158,7 @@ export async function sendMessageToAgent(
     // Add URL context tool by default to allow reading URLs
     config.tools.push({ urlContext: {} });
 
-    const response = await gemini.generateText(contents, model, systemInstruction, config.tools);
+    const response = await gemini.generateText(contents, model, systemInstruction, config.tools, responseMimeType);
     finalResponse = response.text || "Sem resposta.";
   } else {
     // Otherwise, call backend proxy
@@ -129,14 +186,7 @@ export async function sendMessageToAgent(
 
   // Save to Cache
   if (isCacheable && finalResponse) {
-    try {
-      localStorage.setItem(cacheKey, JSON.stringify({
-        response: finalResponse,
-        timestamp: Date.now()
-      }));
-    } catch (e) {
-      console.warn("Failed to save to cache", e);
-    }
+    await saveToSemanticCache(message, finalResponse);
   }
 
   return finalResponse;

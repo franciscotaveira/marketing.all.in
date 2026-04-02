@@ -74,7 +74,8 @@
         "content": { "type": "string" },
         "tags": { "type": "array", "items": { "type": "string" } },
         "createdAt": { "type": "string", "format": "date-time" },
-        "roi": { "type": "number" }
+        "roi": { "type": "number" },
+        "embedding": { "type": "array", "items": { "type": "number" } }
       },
       "required": ["agentId", "title", "content", "createdAt"]
     },

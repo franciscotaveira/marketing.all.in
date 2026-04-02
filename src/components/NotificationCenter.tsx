@@ -63,33 +63,36 @@ export default function NotificationCenter() {
 
     const checkTasks = async () => {
       const now = new Date();
-      const tomorrow = new Date(now.getTime() + 24 * 60 * 60 * 1000);
       const tasksRef = collection(db, 'users', auth.currentUser!.uid, 'tasks');
-      const q = query(tasksRef, where('status', '!=', 'done'));
+      const notifsRef = collection(db, 'users', auth.currentUser!.uid, 'notifications');
       
       try {
-        const snapshot = await getDocs(q);
-        for (const docSnap of snapshot.docs) {
+        // Fetch tasks that are not done (todo or in-progress)
+        const tasksQuery = query(tasksRef, where('status', '!=', 'done'));
+        const tasksSnapshot = await getDocs(tasksQuery);
+        
+        // Fetch recent notifications to avoid duplicates
+        // We only check the last 50 notifications for performance
+        const recentNotifsQuery = query(notifsRef, orderBy('createdAt', 'desc'), limit(50));
+        const notifsSnapshot = await getDocs(recentNotifsQuery);
+        const existingNotifs = notifsSnapshot.docs.map(d => d.data());
+
+        for (const docSnap of tasksSnapshot.docs) {
           const task = docSnap.data();
           if (!task.dueDate) continue;
 
           const dueDate = task.dueDate instanceof Timestamp ? task.dueDate.toDate() : new Date(task.dueDate);
           
-          // Skip if task is done
-          if (task.status === 'done') continue;
-
           // Overdue Check
           if (dueDate < now) {
-            const notifQ = query(
-              collection(db, 'users', auth.currentUser!.uid, 'notifications'),
-              where('metadata.taskId', '==', docSnap.id),
-              where('type', '==', 'warning'),
-              where('read', '==', false)
+            const alreadyNotified = existingNotifs.some(n => 
+              n.metadata?.taskId === docSnap.id && 
+              n.metadata?.notifType === 'overdue' &&
+              n.metadata?.dueDate === dueDate.toISOString()
             );
-            const notifSnapshot = await getDocs(notifQ);
-            
-            if (notifSnapshot.empty) {
-              await addDoc(collection(db, 'users', auth.currentUser!.uid, 'notifications'), {
+
+            if (!alreadyNotified) {
+              await addDoc(notifsRef, {
                 title: '🚨 Tarefa Atrasada',
                 message: `A tarefa "${task.title}" ultrapassou o prazo de vencimento!`,
                 type: 'warning',
@@ -97,50 +100,25 @@ export default function NotificationCenter() {
                 createdAt: serverTimestamp(),
                 metadata: { 
                   taskId: docSnap.id,
+                  notifType: 'overdue',
                   dueDate: dueDate.toISOString()
                 }
               });
             }
           } 
-          // Upcoming Check (within 24h)
-          else if (dueDate < tomorrow) {
-            const notifQ = query(
-              collection(db, 'users', auth.currentUser!.uid, 'notifications'),
-              where('metadata.taskId', '==', docSnap.id),
-              where('type', '==', 'info'),
-              where('read', '==', false)
-            );
-            const notifSnapshot = await getDocs(notifQ);
-            
-            if (notifSnapshot.empty) {
-              await addDoc(collection(db, 'users', auth.currentUser!.uid, 'notifications'), {
-                title: '⏳ Vencimento Próximo',
-                message: `A tarefa "${task.title}" vence em menos de 24 horas.`,
-                type: 'info',
-                read: false,
-                createdAt: serverTimestamp(),
-                metadata: { 
-                  taskId: docSnap.id,
-                  dueDate: dueDate.toISOString()
-                }
-              });
-            }
-          }
-
+          
           // Reminder Check
           if (task.reminderAt) {
             const reminderAt = task.reminderAt instanceof Timestamp ? task.reminderAt.toDate() : new Date(task.reminderAt);
             if (reminderAt <= now) {
-              const notifQ = query(
-                collection(db, 'users', auth.currentUser!.uid, 'notifications'),
-                where('metadata.taskId', '==', docSnap.id),
-                where('metadata.notifType', '==', 'reminder'),
-                where('read', '==', false)
+              const alreadyReminded = existingNotifs.some(n => 
+                n.metadata?.taskId === docSnap.id && 
+                n.metadata?.notifType === 'reminder' &&
+                n.metadata?.reminderAt === reminderAt.toISOString()
               );
-              const notifSnapshot = await getDocs(notifQ);
               
-              if (notifSnapshot.empty) {
-                await addDoc(collection(db, 'users', auth.currentUser!.uid, 'notifications'), {
+              if (!alreadyReminded) {
+                await addDoc(notifsRef, {
                   title: '🔔 Lembrete de Tarefa',
                   message: `Lembrete para: "${task.title}"`,
                   type: 'task',

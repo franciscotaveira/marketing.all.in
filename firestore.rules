@@ -38,6 +38,8 @@ service cloud.firestore {
     //   - content: string (required, max 5000) - Memory content
     //   - tags: list (optional) - List of tags
     //   - createdAt: timestamp (required) - Creation timestamp
+    //   - roi: number (optional) - Return on Investment of the memory
+    //   - embedding: list (optional) - Vector embedding for RAG
     //
     // Collection: users/{userId}/knowledgeBase
     // Document ID: {knowledgeId}
@@ -159,7 +161,9 @@ service cloud.firestore {
              data.agentId is string &&
              data.title is string && data.title.size() <= 200 &&
              data.content is string && data.content.size() <= 100000 &&
-             data.createdAt is timestamp;
+             data.createdAt is timestamp &&
+             (!('roi' in data) || data.roi is number) &&
+             (!('embedding' in data) || data.embedding is list);
     }
 
     function isValidKnowledgeItem(data) {

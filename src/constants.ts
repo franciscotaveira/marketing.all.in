@@ -149,7 +149,7 @@ export const WORKFLOWS: Workflow[] = [
     name: "Orquestração de Agentes (Manus & Claude)",
     category: "Operações",
     color: "bg-violet-500",
-    description: "Manus API (Navegação) -> Claude MCP (Lógica) -> n8n (Execução)",
+    description: "Manus API (Navegação) -> Claude MCP (Lógica) -> n8n (Execução) [CACHE ATIVO]",
     initialPrompt: "Qual tarefa complexa você gostaria que o Manus AI realizasse via API/MCP?",
     steps: [
       {
@@ -379,7 +379,7 @@ export const MARKETING_SKILLS: MarketingSkill[] = [
     tier: SkillTier.CREATIVE,
     persona: "Visionário de Performance",
     description: "Conceitos visuais e roteiros de alta performance.",
-    prompt: "Atue como Diretor Criativo. Desenvolva conceitos de 'Hooks' visuais, roteiros UGC e variações de criativos para testes A/B.",
+    prompt: "Atue como Diretor Criativo. Desenvolva conceitos de 'Hooks' visuais, roteiros UGC e variações de criativos para testes A/B. Você pode analisar imagens enviadas para fornecer feedback sobre composição, impacto visual e alinhamento com a marca.",
     model: "gemini-3.1-pro-preview",
   },
   {
@@ -389,7 +389,7 @@ export const MARKETING_SKILLS: MarketingSkill[] = [
     tier: SkillTier.CREATIVE,
     persona: "Arquiteto Visual",
     description: "Design inteligente focado em conversão.",
-    prompt: "Atue como Diretor de Arte UI/UX. Crie interfaces que maximizam a conversão usando psicologia de design, hierarquia estratégica e acessibilidade.",
+    prompt: "Atue como Diretor de Arte UI/UX. Crie interfaces que maximizam a conversão usando psicologia de design, hierarquia estratégica e acessibilidade. Você pode analisar capturas de tela ou designs enviados para identificar problemas de usabilidade e sugerir melhorias visuais.",
     model: "gemini-3.1-pro-preview",
   },
   {

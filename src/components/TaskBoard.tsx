@@ -24,11 +24,15 @@ import {
   TrendingUp,
   TrendingDown,
   Image as ImageIcon,
-  User
+  User,
+  Brain,
+  Check,
+  Activity
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
-import { Task } from '../types';
+import { Task, BrainMemory } from '../types';
 import { db, auth, handleFirestoreError, OperationType } from '../firebase';
+import { firebaseService } from '../lib/firebaseService';
 import { 
   collection, 
   query, 
@@ -55,28 +59,35 @@ const STATUS_COLUMNS = [
   { id: 'done', name: 'Concluído', icon: CheckCircle2, color: 'text-theme-emerald' },
 ];
 
+const INITIAL_NEW_TASK = { 
+  title: '', 
+  description: '', 
+  priority: 'medium' as 'low' | 'medium' | 'high', 
+  dueDate: '',
+  tags: '',
+  reminderAt: '',
+  image: '',
+  assignedTo: ''
+};
+
 export default function TaskBoard() {
   const [tasks, setTasks] = useState<Task[]>([]);
   const [isAddingTask, setIsAddingTask] = useState<string | null>(null);
   const [editingTask, setEditingTask] = useState<Task | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [newTask, setNewTask] = useState({ 
-    title: '', 
-    description: '', 
-    priority: 'medium' as 'low' | 'medium' | 'high', 
-    dueDate: '',
-    tags: '',
-    reminderAt: '',
-    image: '',
-    assignedTo: ''
-  });
+  const [newTask, setNewTask] = useState(INITIAL_NEW_TASK);
   const [searchQuery, setSearchQuery] = useState('');
+  const [assignedSearchQuery, setAssignedSearchQuery] = useState('');
   const [viewMode, setViewMode] = useState<'kanban' | 'list'>('kanban');
   const [priorityFilter, setPriorityFilter] = useState<'all' | 'low' | 'medium' | 'high'>('all');
   const [statusFilter, setStatusFilter] = useState<'all' | 'todo' | 'in-progress' | 'done'>('all');
   const [dateFilter, setDateFilter] = useState<'all' | 'today' | 'week' | 'overdue'>('all');
   const [sortBy, setSortBy] = useState<'createdAt' | 'priority' | 'dueDate' | 'status'>('createdAt');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
+  const [taskToDelete, setTaskToDelete] = useState<string | null>(null);
+  const [savingToBrain, setSavingToBrain] = useState<string | null>(null);
+  const [savedToBrain, setSavedToBrain] = useState<string[]>([]);
+  const [draggedTaskId, setDraggedTaskId] = useState<string | null>(null);
 
   useEffect(() => {
     if (!auth.currentUser) return;
@@ -118,7 +129,7 @@ export default function TaskBoard() {
         createdAt: serverTimestamp(),
         updatedAt: serverTimestamp(),
       });
-      setNewTask({ title: '', description: '', priority: 'medium', dueDate: '', tags: '', reminderAt: '', image: '', assignedTo: '' });
+      setNewTask(INITIAL_NEW_TASK);
       setIsAddingTask(null);
     } catch (error) {
       handleFirestoreError(error, OperationType.CREATE, 'tasks');
@@ -146,6 +157,59 @@ export default function TaskBoard() {
       };
       reader.readAsDataURL(file);
     }
+  };
+
+  const handleSaveToBrain = async (task: Task) => {
+    if (savingToBrain) return;
+    setSavingToBrain(task.id);
+    try {
+      const memory: Omit<BrainMemory, 'id' | 'createdAt' | 'embedding'> = {
+        agentId: task.assignedTo || 'general',
+        title: `Tarefa Sináptica: ${task.title}`,
+        content: `Contexto da Tarefa: ${task.title}\nDescrição: ${task.description || 'Sem descrição'}\nStatus Final: ${task.status}\nPrioridade: ${task.priority}\nTags: ${task.tags?.join(', ') || 'Nenhuma'}\nData de Conclusão: ${new Date().toLocaleString()}`,
+        tags: [...(task.tags || []), 'task-memory', 'synaptic-brain', 'auto-learned'],
+      };
+      await firebaseService.saveMemory(memory);
+      setSavedToBrain(prev => [...prev, task.id]);
+      setTimeout(() => setSavedToBrain(prev => prev.filter(id => id !== task.id)), 3000);
+    } catch (error) {
+      console.error("Failed to save to brain:", error);
+    } finally {
+      setSavingToBrain(null);
+    }
+  };
+
+  const handleDragStart = (e: React.DragEvent, taskId: string) => {
+    e.dataTransfer.setData('taskId', taskId);
+    setDraggedTaskId(taskId);
+    // Visual feedback for dragging
+    if (e.currentTarget instanceof HTMLElement) {
+      e.currentTarget.style.opacity = '0.4';
+    }
+  };
+
+  const handleDragEnd = (e: React.DragEvent) => {
+    setDraggedTaskId(null);
+    if (e.currentTarget instanceof HTMLElement) {
+      e.currentTarget.style.opacity = '1';
+    }
+  };
+
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault(); // Necessary to allow drop
+    e.dataTransfer.dropEffect = 'move';
+  };
+
+  const handleDrop = async (e: React.DragEvent, newStatus: string) => {
+    e.preventDefault();
+    const taskId = e.dataTransfer.getData('taskId');
+    if (!taskId) return;
+
+    const task = tasks.find(t => t.id === taskId);
+    if (task && task.status !== newStatus) {
+      await handleUpdateStatus(taskId, newStatus);
+    }
+    setDraggedTaskId(null);
   };
 
   const handleUpdateTask = async (taskId: string, updates: Partial<Task>) => {
@@ -180,6 +244,8 @@ export default function TaskBoard() {
     if (!auth.currentUser) return;
     try {
       await deleteDoc(doc(db, 'users', auth.currentUser.uid, 'tasks', taskId));
+      setTaskToDelete(null);
+      if (editingTask?.id === taskId) setEditingTask(null);
     } catch (error) {
       handleFirestoreError(error, OperationType.DELETE, 'tasks');
     }
@@ -215,7 +281,10 @@ export default function TaskBoard() {
         }
       }
       
-      return matchesSearch && matchesPriority && matchesStatus && matchesDate;
+      const matchesAssigned = !assignedSearchQuery || 
+        t.assignedTo?.toLowerCase().includes(assignedSearchQuery.toLowerCase());
+      
+      return matchesSearch && matchesPriority && matchesStatus && matchesDate && matchesAssigned;
     })
     .sort((a, b) => {
       let comparison = 0;
@@ -283,6 +352,25 @@ export default function TaskBoard() {
             )}
           </div>
 
+          <div className="relative group">
+            <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-theme-secondary opacity-30 group-focus-within:text-theme-blue transition-colors" />
+            <input 
+              type="text"
+              placeholder="Responsável..."
+              value={assignedSearchQuery}
+              onChange={(e) => setAssignedSearchQuery(e.target.value)}
+              className="pl-10 pr-10 py-2 bg-theme-glass border border-theme-glass rounded-xl text-sm text-theme-primary placeholder:text-theme-secondary/20 focus:outline-none focus:border-theme-blue/50 focus:bg-theme-glass/80 transition-all w-48 shadow-inner"
+            />
+            {assignedSearchQuery && (
+              <button 
+                onClick={() => setAssignedSearchQuery('')}
+                className="absolute right-3 top-1/2 -translate-y-1/2 p-0.5 hover:bg-theme-glass rounded-full text-theme-secondary opacity-30 hover:opacity-100 transition-all"
+              >
+                <X className="w-3 h-3" />
+              </button>
+            )}
+          </div>
+
           <div className="flex items-center bg-theme-glass border border-theme-glass rounded-xl p-1">
             <button 
               onClick={() => setViewMode('kanban')}
@@ -304,6 +392,18 @@ export default function TaskBoard() {
             </button>
           </div>
 
+          <button 
+            onClick={() => {
+              setNewTask(INITIAL_NEW_TASK);
+              setIsAddingTask('todo');
+              setViewMode('kanban');
+            }}
+            className="flex items-center gap-2 px-4 py-2 bg-theme-blue hover:bg-theme-blue/80 text-white rounded-xl text-sm font-bold shadow-lg shadow-blue-500/20 transition-all active:scale-95"
+          >
+            <Plus className="w-4 h-4" />
+            <span>Nova Tarefa</span>
+          </button>
+
           <div className="flex flex-wrap items-center gap-2 bg-theme-glass border border-theme-glass rounded-xl p-1">
             <div className="flex items-center gap-1 px-2 border-r border-theme-glass/20">
               <Filter className="w-3 h-3 text-theme-secondary opacity-40" />
@@ -320,6 +420,7 @@ export default function TaskBoard() {
             </div>
 
             <div className="flex items-center gap-1 px-2 border-r border-theme-glass/20">
+              <Activity className="w-3 h-3 text-theme-secondary opacity-40" />
               <select 
                 value={statusFilter}
                 onChange={(e) => setStatusFilter(e.target.value as any)}
@@ -364,6 +465,22 @@ export default function TaskBoard() {
                 {sortOrder === 'asc' ? <TrendingUp className="w-3 h-3" /> : <TrendingDown className="w-3 h-3" />}
               </button>
             </div>
+
+            {(priorityFilter !== 'all' || statusFilter !== 'all' || dateFilter !== 'all' || searchQuery !== '' || assignedSearchQuery !== '') && (
+              <button 
+                onClick={() => {
+                  setPriorityFilter('all');
+                  setStatusFilter('all');
+                  setDateFilter('all');
+                  setSearchQuery('');
+                  setAssignedSearchQuery('');
+                }}
+                className="flex items-center gap-1 px-2 py-1 bg-theme-rose/10 hover:bg-theme-rose/20 text-theme-rose rounded-lg text-[9px] font-black uppercase tracking-widest transition-all"
+              >
+                <X className="w-3 h-3" />
+                Limpar
+              </button>
+            )}
           </div>
         </div>
       </div>
@@ -372,8 +489,18 @@ export default function TaskBoard() {
       {viewMode === 'kanban' ? (
         <div className="flex-1 overflow-x-auto p-6 custom-scrollbar bg-gradient-to-b from-theme-glass/10 to-transparent">
           <div className="flex gap-6 h-full min-w-max">
-            {STATUS_COLUMNS.map((col) => (
-              <div key={col.id} className="w-80 flex flex-col gap-4">
+            {STATUS_COLUMNS.filter(col => statusFilter === 'all' || col.id === statusFilter).map((col) => (
+              <div 
+                key={col.id} 
+                className={cn(
+                  "w-80 flex flex-col gap-4 rounded-3xl transition-colors duration-200",
+                  draggedTaskId && tasks.find(t => t.id === draggedTaskId)?.status !== col.id 
+                    ? "bg-theme-blue/5 border-2 border-dashed border-theme-blue/20" 
+                    : "border-2 border-transparent"
+                )}
+                onDragOver={handleDragOver}
+                onDrop={(e) => handleDrop(e, col.id)}
+              >
                 <div className="flex items-center justify-between px-2">
                   <div className="flex items-center gap-2">
                     <col.icon className={cn("w-4 h-4", col.color)} />
@@ -383,7 +510,10 @@ export default function TaskBoard() {
                     </span>
                   </div>
                   <button 
-                    onClick={() => setIsAddingTask(col.id)}
+                    onClick={() => {
+                      setNewTask(INITIAL_NEW_TASK);
+                      setIsAddingTask(col.id);
+                    }}
                     className="p-1.5 hover:bg-theme-glass rounded-lg text-theme-secondary opacity-30 hover:text-theme-primary hover:opacity-100 transition-all group"
                   >
                     <Plus className="w-4 h-4 group-hover:rotate-90 transition-transform" />
@@ -528,7 +658,14 @@ export default function TaskBoard() {
                           exit={{ opacity: 0, scale: 0.9 }}
                           whileHover={{ scale: 1.01 }}
                           whileTap={{ scale: 0.99 }}
-                          className="group bg-theme-glass border border-theme-glass rounded-2xl p-4 hover:border-theme-glass/80 hover:bg-theme-glass/80 transition-all cursor-grab active:cursor-grabbing relative overflow-hidden shadow-xl"
+                          className={cn(
+                            "group bg-theme-glass border border-theme-glass rounded-2xl p-4 hover:border-theme-glass/80 hover:bg-theme-glass/80 transition-all cursor-grab active:cursor-grabbing relative overflow-hidden shadow-xl",
+                            draggedTaskId === task.id && "opacity-40 grayscale-[0.5]",
+                            isOverdue(task.dueDate) && task.status !== 'done' && "border-theme-rose/50 bg-theme-rose/5 shadow-[0_0_20px_rgba(244,63,94,0.15)]"
+                          )}
+                          draggable
+                          onDragStart={(e: any) => handleDragStart(e, task.id)}
+                          onDragEnd={(e: any) => handleDragEnd(e)}
                         >
                           {isOverdue(task.dueDate) && task.status !== 'done' && (
                             <div className="absolute top-0 left-0 w-1 h-full bg-theme-rose shadow-[0_0_10px_rgba(244,63,94,0.5)] z-10" />
@@ -573,7 +710,25 @@ export default function TaskBoard() {
                             </div>
                             <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                               <button 
-                                onClick={() => handleDeleteTask(task.id)}
+                                onClick={() => handleSaveToBrain(task)}
+                                disabled={savingToBrain === task.id || savedToBrain.includes(task.id)}
+                                className={cn(
+                                  "p-1.5 rounded-lg transition-all active:scale-95",
+                                  savedToBrain.includes(task.id) 
+                                    ? "bg-green-500/20 text-green-400" 
+                                    : "hover:bg-blue-500/10 text-theme-secondary opacity-20 hover:text-blue-400 hover:opacity-100"
+                                )}
+                              >
+                                {savingToBrain === task.id ? (
+                                  <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                                ) : savedToBrain.includes(task.id) ? (
+                                  <Check className="w-3.5 h-3.5" />
+                                ) : (
+                                  <Brain className="w-3.5 h-3.5" />
+                                )}
+                              </button>
+                              <button 
+                                onClick={() => setTaskToDelete(task.id)}
                                 className="p-1.5 hover:bg-red-500/10 rounded-lg text-theme-secondary opacity-20 hover:text-red-400 hover:opacity-100 transition-all active:scale-95"
                               >
                                 <Trash2 className="w-3.5 h-3.5" />
@@ -641,7 +796,10 @@ export default function TaskBoard() {
               <motion.div 
                 key={task.id}
                 layout
-                className="flex items-center justify-between p-4 bg-theme-glass border border-theme-glass rounded-2xl hover:bg-theme-glass/80 transition-all group"
+                className={cn(
+                  "flex items-center justify-between p-4 bg-theme-glass border border-theme-glass rounded-2xl hover:bg-theme-glass/80 transition-all group",
+                  isOverdue(task.dueDate) && task.status !== 'done' && "border-theme-rose/50 bg-theme-rose/5 shadow-[0_0_15px_rgba(244,63,94,0.1)]"
+                )}
               >
                 <div className="flex items-center gap-4 flex-1">
                   <button 
@@ -724,7 +882,7 @@ export default function TaskBoard() {
                 </div>
                 <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
                   <button 
-                    onClick={() => handleDeleteTask(task.id)}
+                    onClick={() => setTaskToDelete(task.id)}
                     className="p-2 hover:bg-red-500/10 rounded-xl text-theme-secondary opacity-20 hover:text-red-400 hover:opacity-100 transition-all"
                   >
                     <Trash2 className="w-4 h-4" />
@@ -896,19 +1054,73 @@ export default function TaskBoard() {
                 </div>
               </div>
 
-              <div className="flex items-center justify-end gap-4 mt-10">
+              <div className="flex items-center justify-between mt-10">
                 <button 
-                  onClick={() => setEditingTask(null)}
-                  className="theme-button-secondary"
+                  onClick={() => setTaskToDelete(editingTask.id)}
+                  className="flex items-center gap-2 px-4 py-2 text-theme-rose hover:bg-theme-rose/10 rounded-xl transition-all font-black uppercase tracking-widest text-[10px] group"
                 >
-                  Descartar
+                  <Trash2 className="w-4 h-4 group-hover:scale-110 transition-transform" />
+                  Excluir Tarefa
+                </button>
+                <div className="flex items-center gap-4">
+                  <button 
+                    onClick={() => setEditingTask(null)}
+                    className="theme-button-secondary"
+                  >
+                    Descartar
+                  </button>
+                  <button 
+                    onClick={() => handleUpdateTask(editingTask.id, editingTask)}
+                    disabled={isSubmitting}
+                    className="theme-button-primary px-8"
+                  >
+                    {isSubmitting ? <Loader2 className="w-3 h-3 animate-spin" /> : 'Salvar Alterações'}
+                  </button>
+                </div>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* Delete Confirmation Modal */}
+      <AnimatePresence>
+        {taskToDelete && (
+          <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/80 backdrop-blur-md">
+            <motion.div 
+              initial={{ opacity: 0, scale: 0.9, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.9, y: 20 }}
+              className="w-full max-w-sm bg-theme-main border border-theme-glass rounded-[32px] p-8 shadow-2xl relative overflow-hidden"
+            >
+              <div className="absolute top-0 left-0 w-full h-1 bg-theme-rose" />
+              
+              <div className="flex flex-col items-center text-center space-y-4">
+                <div className="w-16 h-16 bg-theme-rose/10 rounded-full flex items-center justify-center mb-2">
+                  <Trash2 className="w-8 h-8 text-theme-rose" />
+                </div>
+                
+                <h2 className="text-2xl font-black uppercase tracking-tighter text-theme-primary italic">
+                  Confirmar <span className="text-theme-rose">Exclusão</span>
+                </h2>
+                
+                <p className="text-theme-secondary opacity-60 text-sm leading-relaxed">
+                  Tem certeza que deseja excluir esta tarefa? Esta ação não pode ser desfeita e removerá todos os dados permanentemente.
+                </p>
+              </div>
+
+              <div className="flex flex-col gap-3 mt-8">
+                <button 
+                  onClick={() => handleDeleteTask(taskToDelete)}
+                  className="w-full py-4 bg-theme-rose text-white font-black uppercase tracking-widest rounded-2xl hover:bg-theme-rose/90 transition-all shadow-lg shadow-rose-500/20 active:scale-[0.98]"
+                >
+                  Excluir
                 </button>
                 <button 
-                  onClick={() => handleUpdateTask(editingTask.id, editingTask)}
-                  disabled={isSubmitting}
-                  className="theme-button-primary px-8"
+                  onClick={() => setTaskToDelete(null)}
+                  className="w-full py-4 bg-theme-glass text-theme-secondary font-black uppercase tracking-widest rounded-2xl hover:bg-theme-glass/80 transition-all active:scale-[0.98]"
                 >
-                  {isSubmitting ? <Loader2 className="w-3 h-3 animate-spin" /> : 'Salvar Alterações'}
+                  Cancelar
                 </button>
               </div>
             </motion.div>

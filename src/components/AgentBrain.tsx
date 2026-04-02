@@ -38,7 +38,7 @@ export function AgentBrain({ agent, onClose, isDarkMode = true }: AgentBrainProp
   const [memories, setMemories] = useState<BrainMemory[]>([]);
   const [selectedMemory, setSelectedMemory] = useState<BrainMemory | null>(null);
   const [isNewNoteOpen, setIsNewNoteOpen] = useState(false);
-  const [newNote, setNewNote] = useState({ title: "", content: "", tags: "" });
+  const [newNote, setNewNote] = useState({ title: "", content: "", tags: "", roi: "" });
   const [graphData, setGraphData] = useState<{ nodes: BrainNode[], links: BrainLink[] }>({ nodes: [], links: [] });
   const [highlightNodes, setHighlightNodes] = useState(new Set());
   const [highlightLinks, setHighlightLinks] = useState(new Set());
@@ -267,10 +267,11 @@ export function AgentBrain({ agent, onClose, isDarkMode = true }: AgentBrainProp
       title: newNote.title,
       content: newNote.content,
       tags: newNote.tags.split(",").map(t => t.trim()).filter(t => t),
+      roi: newNote.roi ? parseFloat(newNote.roi) : undefined
     };
 
     await firebaseService.saveMemory(memory);
-    setNewNote({ title: "", content: "", tags: "" });
+    setNewNote({ title: "", content: "", tags: "", roi: "" });
     setIsNewNoteOpen(false);
     loadMemories();
   };
@@ -545,7 +546,16 @@ ${selectedMemory.content}`;
                     className="mt-12 p-10 bg-theme-card backdrop-blur-3xl border border-theme-glass rounded-[2.5rem] space-y-8 shadow-[0_40px_100px_rgba(0,0,0,0.8)] relative"
                   >
                     <div className="flex justify-between items-center">
-                      <h3 className="text-3xl font-black text-theme-primary italic uppercase tracking-tighter drop-shadow-[0_0_10px_rgba(255,255,255,0.2)]">{selectedMemory.title}</h3>
+                      <div className="flex flex-col gap-2">
+                        <h3 className="text-3xl font-black text-theme-primary italic uppercase tracking-tighter drop-shadow-[0_0_10px_rgba(255,255,255,0.2)]">{selectedMemory.title}</h3>
+                        {selectedMemory.roi && (
+                          <div className="flex items-center gap-2">
+                            <span className="text-[10px] font-black text-theme-emerald bg-theme-emerald/20 px-3 py-1.5 rounded-xl border border-theme-emerald/40 shadow-[0_0_15px_rgba(52,211,153,0.3)]">
+                              ROI: {selectedMemory.roi}%
+                            </span>
+                          </div>
+                        )}
+                      </div>
                       <button 
                         onClick={() => setSelectedMemory(null)} 
                         className="p-3 hover:bg-theme-glass rounded-full text-theme-secondary opacity-40 hover:text-theme-primary transition-all border border-transparent hover:border-theme-glass"
@@ -783,15 +793,28 @@ ${selectedMemory.content}`;
                         onChange={e => setNewNote(prev => ({ ...prev, content: e.target.value }))}
                       />
                     </div>
-                    <div className="space-y-3">
-                      <label className="text-[11px] font-black uppercase tracking-[0.3em] text-theme-secondary opacity-40 ml-4">Tags de Indexação</label>
-                      <input 
-                        type="text" 
-                        placeholder="roi, meta, conversion, strategy"
-                        className="w-full bg-theme-glass border border-theme-glass rounded-2xl p-5 text-theme-primary text-sm focus:outline-none focus:border-theme-blue/50 transition-all font-mono shadow-inner"
-                        value={newNote.tags}
-                        onChange={e => setNewNote(prev => ({ ...prev, tags: e.target.value }))}
-                      />
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                      <div className="space-y-3">
+                        <label className="text-[11px] font-black uppercase tracking-[0.3em] text-theme-secondary opacity-40 ml-4">Tags de Indexação</label>
+                        <input 
+                          type="text" 
+                          placeholder="roi, meta, conversion, strategy"
+                          className="w-full bg-theme-glass border border-theme-glass rounded-2xl p-5 text-theme-primary text-sm focus:outline-none focus:border-theme-blue/50 transition-all font-mono shadow-inner"
+                          value={newNote.tags}
+                          onChange={e => setNewNote(prev => ({ ...prev, tags: e.target.value }))}
+                        />
+                      </div>
+                      <div className="space-y-3">
+                        <label className="text-[11px] font-black uppercase tracking-[0.3em] text-theme-secondary opacity-40 ml-4">ROI Estimado (%)</label>
+                        <input 
+                          type="number" 
+                          placeholder="Ex: 24.5"
+                          step="0.1"
+                          className="w-full bg-theme-glass border border-theme-glass rounded-2xl p-5 text-theme-primary text-sm focus:outline-none focus:border-theme-blue/50 transition-all font-mono shadow-inner"
+                          value={newNote.roi}
+                          onChange={e => setNewNote(prev => ({ ...prev, roi: e.target.value }))}
+                        />
+                      </div>
                     </div>
                   </div>
                   <div className="flex justify-end gap-6 pt-6">

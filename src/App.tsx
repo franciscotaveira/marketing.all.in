@@ -144,6 +144,7 @@ export default function App() {
   const [agentLogs, setAgentLogs] = useState<{id: string, timestamp: Date, agentId: string, message: string, type: 'info' | 'action' | 'success' | 'error'}[]>([]);
   const [isTerminalOpen, setIsTerminalOpen] = useState(false);
   const [isDarkMode, setIsDarkMode] = useState(true);
+  const [activeAgentId, setActiveAgentId] = useState<string | null>(null);
 
   useEffect(() => {
     if (isDarkMode) {
@@ -314,6 +315,7 @@ export default function App() {
         );
 
         const aiResponse = result.response;
+        setActiveAgentId(null);
         
         const artifacts: Artifact[] = [];
         const artifactRegex = /```artifact:([a-zA-Z0-9_-]+):([^\n]+)\n([\s\S]*?)```/g;
@@ -394,6 +396,7 @@ export default function App() {
         setActiveWorkflow(null);
         activeWorkflowRef.current = null;
         setWorkflowStepIndex(-1);
+        setActiveAgentId(null);
         return;
       }
     }
@@ -412,7 +415,7 @@ export default function App() {
     setWorkflowStepIndex(-1);
   };
 
-  const [isBrainOpen, setIsBrainOpen] = useState(false);
+  const [isBrainOpen, setIsBrainOpen] = useState(true);
   const [currentChatId, setCurrentChatId] = useState<string | null>(null);
   const [chatSessions, setChatSessions] = useState<ChatSession[]>([]);
   const [isHistoryLoading, setIsHistoryLoading] = useState(false);
@@ -650,8 +653,12 @@ export default function App() {
     }
   };
 
-  const addLog = (agentId: string, message: string, type: 'info' | 'action' | 'success' | 'error' = 'info') => {
+  const addLog = (agentId: string, message: string, type: 'info' | 'action' | 'success' | 'error' = 'info', isActive?: boolean) => {
     setAgentLogs(prev => [...prev, { id: Math.random().toString(36).substring(7), timestamp: new Date(), agentId, message, type }]);
+    if (isActive !== undefined) {
+      if (isActive) setActiveAgentId(agentId);
+      else if (activeAgentId === agentId) setActiveAgentId(null);
+    }
   };
 
   const handleSend = async () => {
@@ -688,40 +695,7 @@ export default function App() {
         ? `\n\nUtilize o Framework: ${MARKETING_FRAMEWORKS.find(f => f.id === selectedFramework)?.name} (${MARKETING_FRAMEWORKS.find(f => f.id === selectedFramework)?.description})`
         : "";
 
-      // Fetch Brain Memories (RAG)
-      let brainContext = "";
-      try {
-        const { data: memories } = await firebaseService.getRelevantMemories(userMessage, selectedSkill?.id);
-        if (memories && memories.length > 0) {
-          // Select 3 most recent or relevant memories
-          const topMemories = memories.slice(0, 3);
-          brainContext = `\n\nMEMÓRIAS SINÁPTICAS RECUPERADAS (Contexto do Cérebro):
-          ${topMemories.map((m: BrainMemory) => `- [${m.title}]: ${m.content}`).join('\n')}
-          
-          Use estas memórias para informar sua resposta, manter consistência e acelerar o aprendizado.`;
-        }
-      } catch (e) {
-        console.warn("Brain sync error:", e);
-      }
-
-      const prompt = `Solicitação do Usuário: ${userMessage}${skillContext}${frameworkContext}${brainContext}`;
-
-      const contents: any[] = [];
-      
-      // Add text part
-      contents.push({ text: prompt });
-
-      // Add image parts if any
-      currentImages.forEach(img => {
-        const base64Data = img.split(',')[1];
-        const mimeType = img.split(',')[0].split(':')[1].split(';')[0];
-        contents.push({
-          inlineData: {
-            data: base64Data,
-            mimeType: mimeType
-          }
-        });
-      });
+      const prompt = `Solicitação do Usuário: ${userMessage}${skillContext}${frameworkContext}`;
 
       const activeCompany = companies.find(c => c.id === activeCompanyId);
       const brandContextText = activeCompany ? `\n\nCONTEXTO DA MARCA ATIVA (${activeCompany.name}):\n${activeCompany.context}\n\n` : "";
@@ -760,7 +734,8 @@ export default function App() {
       4. Seja conciso, mas profundo tecnicamente.
       5. RESPONDA SEMPRE EM PORTUGUÊS (BRASIL).
       6. MODO CIENTISTA MALUCO: Você tem acesso a memórias sinápticas. Use-as para criar correlações inéditas entre diferentes áreas do marketing. Se encontrar um padrão de sucesso em uma memória, aplique-o de forma criativa no desafio atual.
-      7. FONTES DE DADOS E INTEGRAÇÕES: Se o usuário fornecer documentação de API, chaves ou links (ex: sistema de agendamento do salão), você deve agir como se tivesse acesso a esses dados para gerar estratégias hiper-personalizadas, ou gerar scripts (Artefatos do tipo 'code' ou 'automation') para que o usuário possa implementar a integração.`;
+      7. FONTES DE DADOS E INTEGRAÇÕES: Se o usuário fornecer documentação de API, chaves ou links (ex: sistema de agendamento do salão), você deve agir como se tivesse acesso a esses dados para gerar estratégias hiper-personalizadas, ou gerar scripts (Artefatos do tipo 'code' ou 'automation') para que o usuário possa implementar a integração.
+      8. ANÁLISE VISUAL: Você possui capacidades multimodais avançadas e pode ver imagens enviadas pelo usuário. Ao receber uma imagem, analise-a detalhadamente para fornecer insights estratégicos, identificar problemas de UX/UI, sugerir melhorias de conversão em peças criativas ou extrair informações relevantes para o contexto de marketing e automação.`;
 
       let aiResponse: string;
       const model = selectedSkill?.model || "gemini-3.1-pro-preview";
@@ -797,6 +772,8 @@ export default function App() {
       } catch (error) {
         console.error("Chat error:", error);
         aiResponse = "Sinto muito, ocorreu um erro ao gerar a resposta.";
+      } finally {
+        setActiveAgentId(null);
       }
       
       // Auto-Learning: Save to Brain
@@ -1436,6 +1413,28 @@ export default function App() {
                   transition={{ duration: 0.2 }}
                   className="flex-1 flex flex-col min-h-0 glass-panel overflow-hidden relative"
                 >
+                  {/* Active Agent Indicator */}
+                  <AnimatePresence>
+                    {activeAgentId && (
+                      <motion.div
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: 20 }}
+                        className="absolute bottom-24 left-1/2 -translate-x-1/2 z-50 pointer-events-none"
+                      >
+                        <div className="bg-blue-600/90 backdrop-blur-md border border-blue-400/30 rounded-full px-4 py-2 flex items-center gap-3 shadow-[0_0_30px_rgba(37,99,235,0.4)]">
+                          <div className="relative">
+                            <div className="w-2 h-2 bg-white rounded-full animate-ping absolute inset-0" />
+                            <div className="w-2 h-2 bg-white rounded-full relative" />
+                          </div>
+                          <span className="text-[10px] font-black uppercase tracking-[0.2em] text-white">
+                            {activeAgentId === 'orchestrator' ? 'Orquestrador' : 
+                             ([...MARKETING_SKILLS, ...customSkills].find(s => s.id === activeAgentId)?.name || activeAgentId)} está falando...
+                          </span>
+                        </div>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
                   {messages.length === 0 ? (
                   <div className="flex-1 flex flex-col items-center justify-center text-center p-8">
                     <div className="w-24 h-24 bg-gradient-to-br from-blue-500 to-purple-600 rounded-[2rem] flex items-center justify-center mb-8 shadow-2xl shadow-blue-500/20 animate-float">

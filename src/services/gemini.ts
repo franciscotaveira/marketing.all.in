@@ -45,7 +45,7 @@ export class GeminiService {
     throw lastError;
   }
 
-  async generateText(prompt: string | any[], model: string = MODELS.GENERAL, systemInstruction?: string, tools?: any[]) {
+  async generateText(prompt: string | any[], model: string = MODELS.GENERAL, systemInstruction?: string, tools?: any[], responseMimeType?: string) {
     return this.withRetry(async () => {
       const response = await this.ai.models.generateContent({
         model,
@@ -53,6 +53,7 @@ export class GeminiService {
         config: {
           systemInstruction,
           tools,
+          responseMimeType,
         },
       });
       return response;
