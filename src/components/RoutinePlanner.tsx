@@ -16,8 +16,9 @@ import {
   LayoutGrid
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
-import { Routine } from '../types';
+import { Routine, MarketingSkill } from '../types';
 import { db, auth, handleFirestoreError, OperationType } from '../firebase';
+import { MARKETING_SKILLS } from '../constants';
 import { 
   collection, 
   query, 
@@ -26,9 +27,12 @@ import {
   deleteDoc, 
   doc, 
   serverTimestamp,
-  orderBy
+  orderBy,
+  updateDoc,
+  where
 } from 'firebase/firestore';
 import { cn } from '../lib/utils';
+import { Task } from '../types';
 
 const FREQUENCY_LABELS = {
   daily: 'Diário',
@@ -48,6 +52,7 @@ const DAYS_OF_WEEK = [
 
 export default function RoutinePlanner() {
   const [routines, setRoutines] = useState<Routine[]>([]);
+  const [tasks, setTasks] = useState<Task[]>([]);
   const [isAddingRoutine, setIsAddingRoutine] = useState(false);
   const [newRoutine, setNewRoutine] = useState<Partial<Routine>>({
     title: '',
@@ -55,17 +60,19 @@ export default function RoutinePlanner() {
     days: [],
     startTime: '09:00',
     endTime: '10:00',
+    agentId: 'productivity-strategist',
   });
 
   useEffect(() => {
     if (!auth.currentUser) return;
 
-    const q = query(
+    // Fetch Routines
+    const qRoutines = query(
       collection(db, 'users', auth.currentUser.uid, 'routines'),
       orderBy('startTime', 'asc')
     );
 
-    const unsubscribe = onSnapshot(q, (snapshot) => {
+    const unsubscribeRoutines = onSnapshot(qRoutines, (snapshot) => {
       const routineList = snapshot.docs.map(doc => ({
         id: doc.id,
         ...doc.data()
@@ -75,8 +82,62 @@ export default function RoutinePlanner() {
       handleFirestoreError(error, OperationType.LIST, 'routines');
     });
 
-    return () => unsubscribe();
+    // Fetch Tasks (only pending ones)
+    const qTasks = query(
+      collection(db, 'users', auth.currentUser.uid, 'tasks'),
+      where('status', 'in', ['todo', 'in-progress']),
+      orderBy('createdAt', 'desc')
+    );
+
+    const unsubscribeTasks = onSnapshot(qTasks, (snapshot) => {
+      const taskList = snapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data()
+      })) as Task[];
+      setTasks(taskList);
+    }, (error) => {
+      handleFirestoreError(error, OperationType.LIST, 'tasks');
+    });
+
+    return () => {
+      unsubscribeRoutines();
+      unsubscribeTasks();
+    };
   }, []);
+
+  const handleTaskDrop = async (taskId: string, routineId: string) => {
+    if (!auth.currentUser) return;
+    
+    try {
+      const taskRef = doc(db, 'users', auth.currentUser.uid, 'tasks', taskId);
+      const routine = routines.find(r => r.id === routineId);
+      
+      if (routine) {
+        await updateDoc(taskRef, {
+          routineId: routineId,
+          updatedAt: serverTimestamp()
+        });
+        // Feedback visual ou log
+        console.log(`Tarefa ${taskId} vinculada à rotina ${routine.title}`);
+      }
+    } catch (error) {
+      handleFirestoreError(error, OperationType.UPDATE, 'tasks');
+    }
+  };
+
+  const handleUnlinkTask = async (taskId: string) => {
+    if (!auth.currentUser) return;
+    
+    try {
+      const taskRef = doc(db, 'users', auth.currentUser.uid, 'tasks', taskId);
+      await updateDoc(taskRef, {
+        routineId: null,
+        updatedAt: serverTimestamp()
+      });
+    } catch (error) {
+      handleFirestoreError(error, OperationType.UPDATE, 'tasks');
+    }
+  };
 
   const handleAddRoutine = async () => {
     if (!newRoutine.title?.trim() || !auth.currentUser) return;
@@ -93,6 +154,7 @@ export default function RoutinePlanner() {
         days: [],
         startTime: '09:00',
         endTime: '10:00',
+        agentId: 'productivity-strategist',
       });
       setIsAddingRoutine(false);
     } catch (error) {
@@ -184,6 +246,11 @@ export default function RoutinePlanner() {
                     initial={{ opacity: 0, x: -20 }}
                     animate={{ opacity: 1, x: 0 }}
                     exit={{ opacity: 0, scale: 0.95 }}
+                    onDragOver={(e) => e.preventDefault()}
+                    onDrop={(e) => {
+                      const taskId = e.dataTransfer.getData('taskId');
+                      if (taskId) handleTaskDrop(taskId, routine.id!);
+                    }}
                     className="group bg-theme-glass border border-theme-glass rounded-3xl p-6 hover:border-theme-glass/80 hover:bg-theme-glass/80 transition-all relative overflow-hidden shadow-lg"
                   >
                     <div className="flex items-center justify-between gap-6">
@@ -229,6 +296,35 @@ export default function RoutinePlanner() {
                         </button>
                       </div>
                     </div>
+
+                    {/* Tarefas Vinculadas */}
+                    <div className="mt-6 pt-6 border-t border-theme-glass">
+                      <div className="flex items-center justify-between mb-4">
+                        <span className="text-[10px] font-black uppercase tracking-widest text-theme-secondary opacity-40">Tarefas Vinculadas</span>
+                        <span className="text-[10px] font-black text-theme-orange bg-theme-orange/10 px-2 py-1 rounded-lg border border-theme-orange/20">
+                          {tasks.filter(t => t.routineId === routine.id).length}
+                        </span>
+                      </div>
+                      
+                      <div className="space-y-2">
+                        {tasks.filter(t => t.routineId === routine.id).map(task => (
+                          <div key={task.id} className="flex items-center justify-between p-3 bg-theme-glass rounded-xl border border-theme-glass group/item">
+                            <span className="text-xs font-bold text-theme-primary truncate flex-1">{task.title}</span>
+                            <button 
+                              onClick={() => handleUnlinkTask(task.id)}
+                              className="ml-3 p-1.5 text-theme-secondary opacity-20 hover:text-red-400 hover:opacity-100 transition-all"
+                            >
+                              <Plus className="w-4 h-4 rotate-45" />
+                            </button>
+                          </div>
+                        ))}
+                        {tasks.filter(t => t.routineId === routine.id).length === 0 && (
+                          <div className="py-4 text-center border-2 border-dashed border-theme-glass rounded-xl">
+                            <p className="text-[10px] font-black uppercase tracking-widest text-theme-secondary opacity-20">Solte tarefas aqui</p>
+                          </div>
+                        )}
+                      </div>
+                    </div>
                   </motion.div>
                 ))}
               </AnimatePresence>
@@ -245,37 +341,45 @@ export default function RoutinePlanner() {
             </div>
           </div>
 
-          {/* Sidebar Insights */}
+          {/* Sidebar de Tarefas Disponíveis */}
           <div className="space-y-6">
-            <div className="bg-gradient-to-br from-theme-orange/20 to-theme-rose/20 border border-theme-glass rounded-[2rem] p-8 relative overflow-hidden group shadow-xl">
-              <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:scale-110 transition-transform">
-                <Zap className="w-32 h-32 text-theme-primary" />
-              </div>
-              
+            <div className="bg-theme-glass border border-theme-glass rounded-[2rem] p-8 shadow-xl flex flex-col h-[600px]">
               <h3 className="text-xl font-black uppercase tracking-tighter text-theme-primary mb-4 flex items-center gap-3">
-                <Sparkles className="w-6 h-6 text-theme-yellow" />
-                Sugestões de IA
+                <LayoutGrid className="w-6 h-6 text-theme-orange" />
+                Tarefas Pendentes
               </h3>
-              <p className="text-theme-secondary opacity-60 text-sm leading-relaxed mb-8 font-medium">
-                Com base no seu fluxo de trabalho, identifiquei oportunidades de otimização.
-              </p>
-
-              <div className="space-y-4">
-                <div className="bg-theme-glass rounded-2xl p-4 border border-theme-glass hover:bg-theme-glass/80 transition-all cursor-pointer group/item shadow-sm">
-                  <div className="flex items-center justify-between mb-2">
-                    <span className="text-[10px] font-black uppercase tracking-widest text-theme-orange">Foco Profundo</span>
-                    <ArrowRight className="w-4 h-4 text-theme-secondary opacity-20 group-hover/item:translate-x-1 transition-transform" />
+              <p className="text-theme-secondary opacity-40 text-xs mb-6">Arraste para vincular a uma rotina.</p>
+              
+              <div className="flex-1 overflow-y-auto space-y-4 pr-2 custom-scrollbar">
+                {tasks.filter(t => !t.routineId).length === 0 ? (
+                  <div className="text-center py-12 opacity-20">
+                    <CheckCircle2 className="w-12 h-12 mx-auto mb-4" />
+                    <p className="text-sm font-bold uppercase tracking-widest">Tudo em dia!</p>
                   </div>
-                  <p className="text-xs text-theme-secondary opacity-80 font-medium leading-relaxed">Mover tarefas complexas para antes das 11h aumentaria sua produtividade em 25%.</p>
-                </div>
-
-                <div className="bg-theme-glass rounded-2xl p-4 border border-theme-glass hover:bg-theme-glass/80 transition-all cursor-pointer group/item shadow-sm">
-                  <div className="flex items-center justify-between mb-2">
-                    <span className="text-[10px] font-black uppercase tracking-widest text-theme-blue">Recuperação</span>
-                    <ArrowRight className="w-4 h-4 text-theme-secondary opacity-20 group-hover/item:translate-x-1 transition-transform" />
-                  </div>
-                  <p className="text-xs text-theme-secondary opacity-80 font-medium leading-relaxed">Adicionar um bloco de 15min de desconexão após reuniões longas.</p>
-                </div>
+                ) : (
+                  tasks.filter(t => !t.routineId).map(task => (
+                    <div
+                      key={task.id}
+                      draggable
+                      onDragStart={(e) => e.dataTransfer.setData('taskId', task.id)}
+                      className="p-4 bg-theme-glass rounded-2xl border border-theme-glass cursor-grab active:cursor-grabbing hover:border-theme-orange/30 transition-all group/task shadow-sm hover:scale-[1.02]"
+                    >
+                      <div className="flex items-center gap-2 mb-2">
+                        <div className={cn(
+                          "w-2 h-2 rounded-full",
+                          task.priority === 'high' ? 'bg-rose-500' : 
+                          task.priority === 'medium' ? 'bg-amber-500' : 'bg-emerald-500'
+                        )} />
+                        <span className="text-[8px] font-black uppercase tracking-widest text-theme-secondary opacity-40">
+                          {task.priority}
+                        </span>
+                      </div>
+                      <h4 className="text-sm font-bold text-theme-primary line-clamp-2 leading-tight group-hover/task:text-theme-orange transition-colors">
+                        {task.title}
+                      </h4>
+                    </div>
+                  ))
+                )}
               </div>
             </div>
 
@@ -365,6 +469,21 @@ export default function RoutinePlanner() {
                         className="w-full bg-theme-glass border border-theme-glass rounded-2xl px-5 py-4 text-theme-primary focus:outline-none focus:border-orange-500/50 transition-all shadow-inner"
                       />
                     </div>
+                  </div>
+
+                  <div>
+                    <label className="text-[10px] font-black uppercase tracking-widest text-theme-secondary opacity-40 mb-3 block">Agente Responsável</label>
+                    <select 
+                      value={newRoutine.agentId}
+                      onChange={(e) => setNewRoutine({ ...newRoutine, agentId: e.target.value })}
+                      className="w-full bg-theme-glass border border-theme-glass rounded-2xl px-5 py-4 text-theme-primary focus:outline-none focus:border-orange-500/50 transition-all font-medium appearance-none"
+                    >
+                      {MARKETING_SKILLS.map(skill => (
+                        <option key={skill.id} value={skill.id} className="bg-[#0A0A0A]">
+                          {skill.name}
+                        </option>
+                      ))}
+                    </select>
                   </div>
                 </div>
 

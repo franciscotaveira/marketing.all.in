@@ -20,6 +20,10 @@ export class GeminiService {
     this.ai = new GoogleGenAI({ apiKey });
   }
 
+  get client() {
+    return this.ai;
+  }
+
   private async withRetry<T>(fn: () => Promise<T>, maxRetries: number = 3): Promise<T> {
     let lastError: any;
     for (let i = 0; i < maxRetries; i++) {

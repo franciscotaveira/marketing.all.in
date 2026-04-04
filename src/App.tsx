@@ -120,6 +120,7 @@ export default function App() {
   const [activeCompanyId, setActiveCompanyId] = useState<string | null>(() => {
     return localStorage.getItem('active_company_id') || null;
   });
+  const [manualAgentPriorities, setManualAgentPriorities] = useState<Record<string, number>>({});
   const [editingCompanyId, setEditingCompanyId] = useState<string | null>(null);
   const [isBrandContextModalOpen, setIsBrandContextModalOpen] = useState(false);
 
@@ -149,7 +150,9 @@ export default function App() {
   useEffect(() => {
     if (isDarkMode) {
       document.documentElement.classList.remove('light');
+      document.documentElement.classList.add('dark');
     } else {
+      document.documentElement.classList.remove('dark');
       document.documentElement.classList.add('light');
     }
   }, [isDarkMode]);
@@ -661,20 +664,19 @@ export default function App() {
     }
   };
 
-  const handleSend = async () => {
-    if (!input.trim() && selectedImages.length === 0 || isLoading) return;
-
-    const userMessage = input;
+  const handleSend = async (overrideInput?: string) => {
+    const userMessage = overrideInput || input;
+    if (!userMessage.trim() && selectedImages.length === 0 || isLoading) return;
 
     // Detect Google Drive Folder Link
     if (userMessage.includes('drive.google.com/drive/folders/')) {
       processDriveFolder(userMessage);
-      setInput("");
+      if (!overrideInput) setInput("");
       return;
     }
 
     const currentImages = [...selectedImages];
-    setInput("");
+    if (!overrideInput) setInput("");
     setSelectedImages([]);
     const userMsg: Omit<Message, 'createdAt'> = { role: "user", content: userMessage, images: currentImages };
     setMessages(prev => [...prev, userMsg as Message]);
@@ -705,7 +707,9 @@ export default function App() {
       
       ${brandContextText}
       
-      SEMPRE que for gerar um plano, copy, roteiro, código ou qualquer material tático/prático, você DEVE extrair isso como um 'Artefato' usando blocos de código com a linguagem 'artifact' no formato exato:
+      IMPORTANTE SOBRE ARTEFATOS:
+      Durante a fase de ideação, planejamento e construção da estratégia, NÃO gere artefatos automaticamente. Converse com o usuário, apresente as ideias e refine o conteúdo primeiro.
+      APENAS QUANDO O USUÁRIO PEDIR EXPLICITAMENTE para "gerar artefatos", "criar os arquivos", "finalizar" ou quando a estratégia estiver totalmente consolidada e pronta para entrega, você DEVE extrair os materiais táticos/práticos como um 'Artefato' usando blocos de código com a linguagem 'artifact' no formato exato:
       \`\`\`artifact:tipo:título
       conteúdo do artefato aqui
       \`\`\`
@@ -765,7 +769,8 @@ export default function App() {
           addLog,
           [...MARKETING_SKILLS, ...customSkills],
           currentImages,
-          messages
+          messages,
+          manualAgentPriorities
         );
 
         aiResponse = result.response;
@@ -1384,6 +1389,9 @@ export default function App() {
               setIsBrandContextModalOpen={setIsBrandContextModalOpen}
               isDarkMode={isDarkMode}
               setIsDarkMode={setIsDarkMode}
+              manualAgentPriorities={manualAgentPriorities}
+              setManualAgentPriorities={setManualAgentPriorities}
+              allSkills={[...MARKETING_SKILLS, ...customSkills]}
             />
           </div>
         </header>
@@ -1487,7 +1495,18 @@ export default function App() {
                 )}
                 
                 {/* Input Area */}
-                <div className="p-4 border-t border-theme-glass bg-theme-main/20 backdrop-blur-xl">
+                <div className="relative p-4 border-t border-theme-glass bg-theme-main/20 backdrop-blur-xl">
+                  {messages.length > 0 && !isLoading && (
+                    <div className="absolute bottom-full right-4 mb-4 z-40">
+                      <button
+                        onClick={() => handleSend("A estratégia está consolidada. Por favor, gere os artefatos finais (arquivos, scripts, copies) usando o formato de artefato apropriado.")}
+                        className="theme-button-primary shadow-lg flex items-center gap-2"
+                      >
+                        <FileText className="w-4 h-4" />
+                        Gerar Artefatos Finais
+                      </button>
+                    </div>
+                  )}
                   <InputBar
                     input={input}
                     setInput={setInput}

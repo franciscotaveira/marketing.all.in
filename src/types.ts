@@ -16,11 +16,11 @@ export enum SkillCategory {
 }
 
 export enum SkillTier {
-  COORDINATION = "Coordenação",
-  INTELLIGENCE = "Inteligência",
-  CREATIVE = "Criativo",
-  PERFORMANCE = "Performance",
-  OPERATIONS = "Operações",
+  COORDINATION = "1. Estratégia & Coordenação",
+  INTELLIGENCE = "2. Inteligência & Pesquisa",
+  CREATIVE = "3. Criativo & Conteúdo",
+  PERFORMANCE = "4. Performance & Distribuição",
+  OPERATIONS = "5. Operações & Mensuração",
 }
 
 export interface MarketingSkill {
@@ -31,7 +31,8 @@ export interface MarketingSkill {
   persona: string;
   description: string;
   prompt: string;
-  model?: string; // Adicionado
+  model?: string;
+  tools?: string[]; // IDs das ferramentas que este agente pode usar
 }
 
 
@@ -162,6 +163,7 @@ export interface Task {
   dueDate?: any;
   createdAt: any;
   updatedAt?: any;
+  routineId?: string; // ID da rotina vinculada
 }
 
 export interface Routine {
@@ -171,6 +173,8 @@ export interface Routine {
   startTime: string;
   endTime: string;
   days: string[];
+  agentId?: string; // Agente responsável pela execução automática
+  lastExecutedAt?: any; // Timestamp da última execução
   createdAt: any;
   updatedAt?: any;
 }

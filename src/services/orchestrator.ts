@@ -1,4 +1,5 @@
 import { sendMessageToAgent, getSemanticCache, saveToSemanticCache } from "./chatService";
+import { getToolDeclarations } from "./toolService";
 import { Message, MarketingSkill, BrainMemory } from "../types";
 import { firebaseService } from "../lib/firebaseService";
 
@@ -52,7 +53,8 @@ export async function orchestrateRequest(
   onLog: (agentId: string, message: string, type: 'info' | 'action' | 'success' | 'error', isActive?: boolean) => void,
   allSkills: MarketingSkill[],
   images?: string[],
-  history?: Message[]
+  history?: Message[],
+  manualPriorities?: Record<string, number>
 ): Promise<OrchestrationResult> {
   
   // Intelligent Semantic Cache (Manus & Claude Optimization)
@@ -91,10 +93,17 @@ Agentes Disponíveis:
 ${allSkills.map(s => `- ${s.id}: ${s.name} (${s.description})`).join("\n")}
 
 Com base no desafio, selecione os 3 melhores agentes para colaborar.
+Atribua uma prioridade de 1 a 10 para cada agente selecionado com base na criticidade da sua contribuição para este desafio específico (10 = Crítico/Principal, 1 = Apoio).
+
 Retorne APENAS um JSON no formato:
 {
-  "selectedAgents": ["agentId1", "agentId2", "agentId3"],
-  "plan": "Breve descrição de como eles vão colaborar"
+  "selectedAgents": [
+    {"id": "agentId1", "priority": 10, "task": "O que este agente deve fazer especificamente"},
+    {"id": "agentId2", "priority": 7, "task": "..."},
+    {"id": "agentId3", "priority": 5, "task": "..."}
+  ],
+  "plan": "Breve descrição de como eles vão colaborar",
+  "criticality": "high" | "medium" | "low"
 }
     `;
 
@@ -116,46 +125,66 @@ Retorne APENAS um JSON no formato:
       console.warn("Planning error, falling back to heuristic:", e);
       // Fallback to heuristic
       const lowerMessage = userMessage.toLowerCase();
-      const prioritizedAgents: MarketingSkill[] = [];
-      if (lowerMessage.includes("venda") || lowerMessage.includes("conversão") || lowerMessage.includes("copy")) prioritizedAgents.push(allSkills.find(s => s.id === "copywriter") || allSkills[0]);
-      if (lowerMessage.includes("estratégia") || lowerMessage.includes("posicionamento")) prioritizedAgents.push(allSkills.find(s => s.id === "strategist") || allSkills[0]);
-      if (lowerMessage.includes("tráfego") || lowerMessage.includes("anúncio")) prioritizedAgents.push(allSkills.find(s => s.id === "media-buyer") || allSkills[0]);
+      const prioritizedIds: string[] = [];
+      if (lowerMessage.includes("venda") || lowerMessage.includes("conversão") || lowerMessage.includes("copy")) prioritizedIds.push("copywriter");
+      if (lowerMessage.includes("estratégia") || lowerMessage.includes("posicionamento")) prioritizedIds.push("strategist");
+      if (lowerMessage.includes("tráfego") || lowerMessage.includes("anúncio")) prioritizedIds.push("media-buyer");
       
-      const defaults = [
-        allSkills.find(s => s.id === "strategist") || allSkills[0],
-        allSkills.find(s => s.id === "growth-hacker") || allSkills[1],
-        allSkills.find(s => s.id === "copywriter") || allSkills[2]
-      ];
+      const defaults = ["strategist", "growth-hacker", "copywriter"];
+      const selectedIds = [...new Set([...prioritizedIds, ...defaults])].slice(0, 3);
+      
       planning = {
-        selectedAgents: [...new Set([...prioritizedAgents, ...defaults])].slice(0, 3).map(a => a.id),
-        plan: "Colaboração paralela para brainstorming de perspectivas."
+        selectedAgents: selectedIds.map((id, idx) => ({
+          id,
+          priority: 10 - (idx * 2),
+          task: "Análise especializada do desafio."
+        })),
+        plan: "Colaboração paralela para brainstorming de perspectivas.",
+        criticality: "medium"
       };
     }
 
-    const swarmAgents = planning.selectedAgents.map((id: string) => allSkills.find(s => s.id === id) || allSkills[0]);
+    // Apply manual priorities if provided
+    if (manualPriorities) {
+      planning.selectedAgents = planning.selectedAgents.map((agent: any) => ({
+        ...agent,
+        priority: manualPriorities[agent.id] !== undefined ? manualPriorities[agent.id] : agent.priority
+      }));
+    }
 
-    onLog("orchestrator", `Plano de Colaboração: ${planning.plan}`, "success", true);
-    onLog("orchestrator", `Agentes priorizados: ${swarmAgents.map(a => a.name).join(", ")}`, "success", true);
+    // Sort agents by priority (highest first)
+    const swarmAgents = planning.selectedAgents
+      .sort((a: any, b: any) => b.priority - a.priority)
+      .map((a: any) => {
+        const skill = allSkills.find(s => s.id === a.id) || allSkills[0];
+        return { ...skill, swarmTask: a.task, swarmPriority: a.priority };
+      });
 
-    // Coletar perspectivas em paralelo
-    const perspectives = await Promise.all(swarmAgents.map(async (agent) => {
-      onLog(agent.id, `Analisando o desafio sob a perspectiva de ${agent.name}...`, "info", true);
-      
-      // Optimization: Compress context if it's too large for the agent
-      const optimizedMessage = enrichedMessage.length > 5000 ? await compressContext(enrichedMessage, agent.model || model) : enrichedMessage;
+    onLog("orchestrator", `Plano de Colaboração (Criticidade: ${planning.criticality}): ${planning.plan}`, "success", true);
+    onLog("orchestrator", `Agentes priorizados: ${swarmAgents.map(a => `${a.name} (P${a.swarmPriority})`).join(", ")}`, "success", true);
 
-      const perspective = await sendMessageToAgent(
-        agent.id,
-        optimizedMessage,
-        agent.model || model,
-        `${agent.prompt}\n\nForneça sua perspectiva especializada sobre este desafio em 1-2 parágrafos.`,
-        undefined,
-        images,
-        history,
-        useGrounding
-      );
-      onLog(agent.id, `${agent.name} concluiu sua análise.`, "success", false);
-      return `### Perspectiva do ${agent.name}:\n${perspective}\n`;
+    // Coletar perspectivas em paralelo, mas respeitando a ordem de prioridade nos logs
+      const perspectives = await Promise.all(swarmAgents.map(async (agent) => {
+        onLog(agent.id, `[P${agent.swarmPriority}] Analisando: ${agent.swarmTask}`, "info", true);
+        
+        // Get tool declarations for this agent
+        const toolDeclarations = getToolDeclarations(agent.tools);
+
+        // Optimization: Compress context if it's too large for the agent
+        const optimizedMessage = enrichedMessage.length > 5000 ? await compressContext(enrichedMessage, agent.model || model) : enrichedMessage;
+
+        const perspective = await sendMessageToAgent(
+          agent.id,
+          optimizedMessage,
+          agent.model || model,
+          `${agent.prompt}\n\nSua tarefa no Swarm (Prioridade ${agent.swarmPriority}): ${agent.swarmTask}\n\nForneça sua perspectiva especializada sobre este desafio em 1-2 parágrafos.`,
+          toolDeclarations,
+          images,
+          history,
+          useGrounding
+        );
+      onLog(agent.id, `${agent.name} concluiu sua análise prioritária.`, "success", false);
+      return `### Perspectiva do ${agent.name} (Prioridade ${agent.swarmPriority}):\n${perspective}\n`;
     }));
 
     onLog("orchestrator", "Sintetizando as perspectivas em uma solução final...", "action", true);
@@ -193,12 +222,14 @@ Como Orquestrador, sintetize essas visões em uma estratégia única, coesa e ac
     }
     onLog(targetAgentId, "Processando a solicitação...", "info", true);
     
+    const toolDeclarations = getToolDeclarations(skill?.tools);
+
     finalResponse = await sendMessageToAgent(
       targetAgentId,
       enrichedMessage,
       skill?.model || model,
       systemInstruction,
-      undefined,
+      toolDeclarations,
       images,
       history,
       useGrounding

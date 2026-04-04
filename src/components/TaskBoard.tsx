@@ -27,10 +27,11 @@ import {
   User,
   Brain,
   Check,
-  Activity
+  Activity,
+  Sparkles
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
-import { Task, BrainMemory } from '../types';
+import { Task, BrainMemory, MarketingSkill } from '../types';
 import { db, auth, handleFirestoreError, OperationType } from '../firebase';
 import { firebaseService } from '../lib/firebaseService';
 import { 
@@ -43,8 +44,12 @@ import {
   doc, 
   serverTimestamp,
   orderBy,
-  Timestamp
+  Timestamp,
+  where,
+  limit
 } from 'firebase/firestore';
+import { orchestrateRequest } from '../services/orchestrator';
+import { MARKETING_SKILLS } from '../constants';
 import { cn } from '../lib/utils';
 
 const PRIORITY_COLORS = {
@@ -249,6 +254,127 @@ export default function TaskBoard() {
     } catch (error) {
       handleFirestoreError(error, OperationType.DELETE, 'tasks');
     }
+  };
+
+  const [isAnalyzing, setIsAnalyzing] = useState<string | null>(null);
+  const [aiSuggestion, setAiSuggestion] = useState<{
+    taskId: string;
+    suggestion: string;
+    action: 'update_status' | 'add_subtask' | 'none';
+    actionDetails?: any;
+  } | null>(null);
+
+  const handleApplySuggestion = async () => {
+    if (!aiSuggestion || !auth.currentUser) return;
+    
+    try {
+      const taskRef = doc(db, 'users', auth.currentUser.uid, 'tasks', aiSuggestion.taskId);
+      
+      if (aiSuggestion.action === 'update_status') {
+        await updateDoc(taskRef, {
+          status: aiSuggestion.actionDetails.newStatus,
+          updatedAt: serverTimestamp()
+        });
+      } else if (aiSuggestion.action === 'add_subtask') {
+        const task = tasks.find(t => t.id === aiSuggestion.taskId);
+        if (task) {
+          await updateDoc(taskRef, {
+            description: (task.description ? task.description + '\n\n' : '') + `[IA] Próximo passo: ${aiSuggestion.actionDetails.subtaskTitle}`,
+            updatedAt: serverTimestamp()
+          });
+        }
+      }
+      setAiSuggestion(null);
+    } catch (error) {
+      handleFirestoreError(error, OperationType.UPDATE, 'tasks');
+    }
+  };
+
+  const handleAIMagic = async (task: Task) => {
+    if (!auth.currentUser) return;
+    setIsAnalyzing(task.id);
+    setAiSuggestion(null);
+    
+    try {
+      const prompt = `
+        Analise esta tarefa no Kanban:
+        Título: ${task.title}
+        Descrição: ${task.description || 'Sem descrição'}
+        Status Atual: ${task.status}
+        Prioridade: ${task.priority}
+        
+        Sua missão: Sugira a próxima ação ideal.
+        Retorne APENAS um JSON no formato:
+        {
+          "suggestion": "Texto curto da sugestão (máx 2 frases)",
+          "action": "update_status" | "add_subtask" | "none",
+          "actionDetails": {
+            "newStatus": "todo" | "in-progress" | "done",
+            "subtaskTitle": "Título do sub-passo"
+          }
+        }
+      `;
+
+      const result = await orchestrateRequest(
+        prompt,
+        'productivity-strategist',
+        'gemini-3.1-pro-preview',
+        'Você é um assistente de produtividade que ajuda a mover tarefas no Kanban.',
+        false,
+        false,
+        () => {},
+        MARKETING_SKILLS
+      );
+
+      try {
+        const parsed = JSON.parse(result.response.replace(/```json\n?|\n?```/g, '').trim());
+        setAiSuggestion({
+          taskId: task.id,
+          ...parsed
+        });
+      } catch (e) {
+        console.error("Failed to parse AI suggestion JSON", e);
+      }
+
+    } catch (error) {
+      console.error('Error in AI Magic:', error);
+    } finally {
+      setIsAnalyzing(null);
+    }
+  };
+
+  const renderAISuggestion = (taskId: string) => {
+    if (aiSuggestion?.taskId !== taskId) return null;
+    return (
+      <motion.div 
+        initial={{ opacity: 0, height: 0 }}
+        animate={{ opacity: 1, height: 'auto' }}
+        className="mt-3 p-3 bg-theme-orange/10 border border-theme-orange/20 rounded-xl"
+      >
+        <div className="flex items-start gap-2">
+          <Sparkles className="w-4 h-4 text-theme-orange mt-0.5 flex-shrink-0" />
+          <div className="flex-1">
+            <p className="text-xs text-theme-primary font-medium mb-2">{aiSuggestion.suggestion}</p>
+            <div className="flex items-center gap-2">
+              {aiSuggestion.action !== 'none' && (
+                <button
+                  onClick={handleApplySuggestion}
+                  className="px-3 py-1 bg-theme-orange text-white text-[10px] font-black uppercase tracking-widest rounded-lg hover:opacity-90 transition-all shadow-lg shadow-orange-500/20"
+                >
+                  Aplicar
+                </button>
+              )}
+              <button
+                onClick={() => setAiSuggestion(null)}
+                className="px-3 py-1 bg-theme-glass text-theme-secondary text-[10px] font-black uppercase tracking-widest rounded-lg hover:bg-theme-glass/80 transition-all"
+              >
+                Dispensar
+              </button>
+            </div>
+          </div>
+        </div>
+      </motion.div>
+    );
   };
 
   const filteredTasks = tasks
@@ -771,6 +897,16 @@ export default function TaskBoard() {
                             </div>
 
                             <div className="flex items-center gap-2">
+                              <button 
+                                onClick={() => handleAIMagic(task)}
+                                disabled={isAnalyzing === task.id}
+                                className={cn(
+                                  "p-1.5 bg-theme-glass rounded-lg text-theme-purple opacity-30 hover:opacity-100 hover:bg-theme-purple/10 transition-all shadow-inner active:scale-95",
+                                  isAnalyzing === task.id && "animate-pulse opacity-100"
+                                )}
+                              >
+                                {isAnalyzing === task.id ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Sparkles className="w-3.5 h-3.5" />}
+                              </button>
                               {col.id !== 'done' && (
                                 <button 
                                   onClick={() => handleUpdateStatus(task.id, col.id === 'todo' ? 'in-progress' : 'done')}
@@ -781,6 +917,7 @@ export default function TaskBoard() {
                               )}
                             </div>
                           </div>
+                          {renderAISuggestion(task.id)}
                         </motion.div>
                       ))}
                   </AnimatePresence>
@@ -793,14 +930,14 @@ export default function TaskBoard() {
         <div className="flex-1 overflow-y-auto p-6 custom-scrollbar bg-gradient-to-b from-theme-glass/10 to-transparent">
           <div className="max-w-5xl mx-auto space-y-2">
             {filteredTasks.map(task => (
-              <motion.div 
-                key={task.id}
-                layout
-                className={cn(
-                  "flex items-center justify-between p-4 bg-theme-glass border border-theme-glass rounded-2xl hover:bg-theme-glass/80 transition-all group",
-                  isOverdue(task.dueDate) && task.status !== 'done' && "border-theme-rose/50 bg-theme-rose/5 shadow-[0_0_15px_rgba(244,63,94,0.1)]"
-                )}
-              >
+              <React.Fragment key={task.id}>
+                <motion.div 
+                  layout
+                  className={cn(
+                    "flex items-center justify-between p-4 bg-theme-glass border border-theme-glass rounded-2xl hover:bg-theme-glass/80 transition-all group",
+                    isOverdue(task.dueDate) && task.status !== 'done' && "border-theme-rose/50 bg-theme-rose/5 shadow-[0_0_15px_rgba(244,63,94,0.1)]"
+                  )}
+                >
                 <div className="flex items-center gap-4 flex-1">
                   <button 
                     onClick={() => handleUpdateStatus(task.id, task.status === 'done' ? 'todo' : 'done')}
@@ -889,10 +1026,12 @@ export default function TaskBoard() {
                   </button>
                 </div>
               </motion.div>
-            ))}
-          </div>
+              {renderAISuggestion(task.id)}
+            </React.Fragment>
+          ))}
         </div>
-      )}
+      </div>
+    )}
 
       {/* Edit Task Modal */}
       <AnimatePresence>

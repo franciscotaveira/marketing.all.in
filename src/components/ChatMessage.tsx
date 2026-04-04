@@ -58,7 +58,7 @@ export const ChatMessage = memo(function ChatMessage({
             : "glass-card bg-theme-glass border-theme-glass text-theme-primary rounded-tl-none"
         )}>
           <div className={cn(
-            "prose prose-sm max-w-none prose-headings:font-black prose-headings:tracking-tighter prose-a:text-blue-400 prose-strong:text-inherit prose-pre:bg-theme-glass prose-pre:text-theme-primary prose-code:text-blue-500 dark:prose-code:text-blue-300",
+            "prose prose-sm max-w-none prose-headings:font-black prose-headings:tracking-tighter prose-a:text-blue-500 dark:prose-a:text-blue-400 prose-strong:text-inherit prose-pre:bg-theme-glass prose-pre:text-theme-primary prose-code:text-blue-600 dark:prose-code:text-blue-300 text-theme-primary",
             "dark:prose-invert"
           )}>
             <ReactMarkdown>{msg.content}</ReactMarkdown>

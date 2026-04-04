@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { 
-  Globe, Brain, Terminal, LayoutDashboard, HelpCircle, Users, Building2, Sun, Moon
+  Globe, Brain, Terminal, LayoutDashboard, HelpCircle, Users, Building2, Sun, Moon, Settings, Search
 } from 'lucide-react';
 import { cn } from '../lib/utils';
 import { MarketingSkill, Company } from '../types';
@@ -22,6 +22,9 @@ interface AgentControlsProps {
   setIsBrandContextModalOpen: (value: boolean) => void;
   isDarkMode: boolean;
   setIsDarkMode: (value: boolean) => void;
+  manualAgentPriorities: Record<string, number>;
+  setManualAgentPriorities: (value: Record<string, number>) => void;
+  allSkills: MarketingSkill[];
 }
 
 export function AgentControls({
@@ -39,16 +42,40 @@ export function AgentControls({
   companies,
   setIsBrandContextModalOpen,
   isDarkMode,
-  setIsDarkMode
+  setIsDarkMode,
+  manualAgentPriorities,
+  setManualAgentPriorities,
+  allSkills
 }: AgentControlsProps) {
   const [activeTooltip, setActiveTooltip] = useState<string | null>(null);
+  const [isSwarmSettingsOpen, setIsSwarmSettingsOpen] = useState(false);
+  const [agentSearchQuery, setAgentSearchQuery] = useState("");
 
   // Close tooltip when clicking outside
   useEffect(() => {
-    const handleClickOutside = () => setActiveTooltip(null);
+    const handleClickOutside = () => {
+      setActiveTooltip(null);
+      setIsSwarmSettingsOpen(false);
+    };
     document.addEventListener('click', handleClickOutside);
     return () => document.removeEventListener('click', handleClickOutside);
   }, []);
+
+  const handlePriorityChange = (agentId: string, priority: number) => {
+    setManualAgentPriorities({
+      ...manualAgentPriorities,
+      [agentId]: priority
+    });
+  };
+
+  const clearManualPriorities = () => {
+    setManualAgentPriorities({});
+  };
+
+  const filteredAgents = allSkills.filter(agent => 
+    agent.name.toLowerCase().includes(agentSearchQuery.toLowerCase()) ||
+    agent.category.toLowerCase().includes(agentSearchQuery.toLowerCase())
+  );
 
   return (
     <div className="flex items-center justify-between p-4 md:px-8 border-b border-theme-glass bg-transparent backdrop-blur-[80px] sticky top-0 z-30 shadow-[0_10px_50px_rgba(0,0,0,0.1)]">
@@ -101,10 +128,18 @@ export function AgentControls({
                 <span className="hidden sm:inline">Swarm</span>
               </button>
               <button
-                onClick={(e) => { e.stopPropagation(); setActiveTooltip(activeTooltip === 'swarm' ? null : 'swarm'); }}
+                onClick={(e) => { 
+                  e.stopPropagation(); 
+                  if (useSwarmMode) {
+                    setIsSwarmSettingsOpen(!isSwarmSettingsOpen);
+                    setActiveTooltip(null);
+                  } else {
+                    setActiveTooltip(activeTooltip === 'swarm' ? null : 'swarm'); 
+                  }
+                }}
                 className="pr-3 pl-1 py-2.5 opacity-70 hover:opacity-100 transition-opacity"
               >
-                <HelpCircle className="w-4 h-4" />
+                {useSwarmMode ? <Settings className="w-4 h-4" /> : <HelpCircle className="w-4 h-4" />}
               </button>
             </div>
             <AnimatePresence>
@@ -117,6 +152,74 @@ export function AgentControls({
                 >
                   <div className="font-black uppercase tracking-widest text-theme-blue mb-2 text-[10px]">Modo Swarm</div>
                   Ativa múltiplos agentes especialistas para trabalhar em paralelo no seu objetivo.
+                </motion.div>
+              )}
+              {isSwarmSettingsOpen && useSwarmMode && (
+                <motion.div 
+                  initial={{ opacity: 0, y: 10, scale: 0.9 }}
+                  animate={{ opacity: 1, y: 0, scale: 1 }}
+                  exit={{ opacity: 0, y: 10, scale: 0.9 }}
+                  onClick={(e) => e.stopPropagation()}
+                  className="absolute top-full mt-3 right-0 w-80 p-4 liquid-glass-panel z-50 shadow-2xl border border-theme-glass overflow-hidden"
+                >
+                  <div className="flex items-center justify-between mb-4">
+                    <div className="font-black uppercase tracking-widest text-theme-blue text-[10px]">Priorização do Swarm</div>
+                    {Object.keys(manualAgentPriorities).length > 0 && (
+                      <button 
+                        onClick={clearManualPriorities}
+                        className="text-[9px] font-black uppercase text-theme-rose hover:underline"
+                      >
+                        Resetar
+                      </button>
+                    )}
+                  </div>
+                  
+                  <div className="mb-4 relative">
+                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                      <Search className="h-3.5 w-3.5 text-theme-secondary opacity-50" />
+                    </div>
+                    <input
+                      type="text"
+                      placeholder="Buscar agente ou categoria..."
+                      value={agentSearchQuery}
+                      onChange={(e) => setAgentSearchQuery(e.target.value)}
+                      className="w-full bg-theme-main/50 border border-theme-glass rounded-lg pl-9 pr-3 py-2 text-xs text-theme-primary placeholder-theme-secondary/50 focus:outline-none focus:border-theme-blue focus:ring-1 focus:ring-theme-blue/50 transition-all shadow-inner"
+                    />
+                  </div>
+                  
+                  <div className="space-y-4 max-h-[300px] overflow-y-auto pr-2 custom-scrollbar">
+                    <p className="text-[10px] text-theme-secondary opacity-60 leading-relaxed italic">
+                      Defina a prioridade manual dos agentes ou deixe o Orquestrador decidir automaticamente com base na criticidade da tarefa.
+                    </p>
+                    
+                    {filteredAgents.length === 0 ? (
+                      <div className="text-center py-4 text-xs text-theme-secondary opacity-60">Nenhum agente encontrado.</div>
+                    ) : (
+                      filteredAgents.map(agent => (
+                        <div key={agent.id} className="space-y-2">
+                          <div className="flex items-center justify-between">
+                            <span className="text-[10px] font-bold text-theme-primary">{agent.name}</span>
+                            <span className="text-[10px] font-black text-theme-blue">
+                              {manualAgentPriorities[agent.id] !== undefined ? `P${manualAgentPriorities[agent.id]}` : 'Auto'}
+                            </span>
+                          </div>
+                          <input 
+                            type="range"
+                            min="0"
+                            max="10"
+                            step="1"
+                            value={manualAgentPriorities[agent.id] || 0}
+                            onChange={(e) => handlePriorityChange(agent.id, parseInt(e.target.value))}
+                            className="w-full h-1 bg-theme-glass rounded-lg appearance-none cursor-pointer accent-theme-blue"
+                          />
+                          <div className="flex justify-between text-[8px] text-theme-secondary opacity-40 font-black uppercase tracking-tighter">
+                            <span>Auto/Baixa</span>
+                            <span>Alta</span>
+                          </div>
+                        </div>
+                      ))
+                    )}
+                  </div>
                 </motion.div>
               )}
             </AnimatePresence>

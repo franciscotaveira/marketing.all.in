@@ -3,20 +3,159 @@ import { createServer as createViteServer } from "vite";
 import path from "path";
 import { z } from "zod";
 import admin from "firebase-admin";
+import { getFirestore } from "firebase-admin/firestore";
 import dotenv from "dotenv";
 import { google } from "googleapis";
+import { GoogleGenAI } from "@google/genai";
+import fs from "fs";
 
 dotenv.config();
 
+// Load Firebase Config
+const firebaseConfigPath = path.join(process.cwd(), 'firebase-applet-config.json');
+let firebaseConfig: any = {};
+if (fs.existsSync(firebaseConfigPath)) {
+  firebaseConfig = JSON.parse(fs.readFileSync(firebaseConfigPath, 'utf8'));
+}
+
 // Initialize Firebase Admin
-admin.initializeApp({
-  credential: admin.credential.applicationDefault(),
-});
-const db = admin.firestore();
+let adminApp;
+try {
+  if (process.env.FIREBASE_SERVICE_ACCOUNT_KEY) {
+    const serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT_KEY);
+    adminApp = admin.initializeApp({
+      credential: admin.credential.cert(serviceAccount),
+      projectId: firebaseConfig.projectId,
+    });
+  } else {
+    adminApp = admin.initializeApp({
+      credential: admin.credential.applicationDefault(),
+      projectId: firebaseConfig.projectId,
+    });
+  }
+} catch (error) {
+  console.error("Failed to initialize Firebase Admin:", error);
+}
+
+const db = getFirestore(adminApp, firebaseConfig.firestoreDatabaseId);
+
+// Initialize Gemini Client for Backend
+const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY || '' });
+
+// Backend Routine Executor
+function startRoutineExecutor() {
+  console.log("[Backend] Starting Routine Executor...");
+  
+  if (!process.env.FIREBASE_SERVICE_ACCOUNT_KEY) {
+    console.warn("\n⚠️ AVISO: Para que o backend acesse o Firestore 24/7, você precisa configurar a variável de ambiente FIREBASE_SERVICE_ACCOUNT_KEY.");
+    console.warn("Sem ela, o servidor não tem permissão para ler/escrever no banco de dados do usuário.\n");
+  }
+  
+  setInterval(async () => {
+    if (!process.env.FIREBASE_SERVICE_ACCOUNT_KEY) {
+      return; // Skip execution if no service account key is provided
+    }
+
+    try {
+      const now = new Date();
+      const currentHour = now.getHours();
+      const currentMinute = now.getMinutes();
+      const currentDay = now.toLocaleDateString('en-US', { weekday: 'long' }).toLowerCase();
+
+      // Get all users
+      const usersSnapshot = await db.collection('users').get();
+      
+      for (const userDoc of usersSnapshot.docs) {
+        const userId = userDoc.id;
+        const routinesSnapshot = await db.collection('users').doc(userId).collection('routines').get();
+        
+        for (const routineDoc of routinesSnapshot.docs) {
+          const routine = { id: routineDoc.id, ...routineDoc.data() } as any;
+          
+          // Check day
+          if (routine.days && routine.days.length > 0 && !routine.days.includes(currentDay)) continue;
+          
+          // Check time
+          if (!routine.startTime) continue;
+          const [startHour, startMinute] = routine.startTime.split(':').map(Number);
+          
+          if (currentHour === startHour && currentMinute === startMinute) {
+            // Check if already executed today
+            const lastExecuted = routine.lastExecutedAt?.toDate();
+            const isAlreadyExecutedToday = lastExecuted && 
+              lastExecuted.getDate() === now.getDate() && 
+              lastExecuted.getMonth() === now.getMonth() && 
+              lastExecuted.getFullYear() === now.getFullYear();
+
+            if (!isAlreadyExecutedToday) {
+              console.log(`[Backend] Executing routine ${routine.title} for user ${userId}`);
+              
+              // 1. Fetch pending tasks for context
+              const tasksSnapshot = await db.collection('users').doc(userId).collection('tasks')
+                .where('status', '!=', 'done').get();
+              const pendingTasks = tasksSnapshot.docs.map(d => d.data());
+              
+              // 2. Prepare prompt
+              const agentId = routine.agentId || 'productivity-strategist';
+              const prompt = `
+                ROTINA AUTOMÁTICA: "${routine.title}"
+                
+                Contexto Atual:
+                - Tarefas Pendentes: ${pendingTasks.length}
+                - Data/Hora: ${now.toLocaleString()}
+                
+                Sua missão: Como ${agentId}, analise o cenário atual e forneça uma recomendação estratégica curta (1 parágrafo) ou uma lista de 3 ações prioritárias para o usuário agora.
+              `;
+
+              try {
+                // 3. Call Gemini
+                const response = await ai.models.generateContent({
+                  model: 'gemini-3.1-pro-preview',
+                  contents: prompt,
+                  config: {
+                    systemInstruction: 'Você é um assistente de produtividade executando uma rotina agendada.'
+                  }
+                });
+
+                // 4. Save Notification
+                await db.collection('users').doc(userId).collection('notifications').add({
+                  title: `Rotina Executada: ${routine.title}`,
+                  message: response.text || "Rotina concluída sem mensagem.",
+                  type: 'success',
+                  read: false,
+                  createdAt: admin.firestore.FieldValue.serverTimestamp(),
+                  metadata: {
+                    routineId: routine.id,
+                    agentId: agentId,
+                    executedBy: 'backend'
+                  }
+                });
+
+                // 5. Update Routine
+                await routineDoc.ref.update({
+                  lastExecutedAt: admin.firestore.FieldValue.serverTimestamp()
+                });
+                
+                console.log(`[Backend] Successfully executed routine ${routine.title}`);
+              } catch (err) {
+                console.error(`[Backend] Error calling Gemini for routine ${routine.id}:`, err);
+              }
+            }
+          }
+        }
+      }
+    } catch (error) {
+      console.error("[Backend] Routine executor error:", error);
+    }
+  }, 60000); // Check every minute
+}
 
 async function startServer() {
   const app = express();
   const PORT = 3000;
+
+  // Start the background routine executor
+  startRoutineExecutor();
 
   app.use(express.json());
 

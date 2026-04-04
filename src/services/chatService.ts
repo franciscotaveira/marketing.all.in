@@ -1,5 +1,6 @@
 import { Message } from "../types";
 import { gemini } from "./gemini";
+import { executeToolCall } from "./toolService";
 
 // Intelligent Cache System
 const CACHE_PREFIX = "agent_cache_v2_";
@@ -158,8 +159,55 @@ export async function sendMessageToAgent(
     // Add URL context tool by default to allow reading URLs
     config.tools.push({ urlContext: {} });
 
-    const response = await gemini.generateText(contents, model, systemInstruction, config.tools, responseMimeType);
-    finalResponse = response.text || "Sem resposta.";
+    const response = await gemini.client.models.generateContent({
+      model: model || "gemini-3-flash-preview",
+      contents,
+      config: {
+        systemInstruction,
+        tools: config.tools,
+        responseMimeType: responseMimeType as any,
+      }
+    });
+
+    // Handle Function Calls
+    if (response.functionCalls && response.functionCalls.length > 0) {
+      const functionResponses = [];
+      for (const call of response.functionCalls) {
+        const toolResult = await executeToolCall(call.name, call.args);
+        functionResponses.push({
+          name: call.name,
+          response: toolResult,
+          id: call.id
+        });
+      }
+
+      // Send back function results to the model
+      const secondResponse = await gemini.client.models.generateContent({
+        model: model || "gemini-3-flash-preview",
+        contents: [
+          ...contents,
+          response.candidates?.[0]?.content as any,
+          {
+            role: "user",
+            parts: functionResponses.map(res => ({
+              functionResponse: {
+                name: res.name,
+                response: res.response,
+                id: res.id
+              }
+            }))
+          }
+        ],
+        config: {
+          systemInstruction,
+          tools: config.tools,
+        }
+      });
+
+      finalResponse = secondResponse.text || "Erro ao processar resposta da ferramenta.";
+    } else {
+      finalResponse = response.text || "Sem resposta.";
+    }
   } else {
     // Otherwise, call backend proxy
     const response = await fetch("/api/chat", {
