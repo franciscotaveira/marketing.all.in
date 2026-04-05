@@ -21,13 +21,29 @@ if (fs.existsSync(firebaseConfigPath)) {
 // Initialize Firebase Admin
 let adminApp;
 let db: admin.firestore.Firestore | null = null;
+let hasValidServiceAccount = false;
+
 try {
   if (process.env.FIREBASE_SERVICE_ACCOUNT_KEY) {
-    const serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT_KEY);
-    adminApp = admin.initializeApp({
-      credential: admin.credential.cert(serviceAccount),
-      projectId: firebaseConfig.projectId,
-    });
+    let serviceAccount;
+    try {
+      serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT_KEY);
+      hasValidServiceAccount = true;
+    } catch (parseError) {
+      console.warn("⚠️ Aviso: FIREBASE_SERVICE_ACCOUNT_KEY não é um JSON válido. Verifique se você não colou um caminho de arquivo em vez do conteúdo JSON. O servidor tentará usar as credenciais padrão.");
+    }
+
+    if (serviceAccount) {
+      adminApp = admin.initializeApp({
+        credential: admin.credential.cert(serviceAccount),
+        projectId: firebaseConfig.projectId,
+      });
+    } else {
+      adminApp = admin.initializeApp({
+        credential: admin.credential.applicationDefault(),
+        projectId: firebaseConfig.projectId,
+      });
+    }
   } else {
     adminApp = admin.initializeApp({
       credential: admin.credential.applicationDefault(),
@@ -46,14 +62,14 @@ const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY || '' });
 function startRoutineExecutor() {
   console.log("[Backend] Starting Routine Executor...");
   
-  if (!process.env.FIREBASE_SERVICE_ACCOUNT_KEY) {
-    console.warn("\n⚠️ AVISO: Para que o backend acesse o Firestore 24/7, você precisa configurar a variável de ambiente FIREBASE_SERVICE_ACCOUNT_KEY.");
-    console.warn("Sem ela, o servidor não tem permissão para ler/escrever no banco de dados do usuário.\n");
+  if (!hasValidServiceAccount) {
+    console.warn("\n⚠️ AVISO: Para que o backend acesse o Firestore 24/7, você precisa configurar a variável de ambiente FIREBASE_SERVICE_ACCOUNT_KEY com um JSON válido.");
+    console.warn("Sem ela, o servidor não tem permissão para ler/escrever no banco de dados do usuário e as rotinas automáticas não serão executadas.\n");
   }
   
   setInterval(async () => {
-    if (!process.env.FIREBASE_SERVICE_ACCOUNT_KEY || !db) {
-      return; // Skip execution if no service account key is provided or db is not initialized
+    if (!hasValidServiceAccount || !db) {
+      return; // Skip execution if no valid service account key is provided or db is not initialized
     }
 
     try {

@@ -9,7 +9,7 @@
 Nossa voz é a de um **Comandante de Operações de Elite**. Falamos com autoridade técnica, mas sem arrogância. Somos diretos ao ponto, focados em resultados e sempre um passo à frente da tecnologia convencional.
 
 - **Preciso**: Sem "fluff" ou palavras vazias. Cada frase tem um propósito técnico ou estratégico.
-- **Visionário**: Falamos sobre o futuro como se já estivéssemos lá (MCP, Manus, Swarm).
+- **Visionário**: Falamos sobre o futuro como se já estivéssemos lá (MCP, Swarm).
 - **Colaborativo**: Enfatizamos que somos um "enxame" (swarm) trabalhando para o usuário.
 - **Empoderador**: Fazemos o usuário se sentir o comandante de uma força de elite.
 
@@ -18,12 +18,12 @@ Pessoas que já entendem o básico de IA e marketing, mas estão frustradas com 
 
 - **Solopreneurs & Founders de SaaS**: Precisam de um time completo de marketing sem o custo de contratação imediata.
 - **Diretores de Marketing de Performance**: Buscam otimização baseada em dados e experimentos rápidos.
-- **Engenheiros de Automação e Growth**: Querem orquestrar fluxos complexos (n8n, Windmill, APIs).
+- **Engenheiros de Automação e Growth**: Querem orquestrar fluxos complexos (n8n, APIs).
 - **Agências de Próxima Geração**: Que desejam escalar sua entrega usando inteligência de enxame.
 
 ## 4. Pontos de Diferenciação
 - **Inteligência de Enxame (Swarm)**: Não somos apenas um chatbot; somos múltiplos agentes especializados colaborando em tempo real.
-- **DNA Técnico Profundo**: Integração nativa com protocolos avançados (MCP, Windmill, Manus AI) para automação infinita.
+- **DNA Técnico Profundo**: Integração nativa com protocolos avançados para automação infinita.
 - **Foco em Artefatos Acionáveis**: Geramos planos, códigos, JSONs de n8n e estratégias prontas para implementação imediata.
 - **Humanização Estratégica**: O equilíbrio perfeito entre a eficiência da máquina e a empatia humana, removendo o "cheiro de IA".
 

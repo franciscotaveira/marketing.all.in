@@ -57,14 +57,14 @@ export async function orchestrateRequest(
   manualPriorities?: Record<string, number>
 ): Promise<OrchestrationResult> {
   
-  // Intelligent Semantic Cache (Manus & Claude Optimization)
+  // Intelligent Semantic Cache
   const isCacheable = !useGrounding && (!images || images.length === 0) && (!history || history.length === 0);
   if (isCacheable) {
     const cachedResponse = await getSemanticCache(`orchestration_${userMessage}_${selectedAgentId}_${useSwarmMode}`);
     if (cachedResponse) {
       try {
         const parsed = JSON.parse(cachedResponse);
-        onLog(selectedAgentId || "orchestrator", "⚡ Resultado recuperado do Cache Semântico Inteligente (Manus & Claude Optimization)", "success", false);
+        onLog(selectedAgentId || "orchestrator", "⚡ Resultado recuperado do Cache Semântico Inteligente", "success", false);
         return { ...parsed, cached: true };
       } catch (e) {
         // Fallback if not JSON

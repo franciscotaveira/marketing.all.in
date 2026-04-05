@@ -58,7 +58,17 @@ export const ChatMessage = memo(function ChatMessage({
             : "glass-card bg-theme-glass border-theme-glass text-theme-primary rounded-tl-none"
         )}>
           <div className={cn(
-            "prose prose-sm max-w-none prose-headings:font-black prose-headings:tracking-tighter prose-a:text-blue-500 dark:prose-a:text-blue-400 prose-strong:text-inherit prose-pre:bg-theme-glass prose-pre:text-theme-primary prose-code:text-blue-600 dark:prose-code:text-blue-300 text-theme-primary",
+            "prose prose-sm max-w-none",
+            "text-theme-primary",
+            "prose-headings:font-black prose-headings:tracking-tighter prose-headings:text-theme-primary",
+            "prose-p:text-theme-primary prose-p:leading-relaxed prose-p:tracking-wide",
+            "prose-a:text-blue-500 dark:prose-a:text-blue-400",
+            "prose-strong:text-theme-primary prose-strong:font-bold",
+            "prose-blockquote:text-theme-secondary prose-blockquote:border-l-4 prose-blockquote:border-theme-glass prose-blockquote:bg-theme-glass/20 prose-blockquote:py-1 prose-blockquote:px-4 prose-blockquote:rounded-r-lg prose-blockquote:not-italic",
+            "prose-pre:bg-[#0f172a] prose-pre:text-gray-100 dark:prose-pre:bg-black/50 dark:prose-pre:border dark:prose-pre:border-white/10",
+            "prose-code:text-blue-600 dark:prose-code:text-blue-300",
+            "prose-li:text-theme-primary prose-li:marker:text-theme-secondary",
+            "prose-ol:text-theme-primary prose-ul:text-theme-primary",
             "dark:prose-invert"
           )}>
             <ReactMarkdown>{msg.content}</ReactMarkdown>

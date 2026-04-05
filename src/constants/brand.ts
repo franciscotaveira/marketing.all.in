@@ -19,7 +19,7 @@ export const APP_BRAND_PERSONA: BrandPersona = {
   differentiation: {
     points: [
       "Inteligência de Enxame (Swarm): Múltiplos agentes especializados colaborando em tempo real.",
-      "DNA Técnico Profundo: Integração nativa com MCP, Windmill e Manus AI para automação infinita.",
+      "DNA Técnico Profundo: Integração nativa com protocolos avançados para automação infinita.",
       "Foco em Artefatos Acionáveis: Não apenas conversas, mas planos, códigos e estratégias prontas para uso.",
       "Humanização Estratégica: O equilíbrio perfeito entre a eficiência da máquina e a empatia humana."
     ],

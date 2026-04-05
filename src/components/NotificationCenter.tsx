@@ -216,7 +216,7 @@ export default function NotificationCenter() {
               initial={{ opacity: 0, y: 10, scale: 0.95 }}
               animate={{ opacity: 1, y: 0, scale: 1 }}
               exit={{ opacity: 0, y: 10, scale: 0.95 }}
-              className="absolute right-0 mt-2 w-80 md:w-96 bg-theme-card backdrop-blur-3xl border border-theme-glass rounded-2xl shadow-[0_0_50px_rgba(0,0,0,0.5)] z-50 overflow-hidden"
+              className="absolute right-0 md:right-0 -right-4 mt-2 w-[calc(100vw-2rem)] md:w-96 bg-theme-card backdrop-blur-3xl border border-theme-glass rounded-2xl shadow-[0_0_50px_rgba(0,0,0,0.5)] z-50 overflow-hidden"
             >
               <div className="p-4 border-b border-theme-glass flex items-center justify-between bg-theme-glass">
                 <div className="flex items-center gap-2">

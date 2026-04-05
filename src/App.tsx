@@ -83,6 +83,7 @@ import { InputBar } from "./components/InputBar";
 import { AgentControls } from "./components/AgentControls";
 import { SidebarChatHistory } from "./components/SidebarChatHistory";
 import { BrandContextModal } from "./components/BrandContextModal";
+import Logo from "./components/Logo";
 import { MARKETING_SKILLS, MARKETING_FRAMEWORKS, CATEGORY_COLORS, CATEGORY_TEXT_COLORS, CATEGORY_BG_LIGHT_COLORS, WORKFLOWS } from "./constants";
 import { MarketingSkill, SkillCategory, Message, SkillTier, Artifact, BrainMemory, Company, Workflow, ChatSession } from "./types";
 import { cn } from "./lib/utils";
@@ -988,15 +989,7 @@ export default function App() {
         )}
       >
         <div className="p-6 border-b border-white/5 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="w-9 h-9 bg-gradient-to-br from-blue-500 to-purple-600 rounded-xl flex items-center justify-center shadow-[0_0_20px_rgba(37,99,235,0.4)] transition-transform hover:scale-110">
-              <Zap className="w-5 h-5 text-white" />
-            </div>
-            <div className="flex flex-col">
-              <h2 className="font-black tracking-tighter text-lg uppercase leading-none text-theme-primary">Aetheris <span className="text-blue-400">Swarm</span></h2>
-              <span className="text-[8px] font-bold text-theme-secondary uppercase tracking-[0.3em] mt-1 italic">Elite AI Orchestration</span>
-            </div>
-          </div>
+          <Logo />
           <button onClick={() => setIsSidebarOpen(false)} className="hover:bg-theme-glass p-2 rounded-xl transition-all active:scale-90">
             <X className="w-5 h-5 text-theme-secondary" />
           </button>
@@ -1324,31 +1317,58 @@ export default function App() {
       {/* Main Content */}
       <main className="flex-1 flex flex-col relative min-w-0">
         {/* Header */}
-        <header className="h-20 glass-panel z-30 flex items-center justify-between px-8 mb-4 shrink-0 transition-all duration-500">
-          <div className="flex items-center gap-6">
-            {!isSidebarOpen && (
-              <button 
-                onClick={() => setIsSidebarOpen(true)}
-                className="p-3 glass-card hover:bg-theme-glass transition-all active:scale-95 group"
-              >
-                <Menu className="w-5 h-5 text-theme-secondary group-hover:text-theme-primary" />
-              </button>
-            )}
-            <div className="flex flex-col">
-              <div className="flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.2em] text-theme-secondary mb-1">
-                <span className="hover:text-theme-primary transition-colors cursor-pointer">Dashboard</span>
-                <ChevronRight className="w-3 h-3" />
-                <span className="text-blue-400">{activeTab === 'chat' ? "Chat Intelligence" : "Operations"}</span>
+        <header className="h-auto min-h-20 py-4 md:py-0 glass-panel z-30 flex flex-col md:flex-row items-center justify-between px-4 md:px-8 mb-4 shrink-0 transition-all duration-500 gap-4 md:gap-0">
+          <div className="flex items-center justify-between w-full md:w-auto gap-4">
+            <div className="flex items-center gap-4">
+              {!isSidebarOpen && (
+                <button 
+                  onClick={() => setIsSidebarOpen(true)}
+                  className="p-3 glass-card hover:bg-theme-glass transition-all active:scale-95 group"
+                >
+                  <Menu className="w-5 h-5 text-theme-secondary group-hover:text-theme-primary" />
+                </button>
+              )}
+              <div className="flex flex-col">
+                <div className="flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.2em] text-theme-secondary mb-1">
+                  <span className="hover:text-theme-primary transition-colors cursor-pointer">Dashboard</span>
+                  <ChevronRight className="w-3 h-3" />
+                  <span className="text-blue-400">{activeTab === 'chat' ? "Chat Intelligence" : "Operations"}</span>
+                </div>
+                <h1 className="text-sm font-black uppercase tracking-widest flex items-center gap-3 text-theme-primary">
+                  {activeTab === 'chat' ? (selectedSkill ? selectedSkill.name : "Marketing Intelligence") : "Gestão de Operações"}
+                  <div className="w-1.5 h-1.5 bg-blue-500 rounded-full animate-pulse shadow-[0_0_10px_rgba(59,130,246,0.8)]" />
+                </h1>
               </div>
-              <h1 className="text-sm font-black uppercase tracking-widest flex items-center gap-3 text-theme-primary">
-                {activeTab === 'chat' ? (selectedSkill ? selectedSkill.name : "Marketing Intelligence") : "Gestão de Operações"}
-                <div className="w-1.5 h-1.5 bg-blue-500 rounded-full animate-pulse shadow-[0_0_10px_rgba(59,130,246,0.8)]" />
-              </h1>
+            </div>
+            {/* Mobile Tab Switcher */}
+            <div className="flex md:hidden p-1 glass-card gap-1">
+              <motion.button 
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+                onClick={() => setActiveTab('chat')}
+                className={cn(
+                  "px-3 py-1.5 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all",
+                  activeTab === 'chat' ? "bg-theme-glass text-theme-primary" : "text-theme-secondary hover:text-theme-primary"
+                )}
+              >
+                Chat
+              </motion.button>
+              <motion.button 
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+                onClick={() => setActiveTab('operations')}
+                className={cn(
+                  "px-3 py-1.5 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all",
+                  activeTab === 'operations' ? "bg-theme-glass text-theme-primary" : "text-theme-secondary hover:text-theme-primary"
+                )}
+              >
+                Ops
+              </motion.button>
             </div>
           </div>
 
-          <div className="flex items-center gap-4">
-            <div className="flex p-1 glass-card gap-1">
+          <div className="flex flex-wrap items-center gap-2 md:gap-4 w-full md:w-auto justify-center md:justify-end pb-2 md:pb-0">
+            <div className="hidden md:flex p-1 glass-card gap-1 shrink-0">
               <motion.button 
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
@@ -1372,29 +1392,33 @@ export default function App() {
                 Operações
               </motion.button>
             </div>
-            <div className="h-8 w-[1px] bg-theme-glass mx-2" />
-            <NotificationCenter />
-            <div className="h-8 w-[1px] bg-theme-glass mx-2" />
-            <AgentControls
-              selectedSkill={selectedSkill}
-              useGrounding={useGrounding}
-              setUseGrounding={setUseGrounding}
-              useSwarmMode={useSwarmMode}
-              setUseSwarmMode={setUseSwarmMode}
-              setIsBrainOpen={setIsBrainOpen}
-              isWorkspaceOpen={isWorkspaceOpen}
-              setIsWorkspaceOpen={setIsWorkspaceOpen}
-              isTerminalOpen={isTerminalOpen}
-              setIsTerminalOpen={setIsTerminalOpen}
-              activeCompanyId={activeCompanyId}
-              companies={companies}
-              setIsBrandContextModalOpen={setIsBrandContextModalOpen}
-              isDarkMode={isDarkMode}
-              setIsDarkMode={setIsDarkMode}
-              manualAgentPriorities={manualAgentPriorities}
-              setManualAgentPriorities={setManualAgentPriorities}
-              allSkills={[...MARKETING_SKILLS, ...customSkills]}
-            />
+            <div className="hidden md:block h-8 w-[1px] bg-theme-glass mx-2 shrink-0" />
+            <div className="shrink-0">
+              <NotificationCenter />
+            </div>
+            <div className="h-8 w-[1px] bg-theme-glass mx-2 shrink-0" />
+            <div className="shrink-0 flex items-center">
+              <AgentControls
+                selectedSkill={selectedSkill}
+                useGrounding={useGrounding}
+                setUseGrounding={setUseGrounding}
+                useSwarmMode={useSwarmMode}
+                setUseSwarmMode={setUseSwarmMode}
+                setIsBrainOpen={setIsBrainOpen}
+                isWorkspaceOpen={isWorkspaceOpen}
+                setIsWorkspaceOpen={setIsWorkspaceOpen}
+                isTerminalOpen={isTerminalOpen}
+                setIsTerminalOpen={setIsTerminalOpen}
+                activeCompanyId={activeCompanyId}
+                companies={companies}
+                setIsBrandContextModalOpen={setIsBrandContextModalOpen}
+                isDarkMode={isDarkMode}
+                setIsDarkMode={setIsDarkMode}
+                manualAgentPriorities={manualAgentPriorities}
+                setManualAgentPriorities={setManualAgentPriorities}
+                allSkills={[...MARKETING_SKILLS, ...customSkills]}
+              />
+            </div>
           </div>
         </header>
 

@@ -183,20 +183,20 @@ export default function RoutinePlanner() {
   return (
     <div className="flex flex-col h-full bg-theme-main">
       {/* Header */}
-      <div className="p-6 border-b border-theme-glass flex items-center justify-between bg-theme-glass/20">
+      <div className="p-6 border-b border-theme-glass flex flex-col md:flex-row md:items-center justify-between gap-4 bg-theme-glass/20">
         <div>
-          <h2 className="text-2xl font-black uppercase tracking-tighter text-theme-primary flex items-center gap-3">
+          <h2 className="text-2xl font-black uppercase tracking-tighter text-theme-primary flex items-center gap-3 italic">
             <Target className="w-6 h-6 text-theme-orange" />
-            Planejamento de Rotinas
+            Planejamento de <span className="text-theme-orange">Rotinas</span>
           </h2>
-          <p className="text-theme-secondary opacity-40 text-sm font-medium">Otimize seu tempo com blocos de foco.</p>
+          <p className="text-theme-secondary opacity-40 text-[10px] font-black uppercase tracking-widest mt-1">Otimize seu tempo com blocos de foco.</p>
         </div>
         <button 
           onClick={() => setIsAddingRoutine(true)}
-          className="flex items-center gap-2 px-4 py-2 bg-theme-orange rounded-xl text-[10px] font-black uppercase tracking-widest text-white hover:opacity-90 transition-all shadow-lg shadow-orange-500/20"
+          className="flex items-center gap-2 px-4 py-2 bg-theme-orange hover:bg-theme-orange/80 text-white rounded-xl text-sm font-bold shadow-lg shadow-orange-500/20 transition-all active:scale-95"
         >
           <Plus className="w-4 h-4" />
-          Nova Rotina
+          <span>Nova Rotina</span>
         </button>
       </div>
 
@@ -253,7 +253,7 @@ export default function RoutinePlanner() {
                     }}
                     className="group bg-theme-glass border border-theme-glass rounded-3xl p-6 hover:border-theme-glass/80 hover:bg-theme-glass/80 transition-all relative overflow-hidden shadow-lg"
                   >
-                    <div className="flex items-center justify-between gap-6">
+                    <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
                       <div className="flex items-center gap-6">
                         <div className="w-16 h-16 rounded-2xl bg-theme-glass flex flex-col items-center justify-center border border-theme-glass shadow-inner">
                           <span className="text-xs font-black text-theme-primary">{routine.startTime}</span>
@@ -280,8 +280,8 @@ export default function RoutinePlanner() {
                         </div>
                       </div>
 
-                      <div className="flex items-center gap-3">
-                        <div className="text-right mr-4">
+                      <div className="flex items-center justify-between md:justify-end gap-3 w-full md:w-auto">
+                        <div className="text-left md:text-right md:mr-4">
                           <div className="text-[10px] font-black uppercase tracking-widest text-theme-secondary opacity-20 mb-1">Duração</div>
                           <div className="text-sm font-bold text-theme-secondary opacity-60 flex items-center gap-2">
                             <Clock className="w-3.5 h-3.5" />
@@ -290,7 +290,7 @@ export default function RoutinePlanner() {
                         </div>
                         <button 
                           onClick={() => handleDeleteRoutine(routine.id!)}
-                          className="p-3 hover:bg-red-500/10 rounded-2xl text-theme-secondary opacity-10 hover:text-red-400 hover:opacity-100 transition-all opacity-0 group-hover:opacity-100"
+                          className="p-3 hover:bg-red-500/10 rounded-2xl text-theme-secondary hover:text-red-400 transition-all opacity-100 md:opacity-0 md:group-hover:opacity-100 focus:opacity-100"
                         >
                           <Trash2 className="w-5 h-5" />
                         </button>

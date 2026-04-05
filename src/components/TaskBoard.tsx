@@ -458,15 +458,15 @@ export default function TaskBoard() {
           <p className="text-theme-secondary opacity-40 text-[10px] font-black uppercase tracking-widest mt-1">Centralize suas tarefas e rotinas estratégicas.</p>
         </div>
 
-        <div className="flex items-center gap-3">
-          <div className="relative group">
+        <div className="flex flex-wrap items-center justify-start md:justify-end gap-3 w-full md:w-auto">
+          <div className="relative group w-full sm:w-auto flex-1 sm:flex-none">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-theme-secondary opacity-30 group-focus-within:text-theme-blue transition-colors" />
             <input 
               type="text"
               placeholder="Buscar tarefas..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-10 pr-10 py-2 bg-theme-glass border border-theme-glass rounded-xl text-sm text-theme-primary placeholder:text-theme-secondary/20 focus:outline-none focus:border-theme-blue/50 focus:bg-theme-glass/80 transition-all w-64 shadow-inner"
+              className="pl-10 pr-10 py-2 bg-theme-glass border border-theme-glass rounded-xl text-sm text-theme-primary placeholder:text-theme-secondary/20 focus:outline-none focus:border-theme-blue/50 focus:bg-theme-glass/80 transition-all w-full sm:w-64 shadow-inner"
             />
             {searchQuery && (
               <button 
@@ -478,14 +478,14 @@ export default function TaskBoard() {
             )}
           </div>
 
-          <div className="relative group">
+          <div className="relative group w-full sm:w-auto flex-1 sm:flex-none">
             <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-theme-secondary opacity-30 group-focus-within:text-theme-blue transition-colors" />
             <input 
               type="text"
               placeholder="Responsável..."
               value={assignedSearchQuery}
               onChange={(e) => setAssignedSearchQuery(e.target.value)}
-              className="pl-10 pr-10 py-2 bg-theme-glass border border-theme-glass rounded-xl text-sm text-theme-primary placeholder:text-theme-secondary/20 focus:outline-none focus:border-theme-blue/50 focus:bg-theme-glass/80 transition-all w-48 shadow-inner"
+              className="pl-10 pr-10 py-2 bg-theme-glass border border-theme-glass rounded-xl text-sm text-theme-primary placeholder:text-theme-secondary/20 focus:outline-none focus:border-theme-blue/50 focus:bg-theme-glass/80 transition-all w-full sm:w-48 shadow-inner"
             />
             {assignedSearchQuery && (
               <button 
@@ -497,12 +497,12 @@ export default function TaskBoard() {
             )}
           </div>
 
-          <div className="flex items-center bg-theme-glass border border-theme-glass rounded-xl p-1">
+          <div className="flex items-center bg-theme-glass border border-theme-glass rounded-xl p-1 w-full sm:w-auto justify-center">
             <button 
               onClick={() => setViewMode('kanban')}
               className={cn(
-                "p-1.5 rounded-lg transition-all",
-                viewMode === 'kanban' ? "bg-theme-blue text-white shadow-lg shadow-blue-500/20" : "text-theme-secondary opacity-40 hover:text-theme-primary hover:opacity-100"
+                "p-1.5 rounded-lg transition-all flex-1 sm:flex-none flex justify-center",
+                viewMode === 'kanban' ? "bg-theme-blue text-white shadow-lg shadow-blue-500/20" : "text-theme-secondary hover:text-theme-primary"
               )}
             >
               <LayoutGrid className="w-4 h-4" />
@@ -510,8 +510,8 @@ export default function TaskBoard() {
             <button 
               onClick={() => setViewMode('list')}
               className={cn(
-                "p-1.5 rounded-lg transition-all",
-                viewMode === 'list' ? "bg-theme-blue text-white shadow-lg shadow-blue-500/20" : "text-theme-secondary opacity-40 hover:text-theme-primary hover:opacity-100"
+                "p-1.5 rounded-lg transition-all flex-1 sm:flex-none flex justify-center",
+                viewMode === 'list' ? "bg-theme-blue text-white shadow-lg shadow-blue-500/20" : "text-theme-secondary hover:text-theme-primary"
               )}
             >
               <ListIcon className="w-4 h-4" />
@@ -524,69 +524,69 @@ export default function TaskBoard() {
               setIsAddingTask('todo');
               setViewMode('kanban');
             }}
-            className="flex items-center gap-2 px-4 py-2 bg-theme-blue hover:bg-theme-blue/80 text-white rounded-xl text-sm font-bold shadow-lg shadow-blue-500/20 transition-all active:scale-95"
+            className="flex items-center justify-center gap-2 px-4 py-2 bg-theme-blue hover:bg-theme-blue/80 text-white rounded-xl text-sm font-bold shadow-lg shadow-blue-500/20 transition-all active:scale-95 w-full sm:w-auto"
           >
             <Plus className="w-4 h-4" />
             <span>Nova Tarefa</span>
           </button>
 
-          <div className="flex flex-wrap items-center gap-2 bg-theme-glass border border-theme-glass rounded-xl p-1">
-            <div className="flex items-center gap-1 px-2 border-r border-theme-glass/20">
-              <Filter className="w-3 h-3 text-theme-secondary opacity-40" />
+          <div className="flex flex-wrap items-center gap-2 bg-theme-glass border border-theme-glass rounded-xl p-1 w-full sm:w-auto">
+            <div className="flex items-center gap-1 px-2 border-r border-theme-glass/20 flex-1 sm:flex-none justify-center">
+              <Filter className="w-3 h-3 text-theme-secondary" />
               <select 
                 value={priorityFilter}
                 onChange={(e) => setPriorityFilter(e.target.value as any)}
-                className="bg-transparent text-[9px] font-black uppercase tracking-widest text-theme-secondary focus:outline-none cursor-pointer hover:text-theme-primary transition-colors"
+                className="bg-transparent text-[9px] font-black uppercase tracking-widest text-theme-secondary focus:outline-none cursor-pointer hover:text-theme-primary transition-colors max-w-[80px] sm:max-w-none"
               >
-                <option value="all" className="bg-[#0A0A0A]">Prioridade: Todas</option>
-                <option value="low" className="bg-[#0A0A0A]">Baixa</option>
-                <option value="medium" className="bg-[#0A0A0A]">Média</option>
-                <option value="high" className="bg-[#0A0A0A]">Alta</option>
+                <option value="all" className="bg-theme-main text-theme-primary">Prioridade: Todas</option>
+                <option value="low" className="bg-theme-main text-theme-primary">Baixa</option>
+                <option value="medium" className="bg-theme-main text-theme-primary">Média</option>
+                <option value="high" className="bg-theme-main text-theme-primary">Alta</option>
               </select>
             </div>
 
-            <div className="flex items-center gap-1 px-2 border-r border-theme-glass/20">
-              <Activity className="w-3 h-3 text-theme-secondary opacity-40" />
+            <div className="flex items-center gap-1 px-2 border-r border-theme-glass/20 flex-1 sm:flex-none justify-center">
+              <Activity className="w-3 h-3 text-theme-secondary" />
               <select 
                 value={statusFilter}
                 onChange={(e) => setStatusFilter(e.target.value as any)}
-                className="bg-transparent text-[9px] font-black uppercase tracking-widest text-theme-secondary focus:outline-none cursor-pointer hover:text-theme-primary transition-colors"
+                className="bg-transparent text-[9px] font-black uppercase tracking-widest text-theme-secondary focus:outline-none cursor-pointer hover:text-theme-primary transition-colors max-w-[80px] sm:max-w-none"
               >
-                <option value="all" className="bg-[#0A0A0A]">Status: Todos</option>
-                <option value="todo" className="bg-[#0A0A0A]">A Fazer</option>
-                <option value="in-progress" className="bg-[#0A0A0A]">Em Progresso</option>
-                <option value="done" className="bg-[#0A0A0A]">Concluído</option>
+                <option value="all" className="bg-theme-main text-theme-primary">Status: Todos</option>
+                <option value="todo" className="bg-theme-main text-theme-primary">A Fazer</option>
+                <option value="in-progress" className="bg-theme-main text-theme-primary">Em Progresso</option>
+                <option value="done" className="bg-theme-main text-theme-primary">Concluído</option>
               </select>
             </div>
 
-            <div className="flex items-center gap-1 px-2 border-r border-theme-glass/20">
-              <CalendarIcon className="w-3 h-3 text-theme-secondary opacity-40" />
+            <div className="flex items-center gap-1 px-2 border-r border-theme-glass/20 flex-1 sm:flex-none justify-center">
+              <CalendarIcon className="w-3 h-3 text-theme-secondary" />
               <select 
                 value={dateFilter}
                 onChange={(e) => setDateFilter(e.target.value as any)}
-                className="bg-transparent text-[9px] font-black uppercase tracking-widest text-theme-secondary focus:outline-none cursor-pointer hover:text-theme-primary transition-colors"
+                className="bg-transparent text-[9px] font-black uppercase tracking-widest text-theme-secondary focus:outline-none cursor-pointer hover:text-theme-primary transition-colors max-w-[80px] sm:max-w-none"
               >
-                <option value="all" className="bg-[#0A0A0A]">Data: Todas</option>
-                <option value="today" className="bg-[#0A0A0A]">Hoje</option>
-                <option value="week" className="bg-[#0A0A0A]">Esta Semana</option>
-                <option value="overdue" className="bg-[#0A0A0A]">Atrasadas</option>
+                <option value="all" className="bg-theme-main text-theme-primary">Data: Todas</option>
+                <option value="today" className="bg-theme-main text-theme-primary">Hoje</option>
+                <option value="week" className="bg-theme-main text-theme-primary">Esta Semana</option>
+                <option value="overdue" className="bg-theme-main text-theme-primary">Atrasadas</option>
               </select>
             </div>
 
-            <div className="flex items-center gap-1 px-2">
+            <div className="flex items-center gap-1 px-2 flex-1 sm:flex-none justify-center">
               <select 
                 value={sortBy}
                 onChange={(e) => setSortBy(e.target.value as any)}
-                className="bg-transparent text-[9px] font-black uppercase tracking-widest text-theme-secondary focus:outline-none cursor-pointer hover:text-theme-primary transition-colors"
+                className="bg-transparent text-[9px] font-black uppercase tracking-widest text-theme-secondary focus:outline-none cursor-pointer hover:text-theme-primary transition-colors max-w-[80px] sm:max-w-none"
               >
-                <option value="createdAt" className="bg-[#0A0A0A]">Criação</option>
-                <option value="dueDate" className="bg-[#0A0A0A]">Prazo</option>
-                <option value="priority" className="bg-[#0A0A0A]">Prioridade</option>
-                <option value="status" className="bg-[#0A0A0A]">Status</option>
+                <option value="createdAt" className="bg-theme-main text-theme-primary">Criação</option>
+                <option value="dueDate" className="bg-theme-main text-theme-primary">Prazo</option>
+                <option value="priority" className="bg-theme-main text-theme-primary">Prioridade</option>
+                <option value="status" className="bg-theme-main text-theme-primary">Status</option>
               </select>
               <button 
                 onClick={() => setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc')}
-                className="p-1 hover:bg-theme-glass rounded text-theme-secondary opacity-40 hover:opacity-100 transition-all"
+                className="p-1 hover:bg-theme-glass rounded text-theme-secondary hover:text-theme-primary transition-all"
               >
                 {sortOrder === 'asc' ? <TrendingUp className="w-3 h-3" /> : <TrendingDown className="w-3 h-3" />}
               </button>
@@ -601,7 +601,8 @@ export default function TaskBoard() {
                   setSearchQuery('');
                   setAssignedSearchQuery('');
                 }}
-                className="flex items-center gap-1 px-2 py-1 bg-theme-rose/10 hover:bg-theme-rose/20 text-theme-rose rounded-lg text-[9px] font-black uppercase tracking-widest transition-all"
+                className="flex items-center gap-1 px-2 py-1 bg-theme-rose/10 hover:bg-theme-rose/20 text-theme-rose rounded-lg text-[9px] font-black uppercase tracking-widest transition-all flex-1 sm:flex-none justify-center"
+                title="Limpar Filtros"
               >
                 <X className="w-3 h-3" />
                 Limpar
@@ -630,7 +631,7 @@ export default function TaskBoard() {
                 <div className="flex items-center justify-between px-2">
                   <div className="flex items-center gap-2">
                     <col.icon className={cn("w-4 h-4", col.color)} />
-                    <span className="text-[10px] font-black uppercase tracking-[0.2em] text-theme-secondary opacity-70">{col.name}</span>
+                    <span className="text-[10px] font-black uppercase tracking-[0.2em] text-theme-secondary">{col.name}</span>
                     <span className="px-1.5 py-0.5 bg-theme-glass rounded text-[10px] font-bold text-theme-blue shadow-lg">
                       {filteredTasks.filter(t => t.status === col.id).length}
                     </span>
@@ -640,7 +641,7 @@ export default function TaskBoard() {
                       setNewTask(INITIAL_NEW_TASK);
                       setIsAddingTask(col.id);
                     }}
-                    className="p-1.5 hover:bg-theme-glass rounded-lg text-theme-secondary opacity-30 hover:text-theme-primary hover:opacity-100 transition-all group"
+                    className="p-1.5 hover:bg-theme-glass rounded-lg text-theme-secondary hover:text-theme-primary transition-all group"
                   >
                     <Plus className="w-4 h-4 group-hover:rotate-90 transition-transform" />
                   </button>
@@ -661,18 +662,18 @@ export default function TaskBoard() {
                           value={newTask.title}
                           onChange={(e) => setNewTask({ ...newTask, title: e.target.value })}
                           onKeyDown={(e) => e.key === 'Enter' && handleAddTask(col.id)}
-                          className="w-full bg-theme-glass/20 border border-theme-glass/40 rounded-xl px-3 py-2 text-sm text-theme-primary placeholder:text-theme-secondary/30 focus:outline-none focus:border-blue-500/50 focus:ring-1 focus:ring-blue-500/20 mb-2 font-bold transition-all"
+                          className="w-full bg-theme-glass/20 border border-theme-glass/40 rounded-xl px-3 py-2 text-sm text-theme-primary placeholder:text-theme-secondary/50 focus:outline-none focus:border-blue-500/50 focus:ring-1 focus:ring-blue-500/20 mb-2 font-bold transition-all"
                         />
                         <textarea 
                           placeholder="Descrição (opcional)..."
                           value={newTask.description}
                           onChange={(e) => setNewTask({ ...newTask, description: e.target.value })}
-                          className="w-full bg-theme-glass/20 border border-theme-glass/40 rounded-xl px-3 py-2 text-xs text-theme-secondary placeholder:text-theme-secondary/30 focus:outline-none focus:border-blue-500/50 focus:ring-1 focus:ring-blue-500/20 mb-4 resize-none min-h-[80px] transition-all"
+                          className="w-full bg-theme-glass/20 border border-theme-glass/40 rounded-xl px-3 py-2 text-xs text-theme-secondary placeholder:text-theme-secondary/50 focus:outline-none focus:border-blue-500/50 focus:ring-1 focus:ring-blue-500/20 mb-4 resize-none min-h-[80px] transition-all"
                         />
                         
                         <div className="space-y-4">
                           <div className="flex items-center gap-2">
-                            <Flag className="w-3.5 h-3.5 text-theme-secondary opacity-20" />
+                            <Flag className="w-3.5 h-3.5 text-theme-secondary" />
                             <div className="flex gap-1">
                               {['low', 'medium', 'high'].map((p) => (
                                 <button
@@ -682,7 +683,7 @@ export default function TaskBoard() {
                                     "px-2 py-1 rounded text-[9px] font-black uppercase tracking-widest border transition-all",
                                     newTask.priority === p 
                                       ? PRIORITY_COLORS[p as keyof typeof PRIORITY_COLORS]
-                                      : "bg-theme-glass border-theme-glass text-theme-secondary opacity-20 hover:bg-theme-glass/80 hover:opacity-100"
+                                      : "bg-theme-glass border-theme-glass text-theme-secondary hover:bg-theme-glass/80 hover:text-theme-primary"
                                   )}
                                 >
                                   {p}
@@ -692,49 +693,49 @@ export default function TaskBoard() {
                           </div>
 
                           <div className="flex items-center gap-2">
-                            <CalendarIcon className="w-3.5 h-3.5 text-theme-secondary opacity-20" />
+                            <CalendarIcon className="w-3.5 h-3.5 text-theme-secondary" />
                             <input 
                               type="date"
                               value={newTask.dueDate}
                               onChange={(e) => setNewTask({ ...newTask, dueDate: e.target.value })}
-                              className="bg-theme-glass border border-theme-glass rounded-lg px-2 py-1 text-[10px] text-theme-secondary opacity-60 focus:outline-none focus:border-blue-500/50 font-mono"
+                              className="bg-theme-glass border border-theme-glass rounded-lg px-2 py-1 text-[10px] text-theme-secondary focus:outline-none focus:border-blue-500/50 font-mono"
                             />
                           </div>
 
                           <div className="flex items-center gap-2">
-                            <User className="w-3.5 h-3.5 text-theme-secondary opacity-20" />
+                            <User className="w-3.5 h-3.5 text-theme-secondary" />
                             <input 
                               placeholder="Atribuir a..."
                               value={newTask.assignedTo}
                               onChange={(e) => setNewTask({ ...newTask, assignedTo: e.target.value })}
-                              className="bg-theme-glass border border-theme-glass rounded-lg px-2 py-1 text-[10px] text-theme-secondary opacity-60 focus:outline-none focus:border-blue-500/50 flex-1"
+                              className="bg-theme-glass border border-theme-glass rounded-lg px-2 py-1 text-[10px] text-theme-secondary focus:outline-none focus:border-blue-500/50 flex-1"
                             />
                           </div>
 
                           <div className="flex items-center gap-2">
-                            <Bell className="w-3.5 h-3.5 text-theme-secondary opacity-20" />
+                            <Bell className="w-3.5 h-3.5 text-theme-secondary" />
                             <input 
                               type="datetime-local"
                               value={newTask.reminderAt}
                               onChange={(e) => setNewTask({ ...newTask, reminderAt: e.target.value })}
-                              className="bg-theme-glass border border-theme-glass rounded-lg px-2 py-1 text-[10px] text-theme-secondary opacity-60 focus:outline-none focus:border-blue-500/50 font-mono"
+                              className="bg-theme-glass border border-theme-glass rounded-lg px-2 py-1 text-[10px] text-theme-secondary focus:outline-none focus:border-blue-500/50 font-mono"
                             />
                           </div>
 
                           <div className="flex items-center gap-2">
-                            <Tag className="w-3.5 h-3.5 text-theme-secondary opacity-20" />
+                            <Tag className="w-3.5 h-3.5 text-theme-secondary" />
                             <input 
                               placeholder="Tags (separadas por vírgula)"
                               value={newTask.tags}
                               onChange={(e) => setNewTask({ ...newTask, tags: e.target.value })}
-                              className="flex-1 bg-theme-glass border border-theme-glass rounded-lg px-2 py-1 text-[10px] text-theme-secondary opacity-60 focus:outline-none focus:border-blue-500/50"
+                              className="flex-1 bg-theme-glass border border-theme-glass rounded-lg px-2 py-1 text-[10px] text-theme-secondary focus:outline-none focus:border-blue-500/50"
                             />
                           </div>
 
                           <div className="flex items-center gap-2">
-                            <ImageIcon className="w-3.5 h-3.5 text-theme-secondary opacity-20" />
+                            <ImageIcon className="w-3.5 h-3.5 text-theme-secondary" />
                             <label className="flex-1 cursor-pointer">
-                              <div className="bg-theme-glass border border-theme-glass rounded-lg px-2 py-1 text-[10px] text-theme-secondary opacity-60 hover:border-blue-500/50 transition-all flex items-center justify-between">
+                              <div className="bg-theme-glass border border-theme-glass rounded-lg px-2 py-1 text-[10px] text-theme-secondary hover:border-blue-500/50 transition-all flex items-center justify-between">
                                 <span className="truncate">{newTask.image ? 'Imagem selecionada' : 'Anexar imagem'}</span>
                                 {newTask.image && (
                                   <button 
@@ -755,17 +756,17 @@ export default function TaskBoard() {
                           </div>
                         </div>
 
-                        <div className="flex items-center justify-end gap-3 mt-6">
+                        <div className="flex flex-col sm:flex-row items-center justify-end gap-3 mt-6">
                           <button 
                             onClick={() => setIsAddingTask(null)}
-                            className="theme-button-secondary px-4 py-2"
+                            className="theme-button-secondary px-4 py-2 w-full sm:w-auto"
                           >
                             Cancelar
                           </button>
                           <button 
                             onClick={() => handleAddTask(col.id)}
                             disabled={isSubmitting}
-                            className="theme-button-primary px-4 py-2"
+                            className="theme-button-primary px-4 py-2 w-full sm:w-auto"
                           >
                             {isSubmitting ? <Loader2 className="w-3 h-3 animate-spin" /> : 'Criar Tarefa'}
                           </button>
@@ -807,12 +808,12 @@ export default function TaskBoard() {
                             >
                               <h3 className={cn(
                                 "text-sm font-bold leading-tight group-hover:text-theme-primary transition-colors",
-                                task.status === 'done' ? "text-theme-secondary opacity-20 line-through" : "text-theme-primary opacity-90"
+                                task.status === 'done' ? "text-theme-secondary opacity-50 line-through" : "text-theme-primary"
                               )}>
                                 {task.title}
                               </h3>
                               {task.description && (
-                                <p className="text-[10px] text-theme-secondary opacity-40 mt-1 line-clamp-2">{task.description}</p>
+                                <p className="text-[10px] text-theme-secondary mt-1 line-clamp-2">{task.description}</p>
                               )}
                               {task.image && (
                                 <div className="mt-3 rounded-xl overflow-hidden border border-theme-glass/20 bg-theme-glass/10">
@@ -827,7 +828,7 @@ export default function TaskBoard() {
                               {task.tags && task.tags.length > 0 && (
                                 <div className="flex flex-wrap gap-1 mt-2">
                                   {task.tags.map((tag, i) => (
-                                    <span key={i} className="px-1.5 py-0.5 bg-theme-glass border border-theme-glass rounded text-[8px] font-black uppercase tracking-widest text-theme-secondary opacity-60">
+                                    <span key={i} className="px-1.5 py-0.5 bg-theme-glass border border-theme-glass rounded text-[8px] font-black uppercase tracking-widest text-theme-secondary">
                                       {tag}
                                     </span>
                                   ))}
@@ -842,7 +843,7 @@ export default function TaskBoard() {
                                   "p-1.5 rounded-lg transition-all active:scale-95",
                                   savedToBrain.includes(task.id) 
                                     ? "bg-green-500/20 text-green-400" 
-                                    : "hover:bg-blue-500/10 text-theme-secondary opacity-20 hover:text-blue-400 hover:opacity-100"
+                                    : "hover:bg-blue-500/10 text-theme-secondary hover:text-blue-400"
                                 )}
                               >
                                 {savingToBrain === task.id ? (
@@ -855,15 +856,15 @@ export default function TaskBoard() {
                               </button>
                               <button 
                                 onClick={() => setTaskToDelete(task.id)}
-                                className="p-1.5 hover:bg-red-500/10 rounded-lg text-theme-secondary opacity-20 hover:text-red-400 hover:opacity-100 transition-all active:scale-95"
+                                className="p-1.5 hover:bg-red-500/10 rounded-lg text-theme-secondary hover:text-red-400 transition-all active:scale-95"
                               >
                                 <Trash2 className="w-3.5 h-3.5" />
                               </button>
                             </div>
                           </div>
 
-                          <div className="flex items-center justify-between">
-                            <div className="flex items-center gap-2">
+                          <div className="flex items-end justify-between gap-3 mt-2">
+                            <div className="flex flex-wrap items-center gap-2 flex-1">
                               <div className={cn(
                                 "px-2 py-0.5 rounded text-[9px] font-black uppercase tracking-widest border shadow-sm",
                                 PRIORITY_COLORS[task.priority]
@@ -875,7 +876,7 @@ export default function TaskBoard() {
                                   "flex items-center gap-1 text-[10px] font-black uppercase tracking-widest font-mono px-1.5 py-0.5 rounded",
                                   isOverdue(task.dueDate) && task.status !== 'done' ? "text-theme-rose bg-theme-rose/10 border border-theme-rose/20" : 
                                   isUpcoming(task.dueDate) && task.status !== 'done' ? "text-theme-yellow bg-theme-yellow/10 border border-theme-yellow/20" :
-                                  "text-theme-secondary opacity-30"
+                                  "text-theme-secondary"
                                 )}>
                                   <Clock className="w-3 h-3" />
                                   {task.dueDate instanceof Timestamp ? task.dueDate.toDate().toLocaleDateString() : new Date(task.dueDate).toLocaleDateString()}
@@ -901,7 +902,7 @@ export default function TaskBoard() {
                                 onClick={() => handleAIMagic(task)}
                                 disabled={isAnalyzing === task.id}
                                 className={cn(
-                                  "p-1.5 bg-theme-glass rounded-lg text-theme-purple opacity-30 hover:opacity-100 hover:bg-theme-purple/10 transition-all shadow-inner active:scale-95",
+                                  "p-1.5 bg-theme-glass rounded-lg text-theme-purple opacity-50 hover:opacity-100 hover:bg-theme-purple/10 transition-all shadow-inner active:scale-95",
                                   isAnalyzing === task.id && "animate-pulse opacity-100"
                                 )}
                               >
@@ -910,7 +911,7 @@ export default function TaskBoard() {
                               {col.id !== 'done' && (
                                 <button 
                                   onClick={() => handleUpdateStatus(task.id, col.id === 'todo' ? 'in-progress' : 'done')}
-                                  className="p-1.5 bg-theme-glass rounded-lg text-theme-secondary opacity-30 hover:text-theme-blue hover:bg-theme-blue/10 hover:opacity-100 transition-all shadow-inner active:scale-95"
+                                  className="p-1.5 bg-theme-glass rounded-lg text-theme-secondary hover:text-theme-blue hover:bg-theme-blue/10 transition-all shadow-inner active:scale-95"
                                 >
                                   <ArrowRight className="w-3.5 h-3.5" />
                                 </button>
@@ -934,11 +935,11 @@ export default function TaskBoard() {
                 <motion.div 
                   layout
                   className={cn(
-                    "flex items-center justify-between p-4 bg-theme-glass border border-theme-glass rounded-2xl hover:bg-theme-glass/80 transition-all group",
+                    "flex flex-col md:flex-row md:items-center justify-between p-4 bg-theme-glass border border-theme-glass rounded-2xl hover:bg-theme-glass/80 transition-all group gap-4",
                     isOverdue(task.dueDate) && task.status !== 'done' && "border-theme-rose/50 bg-theme-rose/5 shadow-[0_0_15px_rgba(244,63,94,0.1)]"
                   )}
                 >
-                <div className="flex items-center gap-4 flex-1">
+                <div className="flex flex-wrap md:flex-nowrap items-center gap-4 flex-1">
                   <button 
                     onClick={() => handleUpdateStatus(task.id, task.status === 'done' ? 'todo' : 'done')}
                     className={cn(
@@ -955,12 +956,12 @@ export default function TaskBoard() {
                     <div className="flex items-center gap-2">
                       <h3 className={cn(
                         "text-sm font-bold",
-                        task.status === 'done' ? "text-theme-secondary opacity-20 line-through" : "text-theme-primary"
+                        task.status === 'done' ? "text-theme-secondary opacity-50 line-through" : "text-theme-primary"
                       )}>
                         {task.title}
                       </h3>
                       <span className={cn(
-                        "px-1.5 py-0.5 rounded text-[7px] font-black uppercase tracking-widest border opacity-40",
+                        "px-1.5 py-0.5 rounded text-[7px] font-black uppercase tracking-widest border opacity-60",
                         STATUS_COLUMNS.find(c => c.id === task.status)?.color.replace('text-', 'border-').replace('opacity-50', 'opacity-20')
                       )}>
                         {STATUS_COLUMNS.find(c => c.id === task.status)?.name}
@@ -976,19 +977,19 @@ export default function TaskBoard() {
                         />
                       </div>
                     )}
-                    {task.tags && task.tags.length > 0 && (
-                      <div className="flex flex-wrap gap-1 mt-1">
-                        {task.tags.map((tag, i) => (
-                          <span key={i} className="px-1 py-0.5 bg-theme-glass border border-theme-glass rounded text-[7px] font-black uppercase tracking-widest text-theme-secondary opacity-40">
+                    {((task.tags && task.tags.length > 0) || task.assignedTo) && (
+                      <div className="flex flex-wrap items-center gap-2 mt-2">
+                        {task.tags && task.tags.map((tag, i) => (
+                          <span key={i} className="px-1.5 py-0.5 bg-theme-glass border border-theme-glass rounded text-[8px] font-black uppercase tracking-widest text-theme-secondary">
                             {tag}
                           </span>
                         ))}
-                      </div>
-                    )}
-                    {task.assignedTo && (
-                      <div className="flex items-center gap-1 text-[9px] font-black uppercase tracking-widest text-theme-blue bg-theme-blue/10 border border-theme-blue/20 px-1.5 py-0.5 rounded">
-                        <User className="w-2.5 h-2.5" />
-                        {task.assignedTo}
+                        {task.assignedTo && (
+                          <div className="flex items-center gap-1 text-[9px] font-black uppercase tracking-widest text-theme-blue bg-theme-blue/10 border border-theme-blue/20 px-1.5 py-0.5 rounded">
+                            <User className="w-2.5 h-2.5" />
+                            {task.assignedTo}
+                          </div>
+                        )}
                       </div>
                     )}
                   </div>
@@ -1017,10 +1018,10 @@ export default function TaskBoard() {
                     </div>
                   )}
                 </div>
-                <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                <div className="flex items-center gap-2 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity justify-end md:justify-start">
                   <button 
                     onClick={() => setTaskToDelete(task.id)}
-                    className="p-2 hover:bg-red-500/10 rounded-xl text-theme-secondary opacity-20 hover:text-red-400 hover:opacity-100 transition-all"
+                    className="p-2 hover:bg-red-500/10 rounded-xl text-theme-secondary opacity-50 md:opacity-20 hover:text-red-400 hover:opacity-100 transition-all"
                   >
                     <Trash2 className="w-4 h-4" />
                   </button>
@@ -1080,7 +1081,7 @@ export default function TaskBoard() {
                   />
                 </div>
 
-                <div className="grid grid-cols-2 gap-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div className="space-y-2">
                     <label className="text-[10px] font-black uppercase tracking-widest text-theme-secondary opacity-40 px-1">Prioridade</label>
                     <div className="flex gap-1 bg-theme-glass p-1 rounded-xl border border-theme-glass">
@@ -1112,7 +1113,7 @@ export default function TaskBoard() {
                   </div>
                 </div>
 
-                <div className="grid grid-cols-2 gap-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div className="space-y-2">
                     <label className="text-[10px] font-black uppercase tracking-widest text-theme-secondary opacity-40 px-1">Notificação (Lembrete)</label>
                     <input 
@@ -1157,7 +1158,7 @@ export default function TaskBoard() {
                   </div>
                 )}
 
-                <div className="grid grid-cols-2 gap-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div className="space-y-2">
                     <label className="text-[10px] font-black uppercase tracking-widest text-theme-secondary opacity-40 px-1">Atribuído a</label>
                     <div className="relative">
@@ -1193,25 +1194,25 @@ export default function TaskBoard() {
                 </div>
               </div>
 
-              <div className="flex items-center justify-between mt-10">
+              <div className="flex flex-col sm:flex-row items-center justify-between mt-10 gap-4">
                 <button 
                   onClick={() => setTaskToDelete(editingTask.id)}
-                  className="flex items-center gap-2 px-4 py-2 text-theme-rose hover:bg-theme-rose/10 rounded-xl transition-all font-black uppercase tracking-widest text-[10px] group"
+                  className="w-full sm:w-auto flex items-center justify-center gap-2 px-4 py-2 text-theme-rose hover:bg-theme-rose/10 rounded-xl transition-all font-black uppercase tracking-widest text-[10px] group order-2 sm:order-1"
                 >
                   <Trash2 className="w-4 h-4 group-hover:scale-110 transition-transform" />
                   Excluir Tarefa
                 </button>
-                <div className="flex items-center gap-4">
+                <div className="flex flex-col sm:flex-row items-center gap-4 w-full sm:w-auto order-1 sm:order-2">
                   <button 
                     onClick={() => setEditingTask(null)}
-                    className="theme-button-secondary"
+                    className="theme-button-secondary w-full sm:w-auto"
                   >
                     Descartar
                   </button>
                   <button 
                     onClick={() => handleUpdateTask(editingTask.id, editingTask)}
                     disabled={isSubmitting}
-                    className="theme-button-primary px-8"
+                    className="theme-button-primary px-8 w-full sm:w-auto"
                   >
                     {isSubmitting ? <Loader2 className="w-3 h-3 animate-spin" /> : 'Salvar Alterações'}
                   </button>

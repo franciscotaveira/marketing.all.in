@@ -78,8 +78,8 @@ export function AgentControls({
   );
 
   return (
-    <div className="flex items-center justify-between p-4 md:px-8 border-b border-theme-glass bg-transparent backdrop-blur-[80px] sticky top-0 z-30 shadow-[0_10px_50px_rgba(0,0,0,0.1)]">
-      <div className="flex items-center gap-4">
+    <div className="flex flex-wrap items-center justify-between gap-4 w-full">
+      <div className="flex items-center gap-4 w-full md:w-auto justify-between md:justify-start">
         <button
           onClick={() => setIsDarkMode(!isDarkMode)}
           className="p-3 rounded-xl bg-theme-glass border border-theme-glass text-theme-secondary hover:text-theme-primary hover:bg-theme-glass/80 transition-all active:scale-95 shadow-inner group"
@@ -94,7 +94,7 @@ export function AgentControls({
         </div>
       </div>
       
-      <div className="flex items-center gap-3">
+      <div className="flex flex-wrap items-center gap-3 w-full md:w-auto justify-center md:justify-end">
         <div className="flex items-center gap-1.5">
           <button
             onClick={() => setIsBrandContextModalOpen(true)}
@@ -112,7 +112,7 @@ export function AgentControls({
           </button>
         </div>
 
-        <div className="flex items-center gap-1.5">
+        <div className="flex flex-wrap items-center gap-1.5 justify-center md:justify-end">
           <div className="relative">
             <div className={cn(
               "flex items-center rounded-xl transition-all shadow-xl border overflow-hidden active:scale-95",
@@ -264,9 +264,9 @@ export function AgentControls({
           </div>
         </div>
 
-        <div className="w-px h-8 bg-theme-glass mx-2" />
+        <div className="hidden md:block w-px h-8 bg-theme-glass mx-2" />
 
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2 justify-center md:justify-end">
           <div className="relative">
             <div className="flex items-center rounded-xl transition-all hover:bg-theme-glass/80 text-theme-primary bg-theme-glass border border-theme-glass shadow-sm active:scale-95">
               <button 

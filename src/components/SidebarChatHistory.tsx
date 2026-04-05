@@ -132,7 +132,7 @@ export function SidebarChatHistory({
                       </div>
                     </div>
 
-                    <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <div className="flex items-center gap-1 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity">
                       <button 
                         onClick={(e) => {
                           e.stopPropagation();
@@ -143,7 +143,7 @@ export function SidebarChatHistory({
                       >
                         <Trash2 className="w-3 h-3" />
                       </button>
-                      <ChevronRight className="w-3 h-3 opacity-20" />
+                      <ChevronRight className="w-3 h-3 opacity-20 hidden md:block" />
                     </div>
                   </motion.div>
                 ))

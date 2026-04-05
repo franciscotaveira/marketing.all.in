@@ -148,7 +148,7 @@ export function InputBar({
             onPaste={handlePaste}
             onKeyDown={handleInputKeyDown}
             placeholder={selectedSkill ? `Pergunte sobre ${selectedSkill.name.toLowerCase()}...` : "Qual é o seu desafio de marketing hoje? (Digite '/' para comandos)"}
-            className="flex-1 w-full bg-transparent rounded-2xl p-4 focus:outline-none transition-all min-h-[60px] max-h-[300px] resize-none font-medium text-theme-primary placeholder:text-theme-secondary/30"
+            className="flex-1 w-full bg-transparent rounded-2xl p-4 focus:outline-none transition-all min-h-[60px] max-h-[300px] resize-none font-medium text-base md:text-sm text-theme-primary placeholder:text-theme-secondary/30"
           />
             <div className="flex gap-1.5 md:gap-2 pb-1 pr-1 w-full md:w-auto overflow-x-auto custom-scrollbar justify-end">
               <input 
@@ -251,10 +251,10 @@ export function InputBar({
             </div>
           </div>
         </div>
-        <div className="mt-4 flex items-center justify-center gap-6 opacity-20">
-          <p className="text-xs font-black uppercase tracking-[0.3em] text-theme-primary">Gemini 3 Flash Intelligence</p>
-          <div className="w-1 h-1 bg-theme-primary rounded-full" />
-          <p className="text-xs font-black uppercase tracking-[0.3em] text-theme-primary">Enxame de Marketing v2.1 PRO</p>
+        <div className="mt-4 flex flex-wrap items-center justify-center gap-2 md:gap-6 opacity-20 text-center">
+          <p className="text-[10px] md:text-xs font-black uppercase tracking-[0.3em] text-theme-primary">Gemini 3 Flash Intelligence</p>
+          <div className="hidden md:block w-1 h-1 bg-theme-primary rounded-full" />
+          <p className="text-[10px] md:text-xs font-black uppercase tracking-[0.3em] text-theme-primary">Enxame de Marketing v2.1 PRO</p>
         </div>
       </div>
     </div>
