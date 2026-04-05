@@ -20,6 +20,7 @@ if (fs.existsSync(firebaseConfigPath)) {
 
 // Initialize Firebase Admin
 let adminApp;
+let db: admin.firestore.Firestore | null = null;
 try {
   if (process.env.FIREBASE_SERVICE_ACCOUNT_KEY) {
     const serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT_KEY);
@@ -33,11 +34,10 @@ try {
       projectId: firebaseConfig.projectId,
     });
   }
+  db = getFirestore(adminApp, firebaseConfig.firestoreDatabaseId);
 } catch (error) {
   console.error("Failed to initialize Firebase Admin:", error);
 }
-
-const db = getFirestore(adminApp, firebaseConfig.firestoreDatabaseId);
 
 // Initialize Gemini Client for Backend
 const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY || '' });
@@ -52,8 +52,8 @@ function startRoutineExecutor() {
   }
   
   setInterval(async () => {
-    if (!process.env.FIREBASE_SERVICE_ACCOUNT_KEY) {
-      return; // Skip execution if no service account key is provided
+    if (!process.env.FIREBASE_SERVICE_ACCOUNT_KEY || !db) {
+      return; // Skip execution if no service account key is provided or db is not initialized
     }
 
     try {
@@ -257,6 +257,9 @@ async function startServer() {
   // API routes
   app.get("/api/agent-config/:agentId", async (req, res) => {
     try {
+      if (!db) {
+        return res.status(500).json({ error: "Database not initialized" });
+      }
       const { agentId } = req.params;
       const doc = await db.collection("agents").doc(agentId).get();
       
@@ -284,6 +287,9 @@ async function startServer() {
       const { agentId, message, systemInstruction, tools, images, history } = chatSchema.parse(req.body);
       
       // Fetch agent config to determine model
+      if (!db) {
+        return res.status(500).json({ error: "Database not initialized" });
+      }
       const doc = await db.collection("agents").doc(agentId).get();
       if (!doc.exists) {
         return res.status(404).json({ error: "Agent not found" });

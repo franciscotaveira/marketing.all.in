@@ -16,7 +16,7 @@ interface InputBarProps {
   selectedImages: string[];
   removeImage: (index: number) => void;
   handleImageUpload: (e: React.ChangeEvent<HTMLInputElement>) => void;
-  handleSend: () => void;
+  handleSend: (overrideInput?: string | React.MouseEvent | React.KeyboardEvent) => void;
   setMessages: (messages: any[]) => void;
   handlePaste: (e: React.ClipboardEvent) => void;
   handleInputKeyDown: (e: React.KeyboardEvent) => void;

@@ -664,19 +664,21 @@ export default function App() {
     }
   };
 
-  const handleSend = async (overrideInput?: string) => {
-    const userMessage = overrideInput || input;
+  const handleSend = async (overrideInput?: string | React.MouseEvent | React.KeyboardEvent) => {
+    const userMessage = typeof overrideInput === 'string' ? overrideInput : input;
     if (!userMessage.trim() && selectedImages.length === 0 || isLoading) return;
+
+    const isOverride = typeof overrideInput === 'string';
 
     // Detect Google Drive Folder Link
     if (userMessage.includes('drive.google.com/drive/folders/')) {
       processDriveFolder(userMessage);
-      if (!overrideInput) setInput("");
+      if (!isOverride) setInput("");
       return;
     }
 
     const currentImages = [...selectedImages];
-    if (!overrideInput) setInput("");
+    if (!isOverride) setInput("");
     setSelectedImages([]);
     const userMsg: Omit<Message, 'createdAt'> = { role: "user", content: userMessage, images: currentImages };
     setMessages(prev => [...prev, userMsg as Message]);
