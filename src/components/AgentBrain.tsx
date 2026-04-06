@@ -31,9 +31,10 @@ interface AgentBrainProps {
   agent: MarketingSkill | null;
   onClose: () => void;
   isDarkMode?: boolean;
+  isIntegrated?: boolean;
 }
 
-export function AgentBrain({ agent, onClose, isDarkMode = true }: AgentBrainProps) {
+export function AgentBrain({ agent, onClose, isDarkMode = true, isIntegrated }: AgentBrainProps) {
   const [view, setView] = useState<"graph" | "vault" | "neural" | "skills" | "analytics">("graph");
   const [memories, setMemories] = useState<BrainMemory[]>([]);
   const [selectedMemory, setSelectedMemory] = useState<BrainMemory | null>(null);
@@ -299,10 +300,13 @@ ${selectedMemory.content}`;
 
   return (
     <motion.div 
-      initial={{ opacity: 0, scale: 0.95 }}
-      animate={{ opacity: 1, scale: 1 }}
-      exit={{ opacity: 0, scale: 0.95 }}
-      className="fixed inset-4 z-50 liquid-glass-panel overflow-hidden flex flex-col"
+      initial={isIntegrated ? { opacity: 0, y: 10 } : { opacity: 0, scale: 0.95 }}
+      animate={{ opacity: 1, scale: 1, y: 0 }}
+      exit={isIntegrated ? { opacity: 0, y: -10 } : { opacity: 0, scale: 0.95 }}
+      className={cn(
+        "liquid-glass-panel overflow-hidden flex flex-col",
+        isIntegrated ? "w-full h-full" : "fixed inset-4 z-50"
+      )}
     >
       {/* Header */}
       <div className="p-6 border-b border-theme-glass flex flex-col md:flex-row items-start md:items-center justify-between bg-theme-glass/20 gap-4 md:gap-0 shadow-2xl">
@@ -326,24 +330,26 @@ ${selectedMemory.content}`;
               </p>
             </div>
           </div>
-          <button onClick={onClose} className="p-2 hover:bg-theme-glass rounded-full transition-all md:hidden shrink-0">
-            <X className="w-6 h-6 text-theme-secondary hover:text-theme-primary" />
-          </button>
+          {!isIntegrated && (
+            <button onClick={onClose} className="p-2 hover:bg-theme-glass rounded-full transition-all md:hidden shrink-0">
+              <X className="w-6 h-6 text-theme-secondary hover:text-theme-primary" />
+            </button>
+          )}
         </div>
 
-        <div className="flex items-center gap-4 w-full md:w-auto overflow-x-auto custom-scrollbar pb-2 md:pb-0">
+        <div className="flex items-center gap-4 w-full md:w-auto overflow-x-auto no-scrollbar pb-2 md:pb-0">
           <button 
             onClick={() => setIsNewNoteOpen(true)}
-            className="px-5 py-2.5 bg-theme-blue hover:opacity-90 text-white rounded-xl text-[10px] font-black uppercase tracking-widest flex items-center gap-2 shrink-0 shadow-[0_10px_25px_rgba(37,99,235,0.4)] border border-white/20 transition-all active:scale-95"
+            className="btn-primary shrink-0"
           >
             <Plus className="w-4 h-4" /> Nova Memória
           </button>
-          <div className="flex bg-theme-glass p-1.5 rounded-2xl border border-theme-glass min-w-max shadow-[inset_0_2px_4px_rgba(0,0,0,0.1)]">
+          <div className="flex p-1 gap-2 shrink-0">
             <button 
               onClick={() => setView("graph")}
               className={cn(
-                "px-5 py-2.5 rounded-xl text-[10px] uppercase font-black tracking-widest transition-all flex items-center gap-2",
-                view === "graph" ? "bg-theme-blue text-white shadow-[0_8px_20px_rgba(37,99,235,0.4)] border border-white/20" : "text-theme-secondary hover:text-theme-primary hover:bg-theme-glass"
+                "chip",
+                view === "graph" ? "chip-active" : "hover:bg-theme-glass"
               )}
             >
               <Network className="w-4 h-4" /> Grafo
@@ -351,8 +357,8 @@ ${selectedMemory.content}`;
             <button 
               onClick={() => setView("vault")}
               className={cn(
-                "px-5 py-2.5 rounded-xl text-[10px] uppercase font-black tracking-widest transition-all flex items-center gap-2",
-                view === "vault" ? "bg-theme-blue text-white shadow-[0_8px_20px_rgba(37,99,235,0.4)] border border-white/20" : "text-theme-secondary hover:text-theme-primary hover:bg-theme-glass"
+                "chip",
+                view === "vault" ? "chip-active" : "hover:bg-theme-glass"
               )}
             >
               <Database className="w-4 h-4" /> Vault
@@ -360,8 +366,8 @@ ${selectedMemory.content}`;
             <button 
               onClick={() => setView("neural")}
               className={cn(
-                "px-5 py-2.5 rounded-xl text-[10px] uppercase font-black tracking-widest transition-all flex items-center gap-2",
-                view === "neural" ? "bg-theme-blue text-white shadow-[0_8px_20px_rgba(37,99,235,0.4)] border border-white/20" : "text-theme-secondary hover:text-theme-primary hover:bg-theme-glass"
+                "chip",
+                view === "neural" ? "chip-active" : "hover:bg-theme-glass"
               )}
             >
               <Cpu className="w-4 h-4" /> Neural
@@ -369,8 +375,8 @@ ${selectedMemory.content}`;
             <button 
               onClick={() => setView("skills")}
               className={cn(
-                "px-5 py-2.5 rounded-xl text-[10px] uppercase font-black tracking-widest transition-all flex items-center gap-2",
-                view === "skills" ? "bg-theme-blue text-white shadow-[0_8px_20px_rgba(37,99,235,0.4)] border border-white/20" : "text-theme-secondary hover:text-theme-primary hover:bg-theme-glass"
+                "chip",
+                view === "skills" ? "chip-active" : "hover:bg-theme-glass"
               )}
             >
               <Library className="w-4 h-4" /> Skills
@@ -378,16 +384,18 @@ ${selectedMemory.content}`;
             <button 
               onClick={() => setView("analytics")}
               className={cn(
-                "px-5 py-2.5 rounded-xl text-[10px] uppercase font-black tracking-widest transition-all flex items-center gap-2",
-                view === "analytics" ? "bg-theme-blue text-white shadow-[0_8px_20px_rgba(37,99,235,0.4)] border border-white/20" : "text-theme-secondary hover:text-theme-primary hover:bg-theme-glass"
+                "chip",
+                view === "analytics" ? "chip-active" : "hover:bg-theme-glass"
               )}
             >
               <Activity className="w-4 h-4" /> Analytics
             </button>
           </div>
-          <button onClick={onClose} className="p-2 hover:bg-theme-glass rounded-full transition-all hidden md:block shrink-0 group">
-            <X className="w-7 h-7 text-theme-secondary opacity-40 group-hover:text-theme-primary group-hover:rotate-90 transition-all" />
-          </button>
+          {!isIntegrated && (
+            <button onClick={onClose} className="p-2 hover:bg-theme-glass rounded-full transition-all hidden md:block shrink-0 group">
+              <X className="w-7 h-7 text-theme-secondary opacity-40 group-hover:text-theme-primary group-hover:rotate-90 transition-all" />
+            </button>
+          )}
         </div>
       </div>
 
@@ -398,7 +406,7 @@ ${selectedMemory.content}`;
           <div className="p-6 border-b border-theme-glass bg-theme-glass/10">
             <button 
               onClick={() => setIsNewNoteOpen(true)}
-              className="w-full py-3.5 bg-theme-blue hover:opacity-90 text-white rounded-2xl text-[10px] font-black uppercase tracking-widest flex items-center justify-center gap-2 transition-all shadow-lg shadow-blue-500/30 border border-white/10"
+              className="btn-primary w-full"
             >
               <Plus className="w-4 h-4" /> Nova Memória
             </button>
@@ -456,7 +464,7 @@ ${selectedMemory.content}`;
               <div className="absolute bottom-8 right-8 p-6 bg-theme-glass backdrop-blur-2xl border border-theme-glass rounded-3xl flex flex-col gap-6 shadow-2xl">
                 <button 
                   onClick={analyzePatterns}
-                  className="px-6 py-3 bg-theme-blue hover:opacity-90 text-white rounded-2xl text-[10px] font-black uppercase tracking-widest shadow-lg shadow-blue-500/40 border border-white/10 transition-all active:scale-95"
+                  className="btn-primary"
                 >
                   Analisar Padrões Neurais
                 </button>
@@ -484,7 +492,7 @@ ${selectedMemory.content}`;
                     <button
                       onClick={injectN8nExperiences}
                       disabled={isSyncing}
-                      className="px-5 py-2.5 bg-theme-blue hover:opacity-90 text-white text-[10px] font-black uppercase tracking-widest rounded-xl flex items-center gap-2 transition-all disabled:opacity-50 shadow-lg shadow-blue-500/20"
+                      className="btn-primary"
                     >
                       <Database className="w-4 h-4" />
                       Injetar Experiências (n8n)
@@ -572,7 +580,7 @@ ${selectedMemory.content}`;
                     <div className="flex justify-end pt-6 border-t border-theme-glass">
                       <button 
                         onClick={handleObsidianSync}
-                        className="px-6 py-3 bg-theme-glass hover:bg-theme-glass/80 text-theme-primary rounded-2xl text-[10px] font-black uppercase tracking-widest flex items-center gap-2 transition-all border border-theme-glass shadow-lg"
+                        className="btn-secondary"
                       >
                         <FileText className="w-4 h-4" /> Exportar para Obsidian
                       </button>

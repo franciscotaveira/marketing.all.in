@@ -179,11 +179,11 @@ export default function NotificationCenter() {
 
   const getIcon = (type: string) => {
     switch (type) {
-      case 'warning': return <AlertCircle className="w-4 h-4 text-theme-yellow" />;
-      case 'error': return <X className="w-4 h-4 text-theme-rose" />;
-      case 'success': return <CheckCircle2 className="w-4 h-4 text-theme-emerald" />;
-      case 'task': return <Clock className="w-4 h-4 text-theme-blue" />;
-      default: return <Info className="w-4 h-4 text-theme-blue" />;
+      case 'warning': return <AlertCircle className="w-4 h-4 text-amber-500" />;
+      case 'error': return <X className="w-4 h-4 text-rose-500" />;
+      case 'success': return <CheckCircle2 className="w-4 h-4 text-emerald-500" />;
+      case 'task': return <Clock className="w-4 h-4 text-blue-500" />;
+      default: return <Info className="w-4 h-4 text-blue-500" />;
     }
   };
 
@@ -191,14 +191,14 @@ export default function NotificationCenter() {
     <div className="relative">
       <button 
         onClick={() => setIsOpen(!isOpen)}
-        className="relative p-2.5 bg-theme-glass/20 border border-theme-glass/40 rounded-xl transition-all group shadow-inner active:scale-90"
+        className="btn-secondary relative p-2.5"
       >
         <Bell className={cn(
           "w-5 h-5 transition-all",
-          unreadCount > 0 ? "text-theme-blue animate-pulse" : "text-theme-secondary group-hover:text-theme-primary"
+          unreadCount > 0 ? "text-blue-500 animate-pulse" : "text-theme-secondary group-hover:text-theme-primary"
         )} />
         {unreadCount > 0 && (
-          <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-theme-rose rounded-full border-2 border-theme-card" />
+          <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-rose-500 rounded-full border-2 border-theme-surface" />
         )}
       </button>
 
@@ -216,13 +216,13 @@ export default function NotificationCenter() {
               initial={{ opacity: 0, y: 10, scale: 0.95 }}
               animate={{ opacity: 1, y: 0, scale: 1 }}
               exit={{ opacity: 0, y: 10, scale: 0.95 }}
-              className="absolute right-0 md:right-0 -right-4 mt-2 w-[calc(100vw-2rem)] md:w-96 bg-theme-card backdrop-blur-3xl border border-theme-glass rounded-2xl shadow-[0_0_50px_rgba(0,0,0,0.5)] z-50 overflow-hidden"
+              className="absolute right-0 md:right-0 -right-4 mt-2 w-[calc(100vw-2rem)] md:w-96 bg-theme-surface border border-theme-glass rounded-2xl shadow-2xl z-50 overflow-hidden"
             >
-              <div className="p-4 border-b border-theme-glass flex items-center justify-between bg-theme-glass">
+              <div className="p-4 border-b border-theme-glass flex items-center justify-between bg-theme-surface/50">
                 <div className="flex items-center gap-2">
-                  <h3 className="text-xs font-black uppercase tracking-widest text-theme-primary">Notificações</h3>
+                  <h3 className="text-[11px] font-bold uppercase tracking-wider text-theme-primary">Notificações</h3>
                   {unreadCount > 0 && (
-                    <span className="px-1.5 py-0.5 bg-theme-blue rounded text-[10px] font-bold text-white shadow-lg shadow-blue-500/20">
+                    <span className="px-1.5 py-0.5 bg-blue-500 rounded text-[10px] font-bold text-white shadow-sm">
                       {unreadCount}
                     </span>
                   )}
@@ -231,12 +231,12 @@ export default function NotificationCenter() {
                   {unreadCount > 0 && (
                     <button 
                       onClick={markAllAsRead}
-                      className="px-3 py-1.5 bg-theme-blue/10 border border-theme-blue/20 rounded-lg text-[9px] font-black uppercase tracking-widest text-theme-blue hover:bg-theme-blue/20 transition-all shadow-inner active:scale-95"
+                      className="btn-secondary px-3 py-1.5 text-blue-500 border-blue-500/20 hover:border-blue-500/40 hover:bg-blue-500/5"
                     >
                       Ler tudo
                     </button>
                   )}
-                  <button onClick={() => setIsOpen(false)} className="text-theme-secondary hover:text-theme-primary transition-colors">
+                  <button onClick={() => setIsOpen(false)} className="btn-secondary p-1">
                     <X className="w-4 h-4" />
                   </button>
                 </div>
@@ -250,14 +250,14 @@ export default function NotificationCenter() {
                         key={notif.id}
                         className={cn(
                           "p-4 flex gap-3 transition-colors group relative",
-                          notif.read ? "opacity-40" : "bg-theme-blue/5"
+                          notif.read ? "opacity-40" : "bg-blue-500/5"
                         )}
                       >
                         <div className="mt-0.5 shrink-0">{getIcon(notif.type)}</div>
                         <div className="flex-1 min-w-0">
-                          <h4 className="text-xs font-bold text-theme-primary mb-1 group-hover:text-theme-blue transition-colors">{notif.title}</h4>
-                          <p className="text-[11px] text-theme-secondary leading-relaxed">{notif.message}</p>
-                          <span className="text-[9px] text-theme-secondary mt-2 block font-mono opacity-50">
+                          <h4 className="text-sm font-bold text-theme-primary mb-1 group-hover:text-blue-500 transition-colors">{notif.title}</h4>
+                          <p className="text-[11px] text-theme-secondary leading-relaxed font-medium">{notif.message}</p>
+                          <span className="text-[9px] text-theme-secondary mt-2 block font-bold opacity-40 uppercase tracking-wider">
                             {notif.createdAt?.toDate().toLocaleString()}
                           </span>
                         </div>
@@ -265,7 +265,7 @@ export default function NotificationCenter() {
                           {!notif.read && (
                             <button 
                               onClick={() => markAsRead(notif.id)}
-                              className="p-1.5 hover:bg-theme-glass rounded-lg text-theme-blue transition-all"
+                              className="btn-secondary p-1.5 text-blue-500 border-blue-500/20 hover:border-blue-500/40"
                               title="Marcar como lida"
                             >
                               <Check className="w-3.5 h-3.5" />
@@ -273,7 +273,7 @@ export default function NotificationCenter() {
                           )}
                           <button 
                             onClick={() => deleteNotification(notif.id)}
-                            className="p-1.5 hover:bg-theme-rose/10 rounded-lg text-theme-secondary hover:text-theme-rose transition-all"
+                            className="btn-secondary p-1.5 text-rose-500 border-rose-500/20 hover:border-rose-500/40"
                             title="Excluir"
                           >
                             <Trash2 className="w-3.5 h-3.5" />
@@ -287,14 +287,14 @@ export default function NotificationCenter() {
                     <div className="w-16 h-16 bg-theme-glass rounded-2xl flex items-center justify-center mb-4 border border-theme-glass">
                       <BellOff className="w-8 h-8 text-theme-secondary opacity-20" />
                     </div>
-                    <p className="text-xs text-theme-secondary font-medium uppercase tracking-widest">Nenhuma notificação</p>
+                    <p className="text-[11px] text-theme-secondary font-bold uppercase tracking-wider opacity-40">Nenhuma notificação</p>
                   </div>
                 )}
               </div>
 
               {notifications.length > 0 && (
-                <div className="p-3 bg-theme-glass border-t border-theme-glass text-center">
-                  <button className="theme-button-secondary w-full py-2">
+                <div className="p-4 bg-theme-surface/50 border-t border-theme-glass text-center">
+                  <button className="btn-secondary w-full py-2.5">
                     Ver histórico completo
                   </button>
                 </div>

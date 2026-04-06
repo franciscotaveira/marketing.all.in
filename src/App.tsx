@@ -65,6 +65,7 @@ import {
   Terminal,
   Trophy,
   HelpCircle,
+  Info,
   CheckCircle2,
   Building2,
 } from "lucide-react";
@@ -144,7 +145,6 @@ export default function App() {
   
   // Agent Logs State
   const [agentLogs, setAgentLogs] = useState<{id: string, timestamp: Date, agentId: string, message: string, type: 'info' | 'action' | 'success' | 'error'}[]>([]);
-  const [isTerminalOpen, setIsTerminalOpen] = useState(false);
   const [isDarkMode, setIsDarkMode] = useState(true);
   const [activeAgentId, setActiveAgentId] = useState<string | null>(null);
 
@@ -163,8 +163,7 @@ export default function App() {
   const [commandFilter, setCommandFilter] = useState("");
   const [selectedCommandIndex, setSelectedCommandIndex] = useState(0);
   const [activeArtifact, setActiveArtifact] = useState<Artifact | null>(null);
-  const [isWorkspaceOpen, setIsWorkspaceOpen] = useState(false);
-  const [activeTab, setActiveTab] = useState<'chat' | 'operations'>('chat');
+  const [activeTab, setActiveTab] = useState<'chat' | 'operations' | 'brain' | 'terminal' | 'workspace'>('chat');
   const [googleTokens, setGoogleTokens] = useState<any>(() => {
     const saved = localStorage.getItem('google_drive_tokens');
     return saved ? JSON.parse(saved) : null;
@@ -253,7 +252,7 @@ export default function App() {
 
   const handleArtifactClick = (art: Artifact) => {
     setActiveArtifact(art);
-    setIsWorkspaceOpen(true);
+    setActiveTab('workspace');
   };
 
   const handleStartWorkflow = (workflow: Workflow) => {
@@ -366,7 +365,7 @@ export default function App() {
 
         if (artifacts.length > 0) {
           setActiveArtifact(artifacts[0]);
-          setIsWorkspaceOpen(true);
+          setActiveTab('workspace');
         }
 
         const formattedResponse = aiResponse.replace(artifactRegex, '> *Artefato gerado: $2*');
@@ -419,12 +418,15 @@ export default function App() {
     setWorkflowStepIndex(-1);
   };
 
-  const [isBrainOpen, setIsBrainOpen] = useState(true);
   const [currentChatId, setCurrentChatId] = useState<string | null>(null);
   const [chatSessions, setChatSessions] = useState<ChatSession[]>([]);
   const [isHistoryLoading, setIsHistoryLoading] = useState(false);
+  const [lastVisibleDoc, setLastVisibleDoc] = useState<any>(null);
+  const [hasMoreMessages, setHasMoreMessages] = useState(false);
+  const [isPaginationLoading, setIsPaginationLoading] = useState(false);
   
   const chatEndRef = useRef<HTMLDivElement>(null);
+  const chatContainerRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const terminalEndRef = useRef<HTMLDivElement>(null);
 
@@ -459,16 +461,62 @@ export default function App() {
     if (!user) return;
     setCurrentChatId(chatId);
     setIsLoading(true);
+    setLastVisibleDoc(null);
+    setHasMoreMessages(false);
     try {
-      const { data, error } = await firebaseService.getMessages(chatId);
+      const { data, lastVisible, error } = await firebaseService.getMessages(chatId);
       if (!error && data) {
         setMessages(data as Message[]);
+        setLastVisibleDoc(lastVisible);
+        setHasMoreMessages(data.length === 20);
+        
+        // Scroll to bottom after loading initial messages
+        setTimeout(() => {
+          chatEndRef.current?.scrollIntoView({ behavior: 'auto' });
+        }, 100);
       }
     } catch (error) {
       console.error("Error loading messages:", error);
     } finally {
       setIsLoading(false);
       if (window.innerWidth < 768) setIsSidebarOpen(false);
+    }
+  };
+
+  const loadMoreMessages = async () => {
+    if (!user || !currentChatId || !lastVisibleDoc || isPaginationLoading || !hasMoreMessages) return;
+    
+    setIsPaginationLoading(true);
+    const scrollHeightBefore = chatContainerRef.current?.scrollHeight || 0;
+    
+    try {
+      const { data, lastVisible, error } = await firebaseService.getMessages(currentChatId, lastVisibleDoc);
+      if (!error && data && data.length > 0) {
+        setMessages(prev => [...data, ...prev]);
+        setLastVisibleDoc(lastVisible);
+        setHasMoreMessages(data.length === 20);
+        
+        // Maintain scroll position
+        setTimeout(() => {
+          if (chatContainerRef.current) {
+            const scrollHeightAfter = chatContainerRef.current.scrollHeight;
+            chatContainerRef.current.scrollTop = scrollHeightAfter - scrollHeightBefore;
+          }
+        }, 0);
+      } else {
+        setHasMoreMessages(false);
+      }
+    } catch (error) {
+      console.error("Error loading more messages:", error);
+    } finally {
+      setIsPaginationLoading(false);
+    }
+  };
+
+  const handleScroll = (e: React.UIEvent<HTMLDivElement>) => {
+    const target = e.currentTarget;
+    if (target.scrollTop === 0 && hasMoreMessages && !isPaginationLoading) {
+      loadMoreMessages();
     }
   };
 
@@ -482,10 +530,33 @@ export default function App() {
           if (currentChatId === chatId) {
             setCurrentChatId(null);
             setMessages([]);
+            setLastVisibleDoc(null);
+            setHasMoreMessages(false);
           }
         }
       } catch (error) {
         console.error("Error deleting chat:", error);
+      }
+    }
+  };
+
+  const handleDeleteAllChats = async () => {
+    if (!user) return;
+    if (confirm("ATENÇÃO: Isso excluirá TODO o seu histórico de conversas permanentemente. Continuar?")) {
+      setIsHistoryLoading(true);
+      try {
+        const { error } = await firebaseService.deleteAllChats();
+        if (!error) {
+          setChatSessions([]);
+          setCurrentChatId(null);
+          setMessages([]);
+          setLastVisibleDoc(null);
+          setHasMoreMessages(false);
+        }
+      } catch (error) {
+        console.error("Error deleting all chats:", error);
+      } finally {
+        setIsHistoryLoading(false);
       }
     }
   };
@@ -618,7 +689,7 @@ export default function App() {
     { id: 'swarm', label: 'Alternar Modo Swarm', icon: Users, action: () => { setUseSwarmMode(!useSwarmMode); setInput(""); setShowCommandMenu(false); } },
     { id: 'marca', label: 'Gerenciar Empresas', icon: Building2, action: () => { setIsBrandContextModalOpen(true); setInput(""); setShowCommandMenu(false); } },
     { id: 'limpar', label: 'Limpar Chat', icon: Trash2, action: () => { setMessages([]); setInput(""); setShowCommandMenu(false); } },
-    { id: 'workspace', label: 'Abrir Workspace', icon: LayoutDashboard, action: () => { setIsWorkspaceOpen(true); setInput(""); setShowCommandMenu(false); } },
+    { id: 'workspace', label: 'Abrir Workspace', icon: LayoutDashboard, action: () => { setActiveTab('workspace'); setInput(""); setShowCommandMenu(false); } },
   ];
 
   const filteredCommands = COMMANDS.filter(cmd => cmd.id.includes(commandFilter.toLowerCase()));
@@ -857,7 +928,7 @@ export default function App() {
 
       if (artifacts.length > 0) {
         setActiveArtifact(artifacts[0]);
-        setIsWorkspaceOpen(true);
+        setActiveTab('workspace');
       }
 
       const aiMsg: Omit<Message, 'createdAt'> = { 
@@ -920,11 +991,9 @@ export default function App() {
     return (
       <div className="min-h-screen bg-[#0A0A0A] flex flex-col items-center justify-center p-6 text-center space-y-12">
         <div className="space-y-4">
-          <div className="w-24 h-24 bg-blue-600 rounded-[2.5rem] flex items-center justify-center mx-auto shadow-[0_0_50px_rgba(37,99,235,0.3)] animate-pulse">
-            <Zap className="w-12 h-12 text-white" />
-          </div>
+          <Logo className="scale-150 mb-8" showText={false} />
           <h1 className="text-6xl font-black text-white tracking-tighter uppercase italic leading-none">
-            Marketing <span className="text-blue-500">Swarm</span>
+            Aetheris <span className="text-blue-500">Swarm</span>
           </h1>
           <p className="text-white/40 font-bold uppercase tracking-[0.4em] text-xs">
             v2.1 Intelligence System
@@ -941,7 +1010,7 @@ export default function App() {
 
           <button
             onClick={handleLogin}
-            className="theme-button-primary w-full py-5 text-xs tracking-[0.2em]"
+            className="btn-primary w-full py-5 text-xs tracking-[0.2em]"
           >
             <LogIn className="w-4 h-4" />
             Entrar com Google
@@ -960,7 +1029,7 @@ export default function App() {
   return (
     <ErrorBoundary>
       <div 
-        className="flex h-screen text-theme-primary font-sans overflow-hidden p-4 gap-4"
+        className="flex h-screen text-theme-primary font-sans overflow-hidden p-4 gap-4 bg-theme-main"
       >
       {/* Sidebar */}
       {/* Overlay for mobile when sidebar is open */}
@@ -971,27 +1040,27 @@ export default function App() {
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             onClick={() => setIsSidebarOpen(false)}
-            className="md:hidden fixed inset-0 bg-black/50 z-30 backdrop-blur-sm"
+            className="md:hidden fixed inset-0 bg-black/60 z-30 backdrop-blur-sm"
           />
         )}
       </AnimatePresence>
       <motion.aside 
         initial={false}
         animate={{ 
-          width: isSidebarOpen ? 280 : 0, 
+          width: isSidebarOpen ? 300 : 0, 
           opacity: isSidebarOpen ? 1 : 0,
           marginRight: isSidebarOpen ? 16 : 0
         }}
         className={cn(
-          "glass-panel flex flex-col overflow-hidden z-40 shadow-2xl shrink-0 transition-all duration-500",
+          "bg-theme-surface border border-theme-glass flex flex-col overflow-hidden z-40 shadow-sm shrink-0 transition-all duration-500 rounded-3xl",
           "absolute md:relative left-0 top-0 bottom-0",
           !isSidebarOpen && "pointer-events-none"
         )}
       >
-        <div className="p-6 border-b border-white/5 flex items-center justify-between">
+        <div className="p-6 border-b border-theme-glass flex items-center justify-between bg-theme-surface/50">
           <Logo />
-          <button onClick={() => setIsSidebarOpen(false)} className="hover:bg-theme-glass p-2 rounded-xl transition-all active:scale-90">
-            <X className="w-5 h-5 text-theme-secondary" />
+          <button onClick={() => setIsSidebarOpen(false)} className="btn-secondary p-2 md:hidden">
+            <X className="w-5 h-5 text-theme-secondary opacity-40" />
           </button>
         </div>
         <div className="flex-1 overflow-y-auto custom-scrollbar p-4 space-y-8">
@@ -1001,20 +1070,24 @@ export default function App() {
             currentChatId={currentChatId}
             onSelectChat={handleSelectChat}
             onDeleteChat={handleDeleteChat}
+            onDeleteAllChats={handleDeleteAllChats}
             onNewChat={() => {
               setCurrentChatId(null);
               setMessages([]);
+              setLastVisibleDoc(null);
+              setHasMoreMessages(false);
             }}
             sessions={chatSessions}
             isLoading={isHistoryLoading}
           />
 
           {/* Global Toggles */}
-          <div className="space-y-3">
-            <h2 className="text-xs uppercase tracking-[0.2em] font-black text-theme-primary px-2">Configurações</h2>
+          <div className="space-y-4">
+            <h2 className="text-[11px] uppercase tracking-wider font-bold text-theme-secondary/40 px-2 flex items-center gap-2">
+              <div className="w-1 h-1 rounded-full bg-blue-500/50" />
+              Navegação Principal
+            </h2>
             <div className="space-y-1.5">
-
-
               <motion.button 
                 whileHover={{ x: 4 }}
                 whileTap={{ scale: 0.98 }}
@@ -1023,30 +1096,30 @@ export default function App() {
                   if (window.innerWidth < 768) setIsSidebarOpen(false);
                 }}
                 className={cn(
-                  "w-full p-3.5 border rounded-xl text-xs font-black uppercase tracking-widest transition-all flex items-center justify-between group active:scale-[0.98]",
+                  "w-full p-3 px-4 border rounded-xl text-sm font-bold transition-all flex items-center justify-between group",
                   activeTab === 'operations'
-                    ? "bg-violet-600/20 border-violet-500/30 text-violet-400 shadow-lg shadow-violet-500/10"
+                    ? "bg-blue-500/10 border-blue-500/20 text-blue-500 shadow-sm"
                     : "bg-theme-glass border-theme-glass text-theme-secondary hover:bg-theme-glass/80 hover:text-theme-primary"
                 )}
               >
-                <div className="flex items-center gap-2.5">
+                <div className="flex items-center gap-3">
                   <Activity className="w-4 h-4" />
                   <span>Gestão de Operações</span>
                 </div>
-                <ChevronRight className="w-3 h-3 group-hover:translate-x-1 transition-all" />
+                <ChevronRight className="w-3.5 h-3.5 opacity-40 group-hover:translate-x-1 transition-all" />
               </motion.button>
 
               <motion.button 
                 whileHover={{ x: 4 }}
                 whileTap={{ scale: 0.98 }}
-                onClick={() => setIsBrainOpen(true)}
-                className="w-full p-3.5 bg-blue-600/10 border border-blue-500/20 rounded-xl text-xs font-black uppercase tracking-widest text-blue-400 hover:bg-blue-600/20 transition-all flex items-center justify-between group active:scale-[0.98]"
+                onClick={() => setActiveTab('brain')}
+                className="w-full p-3 px-4 bg-purple-500/10 border border-purple-500/20 rounded-xl text-sm font-bold text-purple-500 hover:bg-purple-500/20 transition-all flex items-center justify-between group"
               >
-                <div className="flex items-center gap-2.5">
+                <div className="flex items-center gap-3">
                   <Brain className="w-4 h-4" />
                   <span>Cérebro Sináptico</span>
                 </div>
-                <ChevronRight className="w-3 h-3 group-hover:translate-x-1 transition-all" />
+                <ChevronRight className="w-3.5 h-3.5 opacity-40 group-hover:translate-x-1 transition-all" />
               </motion.button>
 
               <motion.button 
@@ -1054,25 +1127,27 @@ export default function App() {
                 whileTap={{ scale: 0.98 }}
                 onClick={connectGoogleDrive}
                 className={cn(
-                  "w-full p-3.5 border rounded-xl text-xs font-black uppercase tracking-widest transition-all flex items-center justify-between group active:scale-[0.98]",
+                  "w-full p-3 px-4 border rounded-xl text-sm font-bold transition-all flex items-center justify-between group",
                   googleTokens 
-                    ? "bg-green-600/10 border-green-500/20 text-green-400 hover:bg-green-600/20" 
-                    : "bg-orange-600/10 border-orange-500/20 text-orange-400 hover:bg-orange-600/20"
+                    ? "bg-emerald-500/10 border-emerald-500/20 text-emerald-500 hover:bg-emerald-500/20" 
+                    : "bg-orange-500/10 border-orange-500/20 text-orange-500 hover:bg-orange-500/20"
                 )}
               >
-                <div className="flex items-center gap-2.5">
+                <div className="flex items-center gap-3">
                   <Globe className="w-4 h-4" />
-                  <span>{googleTokens ? "Google Drive Conectado" : "Conectar Google Drive"}</span>
+                  <span>{googleTokens ? "Google Drive Ativo" : "Conectar Drive"}</span>
                 </div>
-                <ChevronRight className="w-3 h-3 group-hover:translate-x-1 transition-all" />
+                <ChevronRight className="w-3.5 h-3.5 opacity-40 group-hover:translate-x-1 transition-all" />
               </motion.button>
             </div>
           </div>
 
+          <div className="h-px bg-gradient-to-r from-transparent via-theme-glass to-transparent opacity-50" />
+
           {/* Workflows */}
           <div className="space-y-4">
-            <h2 className="text-[10px] uppercase tracking-[0.3em] font-black text-theme-primary px-2 flex items-center gap-2">
-              <div className="w-1 h-1 rounded-full bg-blue-500 animate-pulse" />
+            <h2 className="text-[11px] uppercase tracking-wider font-bold text-theme-secondary/50 px-2 flex items-center gap-2">
+              <div className="w-1 h-1 rounded-full bg-blue-500/50" />
               Workflows Automatizados
             </h2>
             <div className="space-y-6">
@@ -1085,8 +1160,8 @@ export default function App() {
               ).map(([category, workflows]) => (
                 <div key={category} className="space-y-2">
                   <div className="flex items-center gap-2 px-2">
-                    <div className={cn("w-1.5 h-1.5 rounded-full", workflows[0].color)} />
-                    <span className="text-[10px] font-black uppercase tracking-widest text-theme-secondary/60">{category}</span>
+                    <div className={cn("w-1 h-1 rounded-full", workflows[0].color)} />
+                    <span className="text-[10px] font-bold uppercase tracking-wider text-theme-secondary/40">{category}</span>
                   </div>
                   <div className="grid grid-cols-1 gap-1.5">
                     {workflows.map((workflow) => (
@@ -1096,31 +1171,26 @@ export default function App() {
                         key={workflow.id}
                         onClick={() => handleStartWorkflow(workflow)}
                         className={cn(
-                          "p-3 rounded-xl text-xs font-black uppercase tracking-widest transition-all text-left flex items-center justify-between group border relative overflow-hidden",
+                          "p-3 rounded-xl text-sm font-medium transition-all text-left flex items-center justify-between group border relative overflow-hidden",
                           activeWorkflow?.id === workflow.id
-                            ? cn(workflow.color, "border-white/20 text-white shadow-lg") 
-                            : "bg-theme-glass border-theme-glass text-theme-secondary/80 hover:bg-theme-glass/80 hover:text-theme-primary"
+                            ? cn(workflow.color, "border-white/20 text-white shadow-md") 
+                            : "bg-theme-glass border-theme-glass text-theme-secondary hover:bg-theme-glass/80 hover:text-theme-primary"
                         )}
                       >
                         <div className="flex flex-col min-w-0 relative z-10">
                           <span className="truncate">{workflow.name}</span>
                           <span className={cn(
-                            "text-[10px] opacity-60 truncate font-bold mt-0.5 uppercase tracking-tighter",
+                            "text-[11px] opacity-60 truncate font-medium mt-0.5 tracking-tight",
                             activeWorkflow?.id === workflow.id ? "text-white/90" : "text-theme-secondary"
                           )}>{workflow.description}</span>
                         </div>
                         <div className="relative z-10">
                           {activeWorkflow?.id === workflow.id ? (
-                            <Check className="w-3 h-3" />
+                            <Check className="w-3.5 h-3.5" />
                           ) : (
-                            <Play className="w-3 h-3 opacity-0 group-hover:opacity-100 transition-opacity" />
+                            <Play className="w-3.5 h-3.5 opacity-0 group-hover:opacity-100 transition-opacity" />
                           )}
                         </div>
-                        {/* Decorative background element */}
-                        <div className={cn(
-                          "absolute -right-4 -bottom-4 w-12 h-12 rounded-full opacity-10 group-hover:scale-150 transition-transform duration-500",
-                          workflow.color
-                        )} />
                       </motion.button>
                     ))}
                   </div>
@@ -1129,9 +1199,11 @@ export default function App() {
             </div>
           </div>
 
+          <div className="h-px bg-gradient-to-r from-transparent via-theme-glass to-transparent opacity-50" />
+
           {/* Framework Selector */}
           <div className="space-y-3">
-            <h2 className="text-xs uppercase tracking-[0.2em] font-black text-theme-primary px-2">Framework</h2>
+            <h2 className="text-[11px] uppercase tracking-wider font-bold text-theme-secondary/50 px-2">Framework</h2>
             <div className="grid grid-cols-1 gap-1.5">
               {MARKETING_FRAMEWORKS.map((framework) => (
                 <motion.button 
@@ -1140,31 +1212,36 @@ export default function App() {
                   key={framework.id}
                   onClick={() => setSelectedFramework(selectedFramework === framework.id ? null : framework.id)}
                   className={cn(
-                    "p-3 rounded-xl text-xs font-black uppercase tracking-widest transition-all text-left flex items-center justify-between group border",
+                    "p-3 rounded-xl text-sm font-medium transition-all text-left flex items-center justify-between group border",
                     selectedFramework === framework.id 
-                      ? "bg-blue-600 border-blue-500 text-white shadow-[0_0_15px_rgba(37,99,235,0.3)]" 
+                      ? "bg-blue-500 border-blue-500 text-white shadow-sm" 
                       : "bg-theme-glass border-theme-glass text-theme-secondary hover:bg-theme-glass/80 hover:text-theme-primary"
                   )}
                 >
                   <div className="flex flex-col min-w-0">
                     <span className="truncate">{framework.name}</span>
                     <span className={cn(
-                      "text-xs opacity-70 truncate font-medium mt-0.5",
-                      selectedFramework === framework.id ? "text-blue-100" : ""
+                      "text-[11px] opacity-70 truncate font-medium mt-0.5 tracking-tight",
+                      selectedFramework === framework.id ? "text-blue-50" : ""
                     )}>{framework.description}</span>
                   </div>
-                  {selectedFramework === framework.id && <Check className="w-3 h-3" />}
+                  {selectedFramework === framework.id && <Check className="w-3.5 h-3.5" />}
                 </motion.button>
               ))}
             </div>
           </div>
 
+          <div className="h-px bg-gradient-to-r from-transparent via-theme-glass to-transparent opacity-50" />
+
           {/* Skill Categories */}
-          <div className="flex items-center justify-between px-2 mb-3 mt-6">
-            <h2 className="text-xs uppercase tracking-[0.2em] font-black text-theme-primary">Agentes Especialistas</h2>
+          <div className="flex items-center justify-between px-2 mb-3">
+            <h2 className="text-[11px] uppercase tracking-wider font-bold text-theme-secondary/50 flex items-center gap-2">
+              <div className="w-1 h-1 rounded-full bg-emerald-500/50" />
+              Agentes Especialistas
+            </h2>
             <button 
               onClick={() => setIsCustomAgentModalOpen(true)}
-              className="p-1.5 bg-theme-glass/20 border border-theme-glass/40 rounded-lg text-theme-secondary opacity-40 hover:text-theme-primary hover:opacity-100 hover:bg-theme-glass/60 transition-all shadow-inner active:scale-90"
+              className="btn-secondary p-1.5"
               title="Criar Agente Personalizado"
             >
               <Plus className="w-3.5 h-3.5" />
@@ -1184,21 +1261,23 @@ export default function App() {
                   whileTap={{ scale: 0.98 }}
                   onClick={() => setExpandedCategory(isExpanded ? null : category)}
                   className={cn(
-                    "w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-xs font-bold uppercase tracking-[0.15em] transition-all",
-                    isExpanded ? "bg-theme-glass text-theme-primary" : "text-theme-secondary hover:text-theme-primary hover:bg-theme-glass/50"
+                    "w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-sm font-bold transition-all border",
+                    isExpanded 
+                      ? "bg-theme-glass border-theme-glass text-theme-primary shadow-sm" 
+                      : "bg-transparent border-transparent text-theme-secondary hover:text-theme-primary hover:bg-theme-glass/50 hover:border-theme-glass"
                   )}
                 >
                   <div className="flex items-center gap-3">
                     <div className={cn(
                       "w-6 h-6 rounded-lg flex items-center justify-center transition-colors", 
-                      isExpanded ? CATEGORY_BG_LIGHT_COLORS[category] : "bg-white/15",
+                      isExpanded ? CATEGORY_BG_LIGHT_COLORS[category] : "bg-theme-glass",
                       CATEGORY_TEXT_COLORS[category]
                     )}>
                       {getCategoryIcon(category)}
                     </div>
                     {category}
                   </div>
-                  <ChevronRight className={cn("w-3.5 h-3.5 transition-transform", isExpanded ? "rotate-90" : "")} />
+                  <ChevronRight className={cn("w-3.5 h-3.5 transition-transform opacity-40", isExpanded ? "rotate-90" : "")} />
                 </motion.button>
                 
                 <AnimatePresence>
@@ -1222,22 +1301,22 @@ export default function App() {
                             if (window.innerWidth < 768) setIsSidebarOpen(false);
                           }}
                           className={cn(
-                            "w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all group relative overflow-hidden text-sm",
+                            "w-full flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all group relative overflow-hidden text-sm font-bold border",
                             selectedSkill?.id === skill.id 
-                              ? "bg-theme-glass text-theme-primary shadow-sm" 
-                              : "hover:bg-theme-glass/50 text-theme-secondary hover:text-theme-primary"
+                              ? "bg-theme-glass border-theme-glass text-theme-primary shadow-sm" 
+                              : "bg-transparent border-transparent hover:bg-theme-glass/50 text-theme-secondary hover:text-theme-primary hover:border-theme-glass"
                           )}
                         >
                           <div className={cn(
                             "w-7 h-7 rounded-md flex items-center justify-center transition-all",
-                            selectedSkill?.id === skill.id ? CATEGORY_BG_LIGHT_COLORS[category] : "bg-theme-glass group-hover:bg-theme-glass/80",
+                            selectedSkill?.id === skill.id ? CATEGORY_BG_LIGHT_COLORS[category] : "bg-theme-glass",
                             CATEGORY_TEXT_COLORS[category]
                           )}>
                             {getCategoryIcon(skill.category)}
                           </div>
                           <div className="flex flex-col items-start min-w-0 flex-1">
-                            <span className="font-medium truncate w-full">{skill.name}</span>
-                            <span className="text-xs opacity-90 font-medium truncate w-full uppercase tracking-tight">{skill.persona}</span>
+                            <span className="truncate w-full">{skill.name}</span>
+                            <span className="text-[11px] opacity-60 font-medium truncate w-full tracking-tight">{skill.persona}</span>
                           </div>
                           {customSkills.some(s => s.id === skill.id) && (
                             <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
@@ -1280,35 +1359,29 @@ export default function App() {
           })}
         </div>
 
-        <div className="p-4 border-t border-theme-glass space-y-3 bg-theme-main/60 backdrop-blur-xl">
-          <div className="flex items-center gap-3 p-3 bg-theme-glass rounded-2xl border border-theme-glass">
-            <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center font-black text-white text-xs shadow-lg">
+        <div className="p-4 border-t border-theme-glass space-y-4 bg-theme-surface/50">
+          <div className="flex items-center gap-3 p-3 bg-theme-glass rounded-2xl border border-theme-glass shadow-sm">
+            <div className="w-9 h-9 rounded-xl bg-blue-500 flex items-center justify-center font-bold text-white text-xs shadow-sm">
               {user?.displayName?.[0] || user?.email?.[0] || "U"}
             </div>
             <div className="flex flex-col overflow-hidden">
-              <span className="text-xs font-black text-theme-primary truncate">{user?.displayName || "Usuário"}</span>
-              <span className="text-xs font-bold text-theme-secondary opacity-70 truncate">{user?.email}</span>
+              <span className="text-xs font-bold text-theme-primary truncate">{user?.displayName || "Usuário"}</span>
+              <span className="text-[10px] font-bold text-theme-secondary opacity-40 truncate">{user?.email}</span>
             </div>
-            <div className="relative group/btn ml-auto">
-              <button 
-                onClick={handleLogout}
-                className="p-2 hover:bg-theme-glass rounded-lg transition-colors text-theme-secondary hover:text-rose-400"
-              >
-                <LogOut className="w-3.5 h-3.5" />
-              </button>
-              <div className="absolute bottom-full right-0 mb-2 hidden group-hover/btn:block w-32 p-2 bg-theme-main text-theme-primary text-xs rounded-xl shadow-xl z-50 pointer-events-none leading-relaxed text-center border border-theme-glass">
-                <strong className="block text-rose-400 mb-1">Sair</strong>
-                Encerrar a sessão atual.
-              </div>
-            </div>
+            <button 
+              onClick={handleLogout}
+              className="btn-secondary p-2 ml-auto text-rose-500 border-rose-500/20 hover:border-rose-500/40 hover:bg-rose-500/5"
+            >
+              <LogOut className="w-4 h-4" />
+            </button>
           </div>
 
-          <div className="flex items-center justify-between px-2 py-1">
-            <span className="text-xs font-black text-theme-secondary uppercase tracking-widest">v2.1.0-PRO-MAX</span>
+          <div className="flex items-center justify-between px-2">
+            <span className="text-[10px] font-bold text-theme-secondary uppercase tracking-wider opacity-40">v2.1.0-PRO</span>
             <div className="flex gap-1.5">
-              <div className="w-1 h-1 bg-green-500 rounded-full animate-pulse shadow-[0_0_5px_rgba(34,197,94,0.8)]" />
-              <div className="w-1 h-1 bg-green-500 rounded-full animate-pulse delay-75 shadow-[0_0_5px_rgba(34,197,94,0.8)]" />
-              <div className="w-1 h-1 bg-green-500 rounded-full animate-pulse delay-150 shadow-[0_0_5px_rgba(34,197,94,0.8)]" />
+              <div className="w-1 h-1 bg-emerald-500 rounded-full animate-pulse" />
+              <div className="w-1 h-1 bg-emerald-500 rounded-full animate-pulse delay-75" />
+              <div className="w-1 h-1 bg-emerald-500 rounded-full animate-pulse delay-150" />
             </div>
           </div>
         </div>
@@ -1323,32 +1396,32 @@ export default function App() {
               {!isSidebarOpen && (
                 <button 
                   onClick={() => setIsSidebarOpen(true)}
-                  className="p-3 glass-card hover:bg-theme-glass transition-all active:scale-95 group"
+                  className="btn-secondary p-3 group"
                 >
                   <Menu className="w-5 h-5 text-theme-secondary group-hover:text-theme-primary" />
                 </button>
               )}
               <div className="flex flex-col">
-                <div className="flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.2em] text-theme-secondary mb-1">
+                <div className="flex items-center gap-2 text-[10px] font-medium uppercase tracking-wider text-theme-secondary mb-0.5">
                   <span className="hover:text-theme-primary transition-colors cursor-pointer">Dashboard</span>
-                  <ChevronRight className="w-3 h-3" />
-                  <span className="text-blue-400">{activeTab === 'chat' ? "Chat Intelligence" : "Operations"}</span>
+                  <ChevronRight className="w-2.5 h-2.5 opacity-50" />
+                  <span className="text-blue-400/80">{activeTab === 'chat' ? "Chat Intelligence" : "Operations"}</span>
                 </div>
-                <h1 className="text-sm font-black uppercase tracking-widest flex items-center gap-3 text-theme-primary">
+                <h1 className="text-sm font-bold tracking-tight flex items-center gap-2.5 text-theme-primary">
                   {activeTab === 'chat' ? (selectedSkill ? selectedSkill.name : "Marketing Intelligence") : "Gestão de Operações"}
-                  <div className="w-1.5 h-1.5 bg-blue-500 rounded-full animate-pulse shadow-[0_0_10px_rgba(59,130,246,0.8)]" />
+                  <div className="w-1.5 h-1.5 bg-blue-500 rounded-full animate-pulse shadow-[0_0_8px_rgba(59,130,246,0.6)]" />
                 </h1>
               </div>
             </div>
             {/* Mobile Tab Switcher */}
-            <div className="flex md:hidden p-1 glass-card gap-1">
+            <div className="flex md:hidden p-1 glass-card gap-1 border border-theme-glass/40 bg-theme-glass/30 shadow-lg">
               <motion.button 
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
                 onClick={() => setActiveTab('chat')}
                 className={cn(
-                  "px-3 py-1.5 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all",
-                  activeTab === 'chat' ? "bg-theme-glass text-theme-primary" : "text-theme-secondary hover:text-theme-primary"
+                  "px-3 py-1.5 rounded-xl text-[10px] font-semibold tracking-tight transition-all border border-transparent",
+                  activeTab === 'chat' ? "bg-theme-blue/15 text-theme-primary border-theme-blue/30 shadow-md" : "text-theme-secondary hover:text-theme-primary"
                 )}
               >
                 Chat
@@ -1358,8 +1431,8 @@ export default function App() {
                 whileTap={{ scale: 0.98 }}
                 onClick={() => setActiveTab('operations')}
                 className={cn(
-                  "px-3 py-1.5 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all",
-                  activeTab === 'operations' ? "bg-theme-glass text-theme-primary" : "text-theme-secondary hover:text-theme-primary"
+                  "px-3 py-1.5 rounded-xl text-[10px] font-semibold tracking-tight transition-all border border-transparent",
+                  activeTab === 'operations' ? "bg-theme-blue/15 text-theme-primary border-theme-blue/30 shadow-md" : "text-theme-secondary hover:text-theme-primary"
                 )}
               >
                 Ops
@@ -1368,14 +1441,14 @@ export default function App() {
           </div>
 
           <div className="flex flex-wrap items-center gap-2 md:gap-4 w-full md:w-auto justify-center md:justify-end pb-2 md:pb-0">
-            <div className="hidden md:flex p-1 glass-card gap-1 shrink-0">
+            <div className="hidden md:flex p-1 gap-2 shrink-0">
               <motion.button 
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
                 onClick={() => setActiveTab('chat')}
                 className={cn(
-                  "px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all",
-                  activeTab === 'chat' ? "bg-theme-glass text-theme-primary" : "text-theme-secondary hover:text-theme-primary"
+                  "chip",
+                  activeTab === 'chat' && "chip-active"
                 )}
               >
                 Chat
@@ -1385,11 +1458,44 @@ export default function App() {
                 whileTap={{ scale: 0.98 }}
                 onClick={() => setActiveTab('operations')}
                 className={cn(
-                  "px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all",
-                  activeTab === 'operations' ? "bg-theme-glass text-theme-primary" : "text-theme-secondary hover:text-theme-primary"
+                  "chip",
+                  activeTab === 'operations' && "chip-active"
                 )}
               >
                 Operações
+              </motion.button>
+              <motion.button 
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+                onClick={() => setActiveTab('brain')}
+                className={cn(
+                  "chip",
+                  activeTab === 'brain' && "chip-active"
+                )}
+              >
+                Cérebro
+              </motion.button>
+              <motion.button 
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+                onClick={() => setActiveTab('terminal')}
+                className={cn(
+                  "chip",
+                  activeTab === 'terminal' && "chip-active"
+                )}
+              >
+                Terminal
+              </motion.button>
+              <motion.button 
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+                onClick={() => setActiveTab('workspace')}
+                className={cn(
+                  "chip",
+                  activeTab === 'workspace' && "chip-active"
+                )}
+              >
+                Workspace
               </motion.button>
             </div>
             <div className="hidden md:block h-8 w-[1px] bg-theme-glass mx-2 shrink-0" />
@@ -1404,11 +1510,6 @@ export default function App() {
                 setUseGrounding={setUseGrounding}
                 useSwarmMode={useSwarmMode}
                 setUseSwarmMode={setUseSwarmMode}
-                setIsBrainOpen={setIsBrainOpen}
-                isWorkspaceOpen={isWorkspaceOpen}
-                setIsWorkspaceOpen={setIsWorkspaceOpen}
-                isTerminalOpen={isTerminalOpen}
-                setIsTerminalOpen={setIsTerminalOpen}
                 activeCompanyId={activeCompanyId}
                 companies={companies}
                 setIsBrandContextModalOpen={setIsBrandContextModalOpen}
@@ -1435,8 +1536,143 @@ export default function App() {
                   transition={{ duration: 0.2 }}
                   className="flex-1 overflow-y-auto custom-scrollbar space-y-4 pr-2"
                 >
+                  <motion.div 
+                    initial={{ opacity: 0, y: -10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="p-4 bg-theme-blue/5 border border-theme-blue/20 rounded-2xl flex items-center gap-4 mb-4"
+                  >
+                    <div className="w-10 h-10 rounded-xl bg-theme-blue/10 flex items-center justify-center shrink-0">
+                      <Info className="w-5 h-5 text-theme-blue" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <h4 className="text-xs font-black uppercase tracking-widest text-theme-blue mb-1">Dica de Operações</h4>
+                      <p className="text-[11px] text-theme-secondary opacity-60 leading-relaxed">
+                        Transforme suas tarefas em rotinas arrastando-as para os blocos de tempo. Isso ajuda a automatizar seu foco e garantir que nada seja esquecido.
+                      </p>
+                    </div>
+                  </motion.div>
                   <TaskBoard />
                   <RoutinePlanner />
+                </motion.div>
+              ) : activeTab === 'brain' ? (
+                <motion.div 
+                  key="brain"
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -10 }}
+                  transition={{ duration: 0.2 }}
+                  className="flex-1 flex flex-col min-h-0 glass-panel overflow-hidden relative"
+                >
+                  <AgentBrain 
+                    agent={selectedSkill} 
+                    onClose={() => setActiveTab('chat')} 
+                    isDarkMode={isDarkMode}
+                    isIntegrated={true}
+                  />
+                </motion.div>
+              ) : activeTab === 'terminal' ? (
+                <motion.div 
+                  key="terminal"
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -10 }}
+                  transition={{ duration: 0.2 }}
+                  className="flex-1 flex flex-col min-h-0 glass-panel overflow-hidden relative p-6 bg-black font-mono text-emerald-500"
+                >
+                  <div className="flex items-center gap-2 mb-4 border-b border-emerald-500/20 pb-4">
+                    <Terminal className="w-5 h-5" />
+                    <span className="text-xs font-bold uppercase tracking-widest">Terminal de Execução do Enxame v2.2</span>
+                  </div>
+                  <div className="flex-1 overflow-y-auto custom-scrollbar space-y-2 text-[11px]">
+                    <div className="flex gap-2">
+                      <span className="opacity-40">[17:43:52]</span>
+                      <span className="text-blue-400">SYS:</span>
+                      <span>Orquestrador inicializado com sucesso.</span>
+                    </div>
+                    <div className="flex gap-2">
+                      <span className="opacity-40">[17:43:53]</span>
+                      <span className="text-purple-400">SWARM:</span>
+                      <span>Aguardando diretrizes para processamento paralelo...</span>
+                    </div>
+                    <div className="flex gap-2">
+                      <span className="opacity-40">[17:43:55]</span>
+                      <span className="text-emerald-400">BRAIN:</span>
+                      <span>Sincronização de memória concluída (42 nós ativos).</span>
+                    </div>
+                    <div className="animate-pulse">_</div>
+                  </div>
+                </motion.div>
+              ) : activeTab === 'workspace' ? (
+                <motion.div 
+                  key="workspace"
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -10 }}
+                  transition={{ duration: 0.2 }}
+                  className="flex-1 flex flex-col min-h-0 glass-panel overflow-hidden relative"
+                >
+                  <div className="h-20 border-b border-theme-glass flex items-center justify-between px-8 shrink-0 bg-theme-glass/20">
+                    <div className="flex items-center gap-4">
+                      <div className="w-10 h-10 bg-theme-blue rounded-xl flex items-center justify-center shadow-lg shadow-blue-500/20">
+                        <LayoutDashboard className="w-5 h-5 text-white" />
+                      </div>
+                      <div>
+                        <h3 className="font-black tracking-tighter uppercase text-sm text-theme-primary">Estúdio de Artefatos</h3>
+                        <p className="text-[10px] font-black text-theme-blue uppercase tracking-widest">Workspace de Produção</p>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <div className="flex-1 overflow-y-auto p-8 custom-scrollbar">
+                    {activeArtifact ? (
+                      <div className="space-y-8 max-w-3xl mx-auto">
+                        <div className="flex items-start justify-between">
+                          <div className="space-y-3">
+                            <div className="flex items-center gap-2">
+                              <span className="px-3 py-1 bg-theme-blue/20 text-theme-blue rounded-full text-[10px] font-black uppercase tracking-widest border border-theme-blue/20">
+                                {activeArtifact.type}
+                              </span>
+                              <span className="text-[10px] font-black text-theme-secondary uppercase tracking-widest">
+                                Gerado por {activeArtifact.agentName}
+                              </span>
+                            </div>
+                            <h2 className="text-4xl font-black tracking-tighter leading-tight italic text-theme-primary">
+                              {activeArtifact.title}
+                            </h2>
+                          </div>
+                          <button 
+                            onClick={() => copyToClipboard(activeArtifact.content, activeArtifact.id)}
+                            className="p-4 bg-theme-surface border border-theme-glass rounded-2xl hover:bg-theme-glass transition-all active:scale-90 group/copy shadow-xl"
+                          >
+                            {copiedId === activeArtifact.id ? <Check className="w-5 h-5 text-emerald-500" /> : <Copy className="w-5 h-5 text-theme-secondary group-hover/copy:text-theme-primary" />}
+                          </button>
+                        </div>
+                        
+                        <motion.div 
+                          initial={{ opacity: 0, y: 20 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          className="bg-theme-surface border border-theme-glass rounded-3xl p-8 min-h-[600px] relative overflow-hidden shadow-2xl"
+                        >
+                          <div className="absolute top-0 left-0 w-full h-1 bg-theme-blue" />
+                          <div className="prose prose-invert prose-sm max-w-none">
+                            <ReactMarkdown>{activeArtifact.content}</ReactMarkdown>
+                          </div>
+                        </motion.div>
+                      </div>
+                    ) : (
+                      <div className="h-full flex flex-col items-center justify-center text-center space-y-8">
+                        <div className="w-24 h-24 bg-theme-glass rounded-[2rem] flex items-center justify-center border border-theme-glass shadow-inner">
+                          <FileText className="w-12 h-12 text-theme-secondary opacity-20" />
+                        </div>
+                        <div className="space-y-2">
+                          <h3 className="font-black text-theme-secondary uppercase tracking-widest text-sm">Nenhum Artefato Ativo</h3>
+                          <p className="text-xs font-medium text-theme-secondary opacity-40 max-w-[200px] leading-relaxed">
+                            Selecione um artefato no chat para visualizar e editar aqui.
+                          </p>
+                        </div>
+                      </div>
+                    )}
+                  </div>
                 </motion.div>
               ) : (
                 <motion.div 
@@ -1493,7 +1729,16 @@ export default function App() {
                     </div>
                   </div>
                 ) : (
-                  <div className="flex-1 overflow-y-auto p-6 space-y-8 custom-scrollbar">
+                  <div 
+                    ref={chatContainerRef}
+                    onScroll={handleScroll}
+                    className="flex-1 overflow-y-auto p-6 space-y-8 custom-scrollbar"
+                  >
+                    {isPaginationLoading && (
+                      <div className="flex justify-center py-4">
+                        <div className="w-6 h-6 border-2 border-theme-glass border-t-theme-blue rounded-full animate-spin" />
+                      </div>
+                    )}
                     {messages.map((msg, i) => (
                       <ChatMessage
                         key={i}
@@ -1526,7 +1771,7 @@ export default function App() {
                     <div className="absolute bottom-full right-4 mb-4 z-40">
                       <button
                         onClick={() => handleSend("A estratégia está consolidada. Por favor, gere os artefatos finais (arquivos, scripts, copies) usando o formato de artefato apropriado.")}
-                        className="theme-button-primary shadow-lg flex items-center gap-2"
+                        className="btn-primary shadow-lg flex items-center gap-2"
                       >
                         <FileText className="w-4 h-4" />
                         Gerar Artefatos Finais
@@ -1564,87 +1809,7 @@ export default function App() {
           </aside>
         </div>
 
-        {/* Workspace Panel Overlay */}
-        <AnimatePresence>
-          {isWorkspaceOpen && (
-            <motion.div 
-              initial={{ x: "100%", opacity: 0 }}
-              animate={{ x: 0, opacity: 1 }}
-              exit={{ x: "100%", opacity: 0 }}
-              transition={{ type: "spring", damping: 25, stiffness: 200 }}
-              className="fixed inset-y-4 right-4 w-full md:w-1/2 bg-black/60 backdrop-blur-3xl border border-white/10 rounded-3xl flex flex-col shadow-[0_0_50px_rgba(0,0,0,0.5)] z-50 overflow-hidden"
-            >
-              <div className="h-20 border-b border-white/10 flex items-center justify-between px-8 shrink-0 bg-white/5">
-                <div className="flex items-center gap-4">
-                  <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-xl flex items-center justify-center shadow-lg shadow-blue-500/20">
-                    <LayoutDashboard className="w-5 h-5 text-white" />
-                  </div>
-                  <div>
-                    <h3 className="font-black tracking-tighter uppercase text-sm text-white">Estúdio de Artefatos</h3>
-                    <p className="text-[10px] font-black text-blue-400 uppercase tracking-widest">Workspace de Produção</p>
-                  </div>
-                </div>
-                <button 
-                  onClick={() => setIsWorkspaceOpen(false)}
-                  className="p-3 hover:bg-white/10 rounded-2xl transition-all active:scale-90 group"
-                >
-                  <X className="w-6 h-6 text-white/50 group-hover:text-white" />
-                </button>
-              </div>
-              
-              <div className="flex-1 overflow-y-auto p-8 custom-scrollbar">
-                {activeArtifact ? (
-                  <div className="space-y-8 max-w-3xl mx-auto">
-                    <div className="flex items-start justify-between">
-                      <div className="space-y-3">
-                        <div className="flex items-center gap-2">
-                          <span className="px-3 py-1 bg-blue-500/20 text-blue-400 rounded-full text-[10px] font-black uppercase tracking-widest border border-blue-500/20">
-                            {activeArtifact.type}
-                          </span>
-                          <span className="text-[10px] font-black text-white/40 uppercase tracking-widest">
-                            Gerado por {activeArtifact.agentName}
-                          </span>
-                        </div>
-                        <h2 className="text-4xl font-black tracking-tighter leading-tight italic text-white">
-                          {activeArtifact.title}
-                        </h2>
-                      </div>
-                      <button 
-                        onClick={() => copyToClipboard(activeArtifact.content, activeArtifact.id)}
-                        className="p-4 bg-white/5 border border-white/10 rounded-2xl hover:bg-white/10 transition-all active:scale-90 group/copy shadow-xl"
-                      >
-                        {copiedId === activeArtifact.id ? <Check className="w-5 h-5 text-green-400" /> : <Copy className="w-5 h-5 text-white/50 group-hover/copy:text-white" />}
-                      </button>
-                    </div>
-                    
-                    <motion.div 
-                      initial={{ opacity: 0, y: 20 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      className="bg-black/40 backdrop-blur-md border border-white/10 rounded-3xl p-8 min-h-[600px] relative overflow-hidden shadow-2xl"
-                    >
-                      <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-blue-500 to-indigo-600" />
-                      <div className="prose prose-invert prose-sm max-w-none">
-                        <ReactMarkdown>{activeArtifact.content}</ReactMarkdown>
-                      </div>
-                    </motion.div>
-                  </div>
-                ) : (
-                  <div className="h-full flex flex-col items-center justify-center text-center space-y-8">
-                    <div className="w-24 h-24 bg-white/5 rounded-[2rem] flex items-center justify-center border border-white/10 shadow-inner">
-                      <FileText className="w-12 h-12 text-white/20" />
-                    </div>
-                    <div className="space-y-2">
-                      <h3 className="font-black text-white/40 uppercase tracking-widest text-sm">Nenhum Artefato Ativo</h3>
-                      <p className="text-xs font-medium text-white/30 max-w-[200px] leading-relaxed">
-                        Selecione um artefato no chat para visualizar e editar aqui.
-                      </p>
-                    </div>
-                  </div>
-                )}
-              </div>
-            </motion.div>
-          )}
-        </AnimatePresence>
+        {/* Workspace Panel Overlay removed and integrated into tabs */}
       </main>
         <BrandContextModal
           isOpen={isBrandContextModalOpen}
@@ -1679,16 +1844,6 @@ export default function App() {
                 />
               </motion.div>
             </motion.div>
-          )}
-        </AnimatePresence>
-
-        <AnimatePresence>
-          {isBrainOpen && (
-            <AgentBrain 
-              agent={selectedSkill} 
-              onClose={() => setIsBrainOpen(false)} 
-              isDarkMode={isDarkMode}
-            />
           )}
         </AnimatePresence>
       <style>{`

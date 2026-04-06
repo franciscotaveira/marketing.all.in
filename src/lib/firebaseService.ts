@@ -177,21 +177,45 @@ export const firebaseService = {
     }
   },
 
-  async getMessages(chatId: string) {
-    if (!auth.currentUser) return { data: [], error: 'User not authenticated' };
+  async getMessages(chatId: string, lastVisible?: any, limitCount = 20) {
+    if (!auth.currentUser) return { data: [], lastVisible: null, error: 'User not authenticated' };
     const path = `users/${auth.currentUser.uid}/chats/${chatId}/messages`;
     try {
-      const q = query(collection(db, path), orderBy('createdAt', 'asc'));
+      const { limit, startAfter, getDocs } = await import('firebase/firestore');
+      let q = query(collection(db, path), orderBy('createdAt', 'desc'), limit(limitCount));
+      
+      if (lastVisible) {
+        q = query(collection(db, path), orderBy('createdAt', 'desc'), startAfter(lastVisible), limit(limitCount));
+      }
+      
       const snapshot = await getDocs(q);
+      const lastDoc = snapshot.docs[snapshot.docs.length - 1];
+      
       const messages = snapshot.docs.map(doc => ({
         id: doc.id,
         ...doc.data(),
         createdAt: (doc.data().createdAt as Timestamp)?.toDate().toISOString() || new Date().toISOString()
-      })) as unknown as Message[];
-      return { data: messages, error: null };
+      })).reverse() as unknown as Message[];
+      
+      return { data: messages, lastVisible: lastDoc, error: null };
     } catch (error) {
       handleFirestoreError(error, OperationType.GET, path);
-      return { data: [], error };
+      return { data: [], lastVisible: null, error };
+    }
+  },
+
+  async deleteAllChats() {
+    if (!auth.currentUser) return { error: 'User not authenticated' };
+    const path = `users/${auth.currentUser.uid}/chats`;
+    try {
+      const { getDocs, deleteDoc, doc } = await import('firebase/firestore');
+      const snapshot = await getDocs(collection(db, path));
+      const deletePromises = snapshot.docs.map(d => deleteDoc(doc(db, path, d.id)));
+      await Promise.all(deletePromises);
+      return { error: null };
+    } catch (error) {
+      handleFirestoreError(error, OperationType.DELETE, path);
+      return { error };
     }
   },
 

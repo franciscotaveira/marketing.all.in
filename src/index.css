@@ -1,10 +1,11 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Outfit:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap');
 @import "tailwindcss";
 @plugin "@tailwindcss/typography";
 
 @theme {
-  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
-  --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, monospace;
+  --font-sans: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  --font-display: "Outfit", sans-serif;
+  --font-mono: "JetBrains Mono", "SF Mono", ui-monospace, monospace;
   --color-theme-blue: var(--accent-blue);
   --color-theme-purple: var(--accent-purple);
   --color-theme-emerald: var(--accent-emerald);
@@ -12,47 +13,43 @@
   --color-theme-rose: var(--accent-rose);
   --color-theme-yellow: var(--accent-yellow);
   --color-theme-main: var(--bg-main);
+  --color-theme-surface: var(--bg-surface);
+  --color-theme-card: var(--card-bg);
   --color-theme-primary: var(--text-primary);
   --color-theme-secondary: var(--text-secondary);
   --color-theme-glass: var(--glass-bg);
 }
 
 :root {
-  --bg-main: #020202;
-  --bg-gradient: radial-gradient(circle at 10% 20%, rgba(138, 43, 226, 0.15) 0%, transparent 50%),
-                 radial-gradient(circle at 90% 80%, rgba(0, 191, 255, 0.12) 0%, transparent 50%),
-                 radial-gradient(circle at 50% 50%, rgba(5, 5, 8, 1) 0%, rgba(0, 0, 0, 1) 100%);
-  --text-primary: #ffffff;
-  --text-secondary: #e2e8f0;
-  --glass-bg: rgba(0, 0, 0, 0.6);
-  --glass-border: rgba(255, 255, 255, 0.15);
-  --glass-shadow: rgba(0, 0, 0, 0.9);
-  --liquid-bg: rgba(0, 0, 0, 0.9);
-  --liquid-border: rgba(255, 255, 255, 0.2);
-  --card-bg: rgba(0, 0, 0, 0.7);
-  --card-hover-bg: rgba(20, 20, 25, 0.85);
-  --accent-blue: #93c5fd;
-  --accent-purple: #d8b4fe;
-  --accent-emerald: #6ee7b7;
-  --accent-orange: #fdba74;
-  --accent-rose: #fda4af;
-  --accent-yellow: #fcd34d;
+  --bg-main: #09090b;
+  --bg-surface: #18181b;
+  --bg-gradient: linear-gradient(to bottom, #09090b, #000000);
+  --text-primary: #fafafa;
+  --text-secondary: #a1a1aa;
+  --glass-bg: rgba(24, 24, 27, 0.6);
+  --glass-border: rgba(63, 63, 70, 0.4);
+  --glass-shadow: rgba(0, 0, 0, 0.5);
+  --card-bg: #18181b;
+  --card-hover-bg: #27272a;
+  --accent-blue: #3b82f6;
+  --accent-purple: #8b5cf6;
+  --accent-emerald: #10b981;
+  --accent-orange: #f59e0b;
+  --accent-rose: #f43f5e;
+  --accent-yellow: #eab308;
 }
 
 .light {
-  --bg-main: #f8fafc;
-  --bg-gradient: radial-gradient(circle at 10% 20%, rgba(138, 43, 226, 0.05) 0%, transparent 50%),
-                 radial-gradient(circle at 90% 80%, rgba(0, 191, 255, 0.05) 0%, transparent 50%),
-                 radial-gradient(circle at 50% 50%, #f8fafc 0%, #f1f5f9 100%);
-  --text-primary: #0f172a;
-  --text-secondary: #334155;
-  --glass-bg: rgba(255, 255, 255, 0.95);
-  --glass-border: rgba(0, 0, 0, 0.18);
-  --glass-shadow: rgba(0, 0, 0, 0.1);
-  --liquid-bg: rgba(255, 255, 255, 0.98);
-  --liquid-border: rgba(0, 0, 0, 0.2);
-  --card-bg: rgba(255, 255, 255, 1);
-  --card-hover-bg: #ffffff;
+  --bg-main: #f4f4f5;
+  --bg-surface: #ffffff;
+  --bg-gradient: linear-gradient(to bottom, #f4f4f5, #ffffff);
+  --text-primary: #09090b;
+  --text-secondary: #71717a;
+  --glass-bg: rgba(255, 255, 255, 0.6);
+  --glass-border: rgba(228, 228, 231, 0.8);
+  --glass-shadow: rgba(0, 0, 0, 0.05);
+  --card-bg: #ffffff;
+  --card-hover-bg: #f4f4f5;
   --accent-blue: #2563eb;
   --accent-purple: #7c3aed;
   --accent-emerald: #059669;
@@ -63,117 +60,128 @@
 
 @layer base {
   body {
-    @apply antialiased overflow-hidden transition-colors duration-500 font-medium leading-relaxed tracking-wide;
+    @apply antialiased overflow-hidden transition-colors duration-500 font-sans font-normal leading-relaxed tracking-normal;
     background: var(--bg-gradient);
     background-attachment: fixed;
     color: var(--text-primary);
     min-height: 100vh;
-    text-shadow: 0 0 1px rgba(0,0,0,0.01);
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-display font-semibold tracking-tight;
   }
 }
 
 @layer components {
   .glass-panel {
-    @apply backdrop-blur-[60px] rounded-[32px] transition-all duration-500;
+    @apply rounded-3xl transition-all duration-300 backdrop-blur-xl;
     background: var(--glass-bg);
     border: 1px solid var(--glass-border);
-    box-shadow: 
-      inset 1px 1px 0px 0px rgba(255, 255, 255, 0.1),
-      0 12px 40px 0 var(--glass-shadow);
+    box-shadow: 0 8px 32px 0 var(--glass-shadow);
   }
 
   .glass-card {
-    @apply backdrop-blur-[30px] rounded-3xl transition-all duration-300;
+    @apply rounded-2xl transition-all duration-200 backdrop-blur-lg;
     background: var(--card-bg);
     border: 1px solid var(--glass-border);
-    box-shadow: 
-      inset 1px 1px 0px 0px rgba(255, 255, 255, 0.1),
-      0 8px 24px 0 var(--glass-shadow);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
   }
 
   .glass-card:hover {
-    @apply transform -translate-y-0.5;
+    @apply -translate-y-0.5 shadow-md;
     background: var(--card-hover-bg);
-    border-color: var(--accent-blue);
-    box-shadow: 0 12px 32px 0 var(--glass-shadow);
+    border-color: var(--text-secondary);
   }
 
-  .liquid-button {
-    @apply relative overflow-hidden rounded-2xl px-6 py-3 font-bold transition-all duration-300 active:scale-95 text-xs uppercase tracking-widest text-white;
-    background: linear-gradient(135deg, #00bfff 0%, #8a2be2 100%);
-    box-shadow: 
-      inset 0 1px 0 0 rgba(255, 255, 255, 0.2),
-      0 4px 15px rgba(0, 191, 255, 0.3);
+  /* Professional Button Hierarchy */
+  .btn-primary {
+    @apply flex items-center justify-center gap-2 px-5 py-2.5 rounded-[10px] font-bold text-xs tracking-wide uppercase transition-all active:scale-95;
+    background: #18181b;
+    color: #ffffff;
+    border: 1px solid #27272a;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
   }
 
-  .theme-button-primary {
-    @apply relative overflow-hidden rounded-xl px-5 py-2.5 font-black text-[10px] uppercase tracking-widest text-white transition-all duration-300 active:scale-95 flex items-center justify-center gap-2;
-    background: linear-gradient(180deg, rgba(59, 130, 246, 1) 0%, rgba(37, 99, 235, 1) 100%);
-    box-shadow: 
-      inset 0 1px 1px 0 rgba(255, 255, 255, 0.2),
-      0 4px 12px rgba(37, 99, 235, 0.2);
+  .btn-primary:hover {
+    @apply -translate-y-0.5 shadow-xl brightness-125;
+    background: #27272a;
+    border-color: #3f3f46;
+  }
+
+  .btn-orange {
+    @apply flex items-center justify-center gap-2 px-5 py-2.5 rounded-[10px] font-bold text-xs tracking-wide uppercase transition-all active:scale-95;
+    background: #f97316;
+    color: #ffffff;
     border: 1px solid rgba(255, 255, 255, 0.1);
+    box-shadow: 0 4px 12px rgba(249, 115, 22, 0.2);
   }
 
-  .theme-button-primary:hover {
-    @apply brightness-110 shadow-blue-500/30 -translate-y-0.5;
+  .btn-orange:hover {
+    @apply -translate-y-0.5 shadow-xl brightness-110;
+    background: #ea580c;
   }
 
-  .theme-button-secondary {
-    @apply relative overflow-hidden rounded-xl px-5 py-2.5 font-black text-[10px] uppercase tracking-widest transition-all duration-300 active:scale-95 flex items-center justify-center gap-2;
-    color: var(--text-secondary);
-    background: linear-gradient(180deg, rgba(255, 255, 255, 0.05) 0%, rgba(255, 255, 255, 0.02) 100%);
-    box-shadow: 
-      inset 0 1px 1px 0 rgba(255, 255, 255, 0.05),
-      0 4px 12px rgba(0, 0, 0, 0.1);
-    border: 1px solid var(--glass-border);
+  .btn-rose {
+    @apply flex items-center justify-center gap-2 px-5 py-2.5 rounded-[10px] font-bold text-xs tracking-wide uppercase transition-all active:scale-95;
+    background: #f43f5e;
+    color: #ffffff;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    box-shadow: 0 4px 12px rgba(244, 63, 94, 0.2);
   }
 
-  .theme-button-secondary:hover {
-    @apply -translate-y-0.5;
-    background: var(--glass-bg);
-    color: var(--text-primary);
+  .btn-rose:hover {
+    @apply -translate-y-0.5 shadow-xl brightness-110;
+    background: #e11d48;
+  }
+
+  .btn-secondary {
+    @apply flex items-center justify-center gap-2 px-5 py-2.5 rounded-[10px] font-bold text-xs tracking-wide uppercase transition-all active:scale-95 border;
+    background: var(--bg-surface);
     border-color: var(--glass-border);
+    color: var(--text-primary);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
   }
 
-  .liquid-glass-panel {
-    @apply backdrop-blur-[80px] rounded-[32px] transition-all duration-500;
-    background: var(--liquid-bg);
-    border: 1px solid var(--liquid-border);
-    box-shadow: 
-      inset 1px 1px 0px 0px rgba(255, 255, 255, 0.1),
-      0 30px 100px 0 var(--glass-shadow);
-  }
-
-  .liquid-glass-card {
-    @apply backdrop-blur-[40px] rounded-3xl transition-all duration-500;
-    background: var(--card-bg);
-    border: 1px solid var(--liquid-border);
-    box-shadow: 
-      inset 1px 1px 0px 0px rgba(255, 255, 255, 0.08),
-      0 12px 40px 0 var(--glass-shadow);
-  }
-
-  .liquid-glass-card:hover {
-    @apply transform -translate-y-1;
+  .btn-secondary:hover {
+    @apply -translate-y-0.5 shadow-md;
     background: var(--card-hover-bg);
-    border-color: var(--accent-blue);
-    box-shadow: 0 20px 60px 0 var(--glass-shadow);
+    border-color: var(--text-secondary);
   }
 
-  .text-glow-blue {
-    color: var(--accent-blue);
-    text-shadow: 0 0 15px var(--accent-blue);
+  .btn-ghost {
+    @apply flex items-center justify-center gap-2 px-4 py-2 rounded-[10px] font-bold text-xs tracking-wide uppercase transition-all active:scale-95;
+    background: transparent;
+    border: none;
+    color: var(--text-secondary);
   }
 
-  .text-glow-purple {
-    color: var(--accent-purple);
-    text-shadow: 0 0 15px var(--accent-purple);
+  .btn-ghost:hover {
+    @apply bg-theme-glass text-theme-primary;
   }
 
-  .text-glow-emerald {
-    color: var(--accent-emerald);
-    text-shadow: 0 0 15px var(--accent-emerald);
+  /* Interactive Chips for Filters */
+  .chip {
+    @apply flex items-center gap-2 px-3 py-1.5 rounded-full font-bold text-[11px] uppercase tracking-wider transition-all border active:scale-95 shadow-sm;
+    background: var(--bg-surface);
+    border-color: var(--glass-border);
+    color: var(--text-secondary);
+  }
+
+  .chip:hover {
+    @apply border-theme-secondary text-theme-primary;
+    background: var(--card-hover-bg);
+  }
+
+  .chip-active {
+    @apply bg-theme-blue text-white border-theme-blue shadow-md;
+  }
+
+  .chip-active:hover {
+    @apply brightness-110;
+  }
+
+  .section-header {
+    @apply flex items-center justify-between pb-3 border-b border-theme-glass mb-4;
   }
 
   .text-theme-blue { color: var(--accent-blue); }
@@ -183,15 +191,8 @@
   .text-theme-rose { color: var(--accent-rose); }
   .text-theme-yellow { color: var(--accent-yellow); }
 
-  .text-theme-primary { color: var(--text-primary); }
-  .text-theme-secondary { color: var(--text-secondary); }
-  .bg-theme-main { background: var(--bg-main); }
-  .border-theme-glass { border-color: var(--glass-border); }
-  .bg-theme-glass { background: var(--glass-bg); }
-  .bg-theme-card { background: var(--card-bg); }
-
   .custom-scrollbar::-webkit-scrollbar {
-    width: 6px;
+    width: 5px;
   }
 
   .custom-scrollbar::-webkit-scrollbar-track {
@@ -200,6 +201,25 @@
 
   .custom-scrollbar::-webkit-scrollbar-thumb {
     @apply rounded-full transition-colors;
-    background: var(--liquid-border);
+    background: var(--glass-border);
+  }
+
+  .liquid-glass-panel {
+    @apply rounded-[2.5rem] transition-all duration-500 backdrop-blur-3xl;
+    background: var(--bg-surface);
+    border: 1px solid var(--glass-border);
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+  }
+
+  .liquid-glass-card {
+    @apply rounded-3xl transition-all duration-300 backdrop-blur-2xl;
+    background: var(--glass-bg);
+    border: 1px solid var(--glass-border);
+    box-shadow: 0 10px 30px -5px rgba(0, 0, 0, 0.3);
+  }
+
+  .liquid-glass-card:hover {
+    @apply -translate-y-1 shadow-2xl border-theme-blue/50;
+    background: var(--card-hover-bg);
   }
 }

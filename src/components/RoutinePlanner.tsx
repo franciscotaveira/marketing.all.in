@@ -7,6 +7,7 @@ import {
   Circle,
   MoreVertical,
   Trash2,
+  Bell,
   Settings2,
   Sparkles,
   Zap,
@@ -62,6 +63,17 @@ export default function RoutinePlanner() {
     endTime: '10:00',
     agentId: 'productivity-strategist',
   });
+  const [draggedTaskId, setDraggedTaskId] = useState<string | null>(null);
+  const [isOverRoutineId, setIsOverRoutineId] = useState<string | null>(null);
+
+  const pendingTasks = React.useMemo(() => tasks.filter(t => !t.routineId), [tasks]);
+  const routineTasks = React.useMemo(() => {
+    const map: Record<string, Task[]> = {};
+    routines.forEach(r => {
+      map[r.id!] = tasks.filter(t => t.routineId === r.id);
+    });
+    return map;
+  }, [routines, tasks]);
 
   useEffect(() => {
     if (!auth.currentUser) return;
@@ -181,19 +193,19 @@ export default function RoutinePlanner() {
   };
 
   return (
-    <div className="flex flex-col h-full bg-theme-main">
+    <div className="flex flex-col h-full bg-theme-surface border border-theme-glass rounded-3xl overflow-hidden shadow-sm">
       {/* Header */}
-      <div className="p-6 border-b border-theme-glass flex flex-col md:flex-row md:items-center justify-between gap-4 bg-theme-glass/20">
-        <div>
-          <h2 className="text-2xl font-black uppercase tracking-tighter text-theme-primary flex items-center gap-3 italic">
-            <Target className="w-6 h-6 text-theme-orange" />
-            Planejamento de <span className="text-theme-orange">Rotinas</span>
+      <div className="p-6 border-b border-theme-glass flex flex-col sm:flex-row sm:items-center justify-between gap-6 bg-theme-surface/50">
+        <div className="space-y-1">
+          <h2 className="text-xl font-bold tracking-tight text-theme-primary flex items-center gap-3">
+            <Target className="w-5 h-5 text-orange-500" />
+            Planejamento de <span className="text-orange-500">Rotinas</span>
           </h2>
-          <p className="text-theme-secondary opacity-40 text-[10px] font-black uppercase tracking-widest mt-1">Otimize seu tempo com blocos de foco.</p>
+          <p className="text-theme-secondary text-[11px] font-medium uppercase tracking-wider opacity-60">Otimize seu tempo com blocos de foco.</p>
         </div>
         <button 
           onClick={() => setIsAddingRoutine(true)}
-          className="flex items-center gap-2 px-4 py-2 bg-theme-orange hover:bg-theme-orange/80 text-white rounded-xl text-sm font-bold shadow-lg shadow-orange-500/20 transition-all active:scale-95"
+          className="btn-orange w-full sm:w-auto"
         >
           <Plus className="w-4 h-4" />
           <span>Nova Rotina</span>
@@ -206,32 +218,32 @@ export default function RoutinePlanner() {
           {/* Main Content */}
           <div className="lg:col-span-2 space-y-6">
             {/* Stats Summary */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
               <div className="bg-theme-glass border border-theme-glass rounded-2xl p-4 flex items-center gap-4 shadow-sm">
-                <div className="w-10 h-10 rounded-xl bg-theme-orange/10 flex items-center justify-center">
-                  <Flame className="w-5 h-5 text-theme-orange" />
+                <div className="w-10 h-10 rounded-xl bg-orange-500/10 flex items-center justify-center shrink-0 border border-orange-500/20">
+                  <Flame className="w-5 h-5 text-orange-500" />
                 </div>
-                <div>
-                  <div className="text-[10px] font-black uppercase tracking-widest text-theme-secondary opacity-30">Total de Blocos</div>
-                  <div className="text-xl font-black text-theme-primary">{routines.length}</div>
+                <div className="min-w-0">
+                  <div className="text-[10px] font-bold uppercase tracking-wider text-theme-secondary opacity-60 truncate">Total de Blocos</div>
+                  <div className="text-lg font-bold text-theme-primary">{routines.length}</div>
                 </div>
               </div>
               <div className="bg-theme-glass border border-theme-glass rounded-2xl p-4 flex items-center gap-4 shadow-sm">
-                <div className="w-10 h-10 rounded-xl bg-theme-blue/10 flex items-center justify-center">
-                  <Clock className="w-5 h-5 text-theme-blue" />
+                <div className="w-10 h-10 rounded-xl bg-blue-500/10 flex items-center justify-center shrink-0 border border-blue-500/20">
+                  <Clock className="w-5 h-5 text-blue-500" />
                 </div>
-                <div>
-                  <div className="text-[10px] font-black uppercase tracking-widest text-theme-secondary opacity-30">Horas Planejadas</div>
-                  <div className="text-xl font-black text-theme-primary">--h</div>
+                <div className="min-w-0">
+                  <div className="text-[10px] font-bold uppercase tracking-wider text-theme-secondary opacity-60 truncate">Horas Planejadas</div>
+                  <div className="text-lg font-bold text-theme-primary">--h</div>
                 </div>
               </div>
               <div className="bg-theme-glass border border-theme-glass rounded-2xl p-4 flex items-center gap-4 shadow-sm">
-                <div className="w-10 h-10 rounded-xl bg-theme-emerald/10 flex items-center justify-center">
-                  <Zap className="w-5 h-5 text-theme-emerald" />
+                <div className="w-10 h-10 rounded-xl bg-emerald-500/10 flex items-center justify-center shrink-0 border border-emerald-500/20">
+                  <Zap className="w-5 h-5 text-emerald-500" />
                 </div>
-                <div>
-                  <div className="text-[10px] font-black uppercase tracking-widest text-theme-secondary opacity-30">Foco Semanal</div>
-                  <div className="text-xl font-black text-theme-primary">85%</div>
+                <div className="min-w-0">
+                  <div className="text-[10px] font-bold uppercase tracking-wider text-theme-secondary opacity-60 truncate">Foco Semanal</div>
+                  <div className="text-lg font-bold text-theme-primary">85%</div>
                 </div>
               </div>
             </div>
@@ -246,31 +258,44 @@ export default function RoutinePlanner() {
                     initial={{ opacity: 0, x: -20 }}
                     animate={{ opacity: 1, x: 0 }}
                     exit={{ opacity: 0, scale: 0.95 }}
-                    onDragOver={(e) => e.preventDefault()}
+                    onDragOver={(e) => {
+                      e.preventDefault();
+                      setIsOverRoutineId(routine.id!);
+                    }}
+                    onDragLeave={() => setIsOverRoutineId(null)}
                     onDrop={(e) => {
                       const taskId = e.dataTransfer.getData('taskId');
+                      setIsOverRoutineId(null);
                       if (taskId) handleTaskDrop(taskId, routine.id!);
                     }}
-                    className="group bg-theme-glass border border-theme-glass rounded-3xl p-6 hover:border-theme-glass/80 hover:bg-theme-glass/80 transition-all relative overflow-hidden shadow-lg"
+                    className={cn(
+                      "group bg-theme-glass border border-theme-glass rounded-3xl p-6 transition-all relative overflow-hidden shadow-sm",
+                      isOverRoutineId === routine.id 
+                        ? "border-orange-500 bg-orange-500/5 scale-[1.01]" 
+                        : "hover:border-theme-glass/80 hover:bg-theme-glass/80"
+                    )}
                   >
-                    <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
-                      <div className="flex items-center gap-6">
-                        <div className="w-16 h-16 rounded-2xl bg-theme-glass flex flex-col items-center justify-center border border-theme-glass shadow-inner">
-                          <span className="text-xs font-black text-theme-primary">{routine.startTime}</span>
-                          <span className="text-[8px] font-bold text-theme-secondary opacity-20 uppercase tracking-widest">Início</span>
+                    {isOverRoutineId === routine.id && (
+                      <div className="absolute inset-0 border-2 border-dashed border-orange-500/20 rounded-3xl pointer-events-none animate-pulse" />
+                    )}
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-6">
+                      <div className="flex items-center gap-4 sm:gap-6">
+                        <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-2xl bg-theme-glass flex flex-col items-center justify-center border border-theme-glass shadow-sm shrink-0">
+                          <span className="text-xs sm:text-sm font-bold text-theme-primary">{routine.startTime}</span>
+                          <span className="text-[8px] font-bold text-theme-secondary opacity-40 uppercase tracking-wider">Início</span>
                         </div>
                         
-                        <div>
-                          <h3 className="text-lg font-black text-theme-primary group-hover:text-theme-orange transition-colors mb-2">{routine.title}</h3>
-                          <div className="flex gap-1.5">
+                        <div className="min-w-0">
+                          <h3 className="text-base sm:text-lg font-bold text-theme-primary group-hover:text-orange-500 transition-colors mb-2 truncate">{routine.title}</h3>
+                          <div className="flex flex-wrap gap-1">
                             {DAYS_OF_WEEK.map((day) => (
                               <span 
                                 key={day.id}
                                 className={cn(
-                                  "w-6 h-6 rounded-lg flex items-center justify-center text-[8px] font-black uppercase border",
+                                  "w-5 h-5 sm:w-6 sm:h-6 rounded-lg flex items-center justify-center text-[8px] font-bold uppercase border",
                                   routine.days?.includes(day.id)
-                                    ? "bg-theme-orange/10 border-theme-orange/20 text-theme-orange"
-                                    : "bg-theme-glass border-theme-glass text-theme-secondary opacity-10"
+                                    ? "bg-orange-500/10 border-orange-500/20 text-orange-500"
+                                    : "bg-theme-glass border-theme-glass text-theme-secondary opacity-20"
                                 )}
                               >
                                 {day.label}
@@ -280,19 +305,19 @@ export default function RoutinePlanner() {
                         </div>
                       </div>
 
-                      <div className="flex items-center justify-between md:justify-end gap-3 w-full md:w-auto">
-                        <div className="text-left md:text-right md:mr-4">
-                          <div className="text-[10px] font-black uppercase tracking-widest text-theme-secondary opacity-20 mb-1">Duração</div>
-                          <div className="text-sm font-bold text-theme-secondary opacity-60 flex items-center gap-2">
+                      <div className="flex items-center justify-between sm:justify-end gap-3 w-full sm:w-auto pt-4 sm:pt-0 border-t sm:border-t-0 border-theme-glass">
+                        <div className="text-left sm:text-right sm:mr-4">
+                          <div className="text-[10px] font-bold uppercase tracking-wider text-theme-secondary opacity-40 mb-1">Duração</div>
+                          <div className="text-xs sm:text-sm font-medium text-theme-secondary flex items-center gap-2">
                             <Clock className="w-3.5 h-3.5" />
                             {routine.startTime} - {routine.endTime}
                           </div>
                         </div>
                         <button 
                           onClick={() => handleDeleteRoutine(routine.id!)}
-                          className="p-3 hover:bg-red-500/10 rounded-2xl text-theme-secondary hover:text-red-400 transition-all opacity-100 md:opacity-0 md:group-hover:opacity-100 focus:opacity-100"
+                          className="p-2 sm:p-3 hover:bg-rose-500/10 rounded-2xl text-theme-secondary hover:text-rose-500 transition-all opacity-100 sm:opacity-0 sm:group-hover:opacity-100 focus:opacity-100"
                         >
-                          <Trash2 className="w-5 h-5" />
+                          <Trash2 className="w-4 h-4 sm:w-5 h-5" />
                         </button>
                       </div>
                     </div>
@@ -300,27 +325,36 @@ export default function RoutinePlanner() {
                     {/* Tarefas Vinculadas */}
                     <div className="mt-6 pt-6 border-t border-theme-glass">
                       <div className="flex items-center justify-between mb-4">
-                        <span className="text-[10px] font-black uppercase tracking-widest text-theme-secondary opacity-40">Tarefas Vinculadas</span>
-                        <span className="text-[10px] font-black text-theme-orange bg-theme-orange/10 px-2 py-1 rounded-lg border border-theme-orange/20">
+                        <span className="text-[11px] font-bold uppercase tracking-wider text-theme-secondary opacity-40">Tarefas Vinculadas</span>
+                        <span className="text-[11px] font-bold text-orange-500 bg-orange-500/10 px-2 py-1 rounded-lg border border-orange-500/20">
                           {tasks.filter(t => t.routineId === routine.id).length}
                         </span>
                       </div>
                       
                       <div className="space-y-2">
-                        {tasks.filter(t => t.routineId === routine.id).map(task => (
-                          <div key={task.id} className="flex items-center justify-between p-3 bg-theme-glass rounded-xl border border-theme-glass group/item">
-                            <span className="text-xs font-bold text-theme-primary truncate flex-1">{task.title}</span>
+                        {(routineTasks[routine.id!] || []).map(task => (
+                          <div key={task.id} className="flex items-center justify-between p-3 bg-theme-glass rounded-xl border border-theme-glass group/item hover:border-orange-500/20 transition-all">
+                            <div className="flex items-center gap-3 flex-1 min-w-0">
+                              <div className={cn(
+                                "w-1.5 h-1.5 rounded-full shrink-0",
+                                task.priority === 'high' ? 'bg-rose-500' : 
+                                task.priority === 'medium' ? 'bg-amber-500' : 'bg-blue-500'
+                              )} />
+                              <span className="text-sm font-medium text-theme-primary truncate">{task.title}</span>
+                              {task.reminderAt && <Bell className="w-3 h-3 text-orange-500 animate-pulse shrink-0" />}
+                            </div>
                             <button 
                               onClick={() => handleUnlinkTask(task.id)}
-                              className="ml-3 p-1.5 text-theme-secondary opacity-20 hover:text-red-400 hover:opacity-100 transition-all"
+                              className="ml-3 p-1.5 text-theme-secondary opacity-40 hover:text-rose-500 hover:opacity-100 transition-all"
+                              title="Desvincular"
                             >
                               <Plus className="w-4 h-4 rotate-45" />
                             </button>
                           </div>
                         ))}
-                        {tasks.filter(t => t.routineId === routine.id).length === 0 && (
+                        {(routineTasks[routine.id!] || []).length === 0 && (
                           <div className="py-4 text-center border-2 border-dashed border-theme-glass rounded-xl">
-                            <p className="text-[10px] font-black uppercase tracking-widest text-theme-secondary opacity-20">Solte tarefas aqui</p>
+                            <p className="text-[11px] font-bold uppercase tracking-wider text-theme-secondary opacity-20">Solte tarefas aqui para vincular</p>
                           </div>
                         )}
                       </div>
@@ -343,38 +377,48 @@ export default function RoutinePlanner() {
 
           {/* Sidebar de Tarefas Disponíveis */}
           <div className="space-y-6">
-            <div className="bg-theme-glass border border-theme-glass rounded-[2rem] p-8 shadow-xl flex flex-col h-[600px]">
-              <h3 className="text-xl font-black uppercase tracking-tighter text-theme-primary mb-4 flex items-center gap-3">
-                <LayoutGrid className="w-6 h-6 text-theme-orange" />
+            <div className="bg-theme-glass border border-theme-glass rounded-3xl p-6 shadow-sm flex flex-col h-auto md:h-[600px]">
+              <h3 className="text-base font-bold uppercase tracking-wider text-theme-primary mb-4 flex items-center gap-3">
+                <LayoutGrid className="w-5 h-5 text-orange-500" />
                 Tarefas Pendentes
               </h3>
-              <p className="text-theme-secondary opacity-40 text-xs mb-6">Arraste para vincular a uma rotina.</p>
+              <p className="text-theme-secondary opacity-40 text-[11px] mb-6">Arraste para vincular a uma rotina.</p>
               
-              <div className="flex-1 overflow-y-auto space-y-4 pr-2 custom-scrollbar">
-                {tasks.filter(t => !t.routineId).length === 0 ? (
+              <div className="flex-1 overflow-y-auto space-y-3 pr-2 custom-scrollbar">
+                {pendingTasks.length === 0 ? (
                   <div className="text-center py-12 opacity-20">
-                    <CheckCircle2 className="w-12 h-12 mx-auto mb-4" />
-                    <p className="text-sm font-bold uppercase tracking-widest">Tudo em dia!</p>
+                    <CheckCircle2 className="w-10 h-10 mx-auto mb-4" />
+                    <p className="text-xs font-bold uppercase tracking-widest">Tudo em dia!</p>
                   </div>
                 ) : (
-                  tasks.filter(t => !t.routineId).map(task => (
+                  pendingTasks.map(task => (
                     <div
                       key={task.id}
                       draggable
-                      onDragStart={(e) => e.dataTransfer.setData('taskId', task.id)}
-                      className="p-4 bg-theme-glass rounded-2xl border border-theme-glass cursor-grab active:cursor-grabbing hover:border-theme-orange/30 transition-all group/task shadow-sm hover:scale-[1.02]"
+                      onDragStart={(e) => {
+                        e.dataTransfer.setData('taskId', task.id);
+                        setDraggedTaskId(task.id);
+                      }}
+                      onDragEnd={() => setDraggedTaskId(null)}
+                      className={cn(
+                        "p-4 bg-theme-surface border border-theme-glass rounded-2xl cursor-grab active:cursor-grabbing hover:border-orange-500/30 transition-all group/task shadow-sm hover:scale-[1.02]",
+                        draggedTaskId === task.id && "opacity-40"
+                      )}
                     >
-                      <div className="flex items-center gap-2 mb-2">
-                        <div className={cn(
-                          "w-2 h-2 rounded-full",
-                          task.priority === 'high' ? 'bg-rose-500' : 
-                          task.priority === 'medium' ? 'bg-amber-500' : 'bg-emerald-500'
-                        )} />
-                        <span className="text-[8px] font-black uppercase tracking-widest text-theme-secondary opacity-40">
-                          {task.priority}
-                        </span>
+                      <div className="flex items-center justify-between mb-2">
+                        <div className="flex items-center gap-2">
+                          <div className={cn(
+                            "w-2 h-2 rounded-full",
+                            task.priority === 'high' ? 'bg-rose-500' : 
+                            task.priority === 'medium' ? 'bg-amber-500' : 'bg-blue-500'
+                          )} />
+                          <span className="text-[9px] font-bold uppercase tracking-wider text-theme-secondary opacity-40">
+                            {task.priority}
+                          </span>
+                        </div>
+                        {task.reminderAt && <Bell className="w-3 h-3 text-orange-500 animate-pulse" />}
                       </div>
-                      <h4 className="text-sm font-bold text-theme-primary line-clamp-2 leading-tight group-hover/task:text-theme-orange transition-colors">
+                      <h4 className="text-sm font-medium text-theme-primary line-clamp-2 leading-tight group-hover/task:text-orange-500 transition-colors">
                         {task.title}
                       </h4>
                     </div>
@@ -383,32 +427,32 @@ export default function RoutinePlanner() {
               </div>
             </div>
 
-            <div className="bg-theme-glass border border-theme-glass rounded-[2rem] p-8 shadow-xl">
-              <h3 className="text-[10px] font-black uppercase tracking-widest text-theme-secondary opacity-40 mb-6">Consistência Semanal</h3>
+            <div className="bg-theme-glass border border-theme-glass rounded-3xl p-6 shadow-sm">
+              <h3 className="text-[11px] font-bold uppercase tracking-wider text-theme-secondary opacity-40 mb-6">Consistência Semanal</h3>
               <div className="space-y-6">
                 <div>
-                  <div className="flex justify-between text-[10px] font-black uppercase tracking-widest text-theme-secondary opacity-60 mb-3">
+                  <div className="flex justify-between text-[10px] font-bold uppercase tracking-wider text-theme-secondary opacity-60 mb-3">
                     <span>Execução de Rotinas</span>
-                    <span className="text-theme-orange">85%</span>
+                    <span className="text-orange-500">85%</span>
                   </div>
-                  <div className="h-2 bg-theme-glass rounded-full overflow-hidden shadow-inner">
+                  <div className="h-1.5 bg-theme-glass rounded-full overflow-hidden">
                     <motion.div 
                       initial={{ width: 0 }}
                       animate={{ width: '85%' }}
-                      className="h-full bg-theme-orange shadow-[0_0_10px_rgba(249,115,22,0.5)]" 
+                      className="h-full bg-orange-500" 
                     />
                   </div>
                 </div>
                 <div>
-                  <div className="flex justify-between text-[10px] font-black uppercase tracking-widest text-theme-secondary opacity-60 mb-3">
+                  <div className="flex justify-between text-[10px] font-bold uppercase tracking-wider text-theme-secondary opacity-60 mb-3">
                     <span>Foco em Prioridades</span>
-                    <span className="text-theme-blue">62%</span>
+                    <span className="text-blue-500">62%</span>
                   </div>
-                  <div className="h-2 bg-theme-glass rounded-full overflow-hidden shadow-inner">
+                  <div className="h-1.5 bg-theme-glass rounded-full overflow-hidden">
                     <motion.div 
                       initial={{ width: 0 }}
                       animate={{ width: '62%' }}
-                      className="h-full bg-theme-blue shadow-[0_0_10px_rgba(59,130,246,0.5)]" 
+                      className="h-full bg-blue-500" 
                     />
                   </div>
                 </div>
@@ -430,56 +474,56 @@ export default function RoutinePlanner() {
               className="absolute inset-0 bg-black/80 backdrop-blur-sm"
             />
             <motion.div 
-              initial={{ opacity: 0, scale: 0.9, y: 20 }}
+              initial={{ opacity: 0, scale: 0.95, y: 20 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.9, y: 20 }}
-              className="relative w-full max-w-2xl bg-theme-main border border-theme-glass rounded-[2.5rem] p-10 shadow-2xl"
+              exit={{ opacity: 0, scale: 0.95, y: 20 }}
+              className="relative w-full max-w-2xl bg-theme-surface border border-theme-glass rounded-3xl p-8 shadow-2xl"
             >
-              <h3 className="text-3xl font-black uppercase tracking-tighter text-theme-primary mb-8">Nova Rotina Estratégica</h3>
+              <h3 className="text-2xl font-bold tracking-tight text-theme-primary mb-8">Nova Rotina Estratégica</h3>
               
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
-                <div className="space-y-8">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                <div className="space-y-6">
                   <div>
-                    <label className="text-[10px] font-black uppercase tracking-widest text-theme-secondary opacity-40 mb-3 block">Título da Rotina</label>
+                    <label className="text-[11px] font-bold uppercase tracking-wider text-theme-secondary opacity-40 mb-2 block">Título da Rotina</label>
                     <input 
                       autoFocus
                       placeholder="Ex: Foco Profundo - Marketing"
                       value={newRoutine.title}
                       onChange={(e) => setNewRoutine({ ...newRoutine, title: e.target.value })}
-                      className="w-full bg-theme-glass border border-theme-glass rounded-2xl px-5 py-4 text-theme-primary placeholder:text-theme-secondary/20 focus:outline-none focus:border-orange-500/50 transition-all font-medium"
+                      className="w-full bg-theme-glass border border-theme-glass rounded-xl px-4 py-3 text-theme-primary placeholder:text-theme-secondary/20 focus:outline-none focus:border-orange-500/50 transition-all text-sm font-medium"
                     />
                   </div>
 
-                  <div className="grid grid-cols-2 gap-6">
+                  <div className="grid grid-cols-2 gap-4">
                     <div>
-                      <label className="text-[10px] font-black uppercase tracking-widest text-theme-secondary opacity-40 mb-3 block">Início</label>
+                      <label className="text-[11px] font-bold uppercase tracking-wider text-theme-secondary opacity-40 mb-2 block">Início</label>
                       <input 
                         type="time"
                         value={newRoutine.startTime}
                         onChange={(e) => setNewRoutine({ ...newRoutine, startTime: e.target.value })}
-                        className="w-full bg-theme-glass border border-theme-glass rounded-2xl px-5 py-4 text-theme-primary focus:outline-none focus:border-orange-500/50 transition-all shadow-inner"
+                        className="w-full bg-theme-glass border border-theme-glass rounded-xl px-4 py-3 text-theme-primary focus:outline-none focus:border-orange-500/50 transition-all text-sm"
                       />
                     </div>
                     <div>
-                      <label className="text-[10px] font-black uppercase tracking-widest text-theme-secondary opacity-40 mb-3 block">Fim</label>
+                      <label className="text-[11px] font-bold uppercase tracking-wider text-theme-secondary opacity-40 mb-2 block">Fim</label>
                       <input 
                         type="time"
                         value={newRoutine.endTime}
                         onChange={(e) => setNewRoutine({ ...newRoutine, endTime: e.target.value })}
-                        className="w-full bg-theme-glass border border-theme-glass rounded-2xl px-5 py-4 text-theme-primary focus:outline-none focus:border-orange-500/50 transition-all shadow-inner"
+                        className="w-full bg-theme-glass border border-theme-glass rounded-xl px-4 py-3 text-theme-primary focus:outline-none focus:border-orange-500/50 transition-all text-sm"
                       />
                     </div>
                   </div>
 
                   <div>
-                    <label className="text-[10px] font-black uppercase tracking-widest text-theme-secondary opacity-40 mb-3 block">Agente Responsável</label>
+                    <label className="text-[11px] font-bold uppercase tracking-wider text-theme-secondary opacity-40 mb-2 block">Agente Responsável</label>
                     <select 
                       value={newRoutine.agentId}
                       onChange={(e) => setNewRoutine({ ...newRoutine, agentId: e.target.value })}
-                      className="w-full bg-theme-glass border border-theme-glass rounded-2xl px-5 py-4 text-theme-primary focus:outline-none focus:border-orange-500/50 transition-all font-medium appearance-none"
+                      className="w-full bg-theme-glass border border-theme-glass rounded-xl px-4 py-3 text-theme-primary focus:outline-none focus:border-orange-500/50 transition-all text-sm font-medium appearance-none"
                     >
                       {MARKETING_SKILLS.map(skill => (
-                        <option key={skill.id} value={skill.id} className="bg-[#0A0A0A]">
+                        <option key={skill.id} value={skill.id} className="bg-theme-surface">
                           {skill.name}
                         </option>
                       ))}
@@ -488,16 +532,16 @@ export default function RoutinePlanner() {
                 </div>
 
                 <div>
-                  <label className="text-[10px] font-black uppercase tracking-widest text-theme-secondary opacity-40 mb-3 block">Dias da Semana</label>
-                  <div className="grid grid-cols-4 gap-3">
+                  <label className="text-[11px] font-bold uppercase tracking-wider text-theme-secondary opacity-40 mb-2 block">Dias da Semana</label>
+                  <div className="grid grid-cols-4 gap-2">
                     {DAYS_OF_WEEK.map((day) => (
                       <button 
                         key={day.id}
                         onClick={() => toggleDay(day.id)}
                         className={cn(
-                          "aspect-square rounded-2xl flex items-center justify-center text-[10px] font-black uppercase tracking-widest transition-all border",
+                          "aspect-square rounded-xl flex items-center justify-center text-[10px] font-bold uppercase tracking-wider transition-all border",
                           newRoutine.days?.includes(day.id)
-                            ? "bg-theme-orange border-theme-orange text-white shadow-lg shadow-orange-500/20"
+                            ? "bg-orange-500 border-orange-500 text-white shadow-sm"
                             : "bg-theme-glass border-theme-glass text-theme-secondary opacity-30 hover:bg-theme-glass/80 hover:opacity-100 shadow-sm"
                         )}
                       >
@@ -508,16 +552,16 @@ export default function RoutinePlanner() {
                 </div>
               </div>
 
-              <div className="flex gap-4 mt-12 pt-8 border-t border-theme-glass">
+              <div className="flex gap-4 mt-10 pt-6 border-t border-theme-glass">
                 <button 
                   onClick={() => setIsAddingRoutine(false)}
-                  className="flex-1 px-8 py-4 bg-theme-glass rounded-2xl text-[10px] font-black uppercase tracking-widest text-theme-secondary opacity-60 hover:bg-theme-glass/80 hover:text-theme-primary transition-all shadow-sm"
+                  className="btn-secondary flex-1"
                 >
                   Cancelar
                 </button>
                 <button 
                   onClick={handleAddRoutine}
-                  className="flex-1 px-8 py-4 bg-theme-orange rounded-2xl text-[10px] font-black uppercase tracking-widest text-white hover:opacity-90 transition-all shadow-lg shadow-orange-500/20"
+                  className="btn-orange flex-1"
                 >
                   Salvar Rotina
                 </button>

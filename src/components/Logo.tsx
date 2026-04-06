@@ -10,39 +10,69 @@ interface LogoProps {
 export default function Logo({ className, showText = true }: LogoProps) {
   return (
     <div className={cn("flex items-center gap-3", className)}>
-      <div className="relative w-8 h-8 flex items-center justify-center shrink-0">
-        {/* Core Glow */}
-        <div className="absolute inset-0 bg-gradient-to-tr from-blue-600 to-purple-600 rounded-xl rotate-45 opacity-20 blur-md animate-pulse" />
-        <div className="absolute inset-0.5 bg-gradient-to-tr from-blue-500 to-purple-500 rounded-xl rotate-45 shadow-[0_0_15px_rgba(59,130,246,0.5)]" />
-        
-        {/* Inner Dark Core */}
-        <div className="absolute inset-1.5 bg-theme-main rounded-lg rotate-45 flex items-center justify-center overflow-hidden">
-          <div className="w-full h-full bg-gradient-to-br from-blue-500/20 to-purple-500/20" />
-        </div>
-        
-        {/* Swarm Nodes (Orbiting) */}
+      <div className="relative w-10 h-10 flex items-center justify-center shrink-0">
+        {/* Outer Ring - Dynamic */}
         <motion.div 
           animate={{ rotate: 360 }}
-          transition={{ duration: 12, repeat: Infinity, ease: "linear" }}
-          className="absolute inset-0"
-        >
-          <div className="absolute -top-1 left-1/2 w-1.5 h-1.5 bg-emerald-400 rounded-full shadow-[0_0_8px_rgba(52,211,153,0.8)]" />
-          <div className="absolute bottom-1 -left-1 w-1.5 h-1.5 bg-blue-400 rounded-full shadow-[0_0_8px_rgba(96,165,250,0.8)]" />
-          <div className="absolute bottom-1 -right-1 w-1.5 h-1.5 bg-purple-400 rounded-full shadow-[0_0_8px_rgba(192,132,252,0.8)]" />
-        </motion.div>
+          transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
+          className="absolute inset-0 border-2 border-dashed border-blue-500/20 rounded-full"
+        />
+        
+        {/* Hexagonal Core Container */}
+        <div className="relative w-8 h-8 flex items-center justify-center">
+          {/* Background Glow */}
+          <div className="absolute inset-0 bg-blue-600/20 blur-xl rounded-full animate-pulse" />
+          
+          {/* Main Shape - Stylized "A" or Synapse */}
+          <svg viewBox="0 0 40 40" className="w-full h-full relative z-10">
+            <defs>
+              <linearGradient id="logo-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" stopColor="#3b82f6" />
+                <stop offset="100%" stopColor="#8b5cf6" />
+              </linearGradient>
+            </defs>
+            
+            {/* Synaptic Connections */}
+            <motion.path
+              d="M20 8 L32 28 L8 28 Z"
+              fill="none"
+              stroke="url(#logo-grad)"
+              strokeWidth="2.5"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              initial={{ pathLength: 0, opacity: 0 }}
+              animate={{ pathLength: 1, opacity: 1 }}
+              transition={{ duration: 3, repeat: Infinity, repeatType: "reverse" }}
+            />
+            
+            {/* Core Swarm Particles */}
+            <circle cx="20" cy="18" r="2.5" fill="currentColor" className="text-blue-500" />
+            <circle cx="14" cy="26" r="1.5" fill="currentColor" className="text-purple-500" />
+            <circle cx="26" cy="26" r="1.5" fill="currentColor" className="text-blue-400" />
+          </svg>
 
-        {/* Center Dot */}
-        <div className="absolute w-1.5 h-1.5 bg-white rounded-full shadow-[0_0_5px_rgba(255,255,255,1)]" />
+          {/* Orbiting Particles */}
+          <motion.div 
+            animate={{ rotate: -360 }}
+            transition={{ duration: 8, repeat: Infinity, ease: "linear" }}
+            className="absolute inset-0"
+          >
+            <div className="absolute top-0 left-1/2 -translate-x-1/2 w-1.5 h-1.5 bg-emerald-400 rounded-full shadow-[0_0_10px_rgba(52,211,153,0.8)]" />
+          </motion.div>
+        </div>
       </div>
       
       {showText && (
-        <div className="flex flex-col">
-          <span className="text-sm font-black tracking-widest uppercase bg-clip-text text-transparent bg-gradient-to-r from-blue-400 via-purple-400 to-emerald-400">
+        <div className="flex flex-col leading-none">
+          <span className="text-lg font-bold tracking-tight text-theme-primary">
             Aetheris
           </span>
-          <span className="text-[8px] font-black tracking-[0.3em] uppercase text-theme-secondary -mt-1">
-            Swarm
-          </span>
+          <div className="flex items-center gap-1">
+            <span className="text-[10px] font-bold tracking-widest uppercase text-theme-secondary opacity-40">
+              Swarm
+            </span>
+            <div className="w-1 h-1 bg-blue-500 rounded-full animate-pulse" />
+          </div>
         </div>
       )}
     </div>

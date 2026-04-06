@@ -30,43 +30,43 @@ export const ChatMessage = memo(function ChatMessage({
       )}
     >
       <div className={cn(
-        "w-10 h-10 rounded-2xl flex items-center justify-center flex-shrink-0 mt-1 shadow-lg transition-transform group-hover:scale-110",
-        msg.role === "user" ? "bg-theme-primary text-theme-main" : "bg-blue-600 text-white"
+        "w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 mt-1 shadow-sm transition-transform group-hover:scale-105",
+        msg.role === "user" ? "bg-theme-primary text-theme-main" : "bg-blue-500 text-white"
       )}>
         {msg.role === "user" ? <User className="w-5 h-5" /> : <Bot className="w-5 h-5" />}
       </div>
       <div className={cn(
-        "max-w-[85%] min-w-0 space-y-3",
+        "max-w-[85%] min-w-0 space-y-2",
         msg.role === "user" ? "text-right items-end" : "text-left items-start"
       )}>
         {msg.role === "ai" && (
-          <div className="flex items-center gap-3 mb-1">
-            <span className="text-xs font-black uppercase tracking-[0.2em] text-blue-400">
+          <div className="flex items-center gap-2.5 mb-1">
+            <span className="text-[11px] font-bold uppercase tracking-wider text-blue-500">
               {msg.agentName}
             </span>
             {msg.agentTier && (
-              <span className="text-[8px] px-2 py-0.5 bg-blue-500/20 text-blue-500 dark:text-blue-300 rounded-full uppercase font-black tracking-widest border border-blue-500/20">
+              <span className="text-[9px] px-2 py-0.5 bg-blue-500/10 text-blue-500 rounded-full font-bold tracking-wider border border-blue-500/20 uppercase">
                 {msg.agentTier}
               </span>
             )}
           </div>
         )}
         <div className={cn(
-          "p-3 md:p-4 rounded-2xl shadow-sm relative transition-all group-hover:shadow-md overflow-hidden break-words",
+          "p-4 rounded-2xl shadow-sm relative transition-all group-hover:shadow-md overflow-hidden break-words border",
           msg.role === "user" 
-            ? "glass-card bg-theme-glass text-theme-primary rounded-tr-none border-theme-glass" 
-            : "glass-card bg-theme-glass border-theme-glass text-theme-primary rounded-tl-none"
+            ? "bg-theme-surface text-theme-primary rounded-tr-none border-theme-glass" 
+            : "bg-theme-surface border-theme-glass text-theme-primary rounded-tl-none"
         )}>
           <div className={cn(
             "prose prose-sm max-w-none",
             "text-theme-primary",
-            "prose-headings:font-black prose-headings:tracking-tighter prose-headings:text-theme-primary",
-            "prose-p:text-theme-primary prose-p:leading-relaxed prose-p:tracking-wide",
+            "prose-headings:font-bold prose-headings:tracking-tight prose-headings:text-theme-primary",
+            "prose-p:text-theme-primary prose-p:leading-relaxed prose-p:font-medium",
             "prose-a:text-blue-500 dark:prose-a:text-blue-400",
             "prose-strong:text-theme-primary prose-strong:font-bold",
             "prose-blockquote:text-theme-secondary prose-blockquote:border-l-4 prose-blockquote:border-theme-glass prose-blockquote:bg-theme-glass/20 prose-blockquote:py-1 prose-blockquote:px-4 prose-blockquote:rounded-r-lg prose-blockquote:not-italic",
-            "prose-pre:bg-[#0f172a] prose-pre:text-gray-100 dark:prose-pre:bg-black/50 dark:prose-pre:border dark:prose-pre:border-white/10",
-            "prose-code:text-blue-600 dark:prose-code:text-blue-300",
+            "prose-pre:bg-slate-900 prose-pre:text-gray-100 dark:prose-pre:bg-black/50 dark:prose-pre:border dark:prose-pre:border-white/10",
+            "prose-code:text-blue-500 dark:prose-code:text-blue-300",
             "prose-li:text-theme-primary prose-li:marker:text-theme-secondary",
             "prose-ol:text-theme-primary prose-ul:text-theme-primary",
             "dark:prose-invert"
@@ -76,13 +76,13 @@ export const ChatMessage = memo(function ChatMessage({
           
           {msg.artifacts && msg.artifacts.length > 0 && (
             <div className="mt-4 pt-4 border-t border-theme-glass space-y-3">
-              <p className="text-xs font-black uppercase tracking-[0.3em] text-theme-secondary">Artefatos Gerados</p>
+              <p className="text-[11px] font-bold uppercase tracking-wider text-theme-secondary opacity-40">Artefatos Gerados</p>
               <div className="flex flex-wrap gap-2">
                 {msg.artifacts.map((art) => (
                   <button 
                     key={art.id}
                     onClick={() => onArtifactClick(art)}
-                    className="flex items-center gap-3 px-4 py-2.5 bg-blue-500/20 text-blue-600 dark:text-blue-300 border border-blue-500/20 rounded-xl text-xs font-black uppercase tracking-widest hover:bg-blue-600 hover:text-white transition-all shadow-sm active:scale-95 group/art"
+                    className="btn-primary px-4 py-2 text-[11px] group/art"
                   >
                     <FileText className="w-3.5 h-3.5 group-hover/art:rotate-12 transition-transform" />
                     {art.title}
@@ -95,7 +95,7 @@ export const ChatMessage = memo(function ChatMessage({
           {msg.images && msg.images.length > 0 && (
             <div className="mt-4 flex flex-wrap gap-3">
               {msg.images.map((img, idx) => (
-                <div key={idx} className="relative group/img overflow-hidden rounded-xl border border-white/10 shadow-sm">
+                <div key={idx} className="relative group/img overflow-hidden rounded-xl border border-theme-glass shadow-sm">
                   <img 
                     src={img} 
                     alt="Context" 
@@ -120,25 +120,23 @@ export const ChatMessage = memo(function ChatMessage({
                     element.click();
                     document.body.removeChild(element);
                   }}
-                  className="p-1.5 bg-theme-glass hover:bg-theme-glass/80 text-theme-secondary rounded-lg transition-colors shadow-sm border border-theme-glass active:scale-95"
+                  className="btn-secondary p-1.5"
                 >
                   <Download className="w-3.5 h-3.5" />
                 </button>
-                <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 hidden group-hover/btn:block w-32 p-2 bg-theme-main text-theme-primary text-xs rounded-xl shadow-xl z-50 pointer-events-none leading-relaxed text-center border border-theme-glass">
-                  <strong className="block text-theme-secondary mb-1">Baixar Markdown</strong>
-                  Salva a resposta como um arquivo .md
+                <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 hidden group-hover/btn:block w-32 p-2.5 bg-theme-surface border border-theme-glass text-theme-primary text-[11px] rounded-xl shadow-xl z-50 leading-relaxed text-center font-bold uppercase tracking-wider">
+                  Baixar MD
                 </div>
               </div>
               <div className="relative group/btn">
                 <button 
                   onClick={() => onCopyClick(msg.content, `msg-${index}`)}
-                  className="p-1.5 bg-theme-glass hover:bg-theme-glass/80 text-theme-secondary rounded-lg transition-colors shadow-sm border border-theme-glass active:scale-95"
+                  className="btn-secondary p-1.5"
                 >
-                  {copiedId === `msg-${index}` ? <Check className="w-3.5 h-3.5 text-green-400" /> : <Copy className="w-3.5 h-3.5" />}
+                  {copiedId === `msg-${index}` ? <Check className="w-3.5 h-3.5 text-emerald-500" /> : <Copy className="w-3.5 h-3.5" />}
                 </button>
-                <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 hidden group-hover/btn:block w-32 p-2 bg-theme-main text-theme-primary text-xs rounded-xl shadow-xl z-50 pointer-events-none leading-relaxed text-center border border-theme-glass">
-                  <strong className="block text-theme-secondary mb-1">Copiar Resposta</strong>
-                  Copia o texto para a área de transferência.
+                <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 hidden group-hover/btn:block w-32 p-2.5 bg-theme-surface border border-theme-glass text-theme-primary text-[11px] rounded-xl shadow-xl z-50 leading-relaxed text-center font-bold uppercase tracking-wider">
+                  Copiar
                 </div>
               </div>
             </div>

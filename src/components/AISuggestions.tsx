@@ -71,21 +71,21 @@ export const AISuggestions: React.FC = () => {
   };
 
   return (
-    <div className="flex flex-col h-full">
-      <div className="p-6 border-b border-theme-glass flex items-center justify-between">
+    <div className="flex flex-col h-full bg-theme-surface border border-theme-glass rounded-3xl overflow-hidden shadow-sm">
+      <div className="p-6 border-b border-theme-glass flex items-center justify-between bg-theme-surface/50">
         <div className="flex items-center gap-3">
-          <div className="w-8 h-8 rounded-lg bg-theme-purple/20 flex items-center justify-center text-theme-purple">
+          <div className="w-8 h-8 rounded-lg bg-purple-500/10 flex items-center justify-center text-purple-500 border border-purple-500/20">
             <Sparkles className="w-4 h-4" />
           </div>
           <div>
-            <h3 className="text-sm font-black uppercase tracking-widest text-theme-primary">Sugestões de IA</h3>
-            <p className="text-[10px] font-bold text-theme-secondary uppercase tracking-widest">Otimização em Tempo Real</p>
+            <h3 className="text-sm font-bold uppercase tracking-wider text-theme-primary">Sugestões de IA</h3>
+            <p className="text-[10px] font-bold text-theme-secondary uppercase tracking-wider opacity-60">Otimização em Tempo Real</p>
           </div>
         </div>
         <button 
           onClick={generateSuggestions}
           disabled={isLoading}
-          className="p-2 hover:bg-theme-glass rounded-lg transition-all text-theme-secondary hover:text-theme-primary disabled:opacity-50"
+          className="btn-secondary p-2 disabled:opacity-50"
         >
           {isLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <RefreshCw className="w-4 h-4" />}
         </button>
@@ -100,30 +100,30 @@ export const AISuggestions: React.FC = () => {
               animate={{ opacity: 1, x: 0 }}
               exit={{ opacity: 0, scale: 0.95 }}
               transition={{ delay: index * 0.1 }}
-              className="glass-card p-4 group cursor-pointer hover:bg-white/5 transition-all"
+              className="bg-theme-glass border border-theme-glass p-4 rounded-2xl group cursor-pointer hover:bg-theme-glass/80 transition-all shadow-sm"
             >
               <div className="flex items-start justify-between mb-2">
                 <div className={cn(
-                  "px-2 py-0.5 rounded text-[8px] font-black uppercase tracking-widest",
-                  suggestion.type === 'optimization' && "bg-theme-blue/20 text-theme-blue",
-                  suggestion.type === 'insight' && "bg-theme-purple/20 text-theme-purple",
-                  suggestion.type === 'action' && "bg-theme-orange/20 text-theme-orange"
+                  "px-2 py-0.5 rounded text-[9px] font-bold uppercase tracking-wider",
+                  suggestion.type === 'optimization' && "bg-blue-500/10 text-blue-500",
+                  suggestion.type === 'insight' && "bg-purple-500/10 text-purple-500",
+                  suggestion.type === 'action' && "bg-orange-500/10 text-orange-500"
                 )}>
                   {suggestion.type}
                 </div>
                 <div className={cn(
-                  "flex items-center gap-1 text-[8px] font-bold uppercase tracking-widest",
-                  suggestion.impact === 'high' ? "text-theme-rose" : "text-theme-secondary"
+                  "flex items-center gap-1 text-[9px] font-bold uppercase tracking-wider",
+                  suggestion.impact === 'high' ? "text-rose-500" : "text-theme-secondary opacity-60"
                 )}>
-                  <Zap className="w-2 h-2" />
+                  <Zap className="w-2.5 h-2.5" />
                   {suggestion.impact} impact
                 </div>
               </div>
               
-              <h4 className="text-xs font-black mb-1 group-hover:text-theme-blue transition-colors text-theme-primary">{suggestion.title}</h4>
+              <h4 className="text-sm font-bold mb-1 group-hover:text-blue-500 transition-colors text-theme-primary">{suggestion.title}</h4>
               <p className="text-[11px] text-theme-secondary leading-relaxed mb-3">{suggestion.description}</p>
               
-              <button className="w-full py-2 rounded-lg bg-theme-glass hover:bg-theme-glass/80 text-[10px] font-black uppercase tracking-widest flex items-center justify-center gap-2 transition-all text-theme-primary">
+              <button className="btn-secondary w-full py-2">
                 Aplicar Sugestão
                 <ChevronRight className="w-3 h-3" />
               </button>
@@ -143,14 +143,14 @@ export const AISuggestions: React.FC = () => {
         )}
       </div>
 
-      <div className="p-4 border-t border-theme-glass">
-        <div className="glass-card p-3 bg-theme-blue/10 border-theme-blue/20 flex items-center gap-3">
-          <div className="w-8 h-8 rounded-lg bg-theme-blue flex items-center justify-center shadow-lg shadow-blue-500/20">
+      <div className="p-4 border-t border-theme-glass bg-theme-surface/50">
+        <div className="bg-blue-500/5 border border-blue-500/10 p-3 rounded-2xl flex items-center gap-3">
+          <div className="w-8 h-8 rounded-lg bg-blue-500 flex items-center justify-center shadow-sm">
             <TrendingUp className="w-4 h-4 text-white" />
           </div>
           <div className="flex flex-col">
-            <span className="text-[10px] font-black uppercase tracking-widest text-theme-blue">Produtividade</span>
-            <span className="text-xs font-black text-theme-primary">+24% esta semana</span>
+            <span className="text-[10px] font-bold uppercase tracking-wider text-blue-500">Produtividade</span>
+            <span className="text-xs font-bold text-theme-primary">+24% esta semana</span>
           </div>
         </div>
       </div>

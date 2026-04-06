@@ -91,24 +91,24 @@ export const BrandContextModal: React.FC<BrandContextModalProps> = ({
             initial={{ scale: 0.95, opacity: 0, y: 20 }}
             animate={{ scale: 1, opacity: 1, y: 0 }}
             exit={{ scale: 0.95, opacity: 0, y: 20 }}
-            className="relative w-full max-w-2xl bg-theme-main border border-theme-glass rounded-[2.5rem] shadow-[0_0_50px_rgba(0,0,0,0.5)] overflow-hidden flex flex-col max-h-[90vh]"
+            className="relative w-full max-w-2xl bg-theme-surface border border-theme-glass rounded-3xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh]"
           >
             {/* Header */}
-            <div className="p-8 border-b border-theme-glass flex items-center justify-between bg-theme-glass/20">
+            <div className="p-8 border-b border-theme-glass flex items-center justify-between bg-theme-surface/50">
               <div className="flex items-center gap-4">
-                <div className="w-12 h-12 bg-blue-600 rounded-2xl flex items-center justify-center shadow-lg shadow-blue-500/20">
+                <div className="w-12 h-12 bg-blue-500 rounded-2xl flex items-center justify-center shadow-sm">
                   <Building2 className="w-6 h-6 text-white" />
                 </div>
                 <div>
-                  <h2 className="text-xl font-black tracking-tight text-theme-primary">Contexto de Marca</h2>
-                  <p className="text-xs text-blue-400 font-black tracking-widest uppercase italic">Gerencie suas empresas e personas</p>
+                  <h2 className="text-xl font-bold tracking-tight text-theme-primary">Contexto de Marca</h2>
+                  <p className="text-[11px] text-blue-500 font-bold tracking-wider uppercase opacity-60">Gerencie suas empresas e personas</p>
                 </div>
               </div>
               <button 
                 onClick={onClose}
-                className="p-3 hover:bg-theme-glass rounded-2xl transition-all active:scale-90 group"
+                className="btn-secondary p-2.5"
               >
-                <X className="w-6 h-6 text-theme-secondary opacity-50 group-hover:text-theme-primary group-hover:opacity-100" />
+                <X className="w-5 h-5 text-theme-secondary opacity-40 group-hover:text-theme-primary group-hover:opacity-100" />
               </button>
             </div>
 
@@ -117,7 +117,7 @@ export const BrandContextModal: React.FC<BrandContextModalProps> = ({
                 <div className="space-y-6">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div className="space-y-2">
-                      <label className="text-[10px] font-black uppercase tracking-widest text-theme-secondary opacity-40 flex items-center gap-2">
+                      <label className="text-[11px] font-bold uppercase tracking-wider text-theme-secondary opacity-40 flex items-center gap-2">
                         <Briefcase className="w-3 h-3" />
                         Nome da Empresa
                       </label>
@@ -126,11 +126,11 @@ export const BrandContextModal: React.FC<BrandContextModalProps> = ({
                         value={formData.name}
                         onChange={e => setFormData(prev => ({ ...prev, name: e.target.value }))}
                         placeholder="Ex: Marketing Swarm Pro"
-                        className="w-full bg-theme-glass/40 backdrop-blur-md border border-theme-glass/60 rounded-xl px-4 py-3 text-sm text-theme-primary placeholder:text-theme-secondary/30 focus:outline-none focus:border-blue-500/50 focus:ring-1 focus:ring-blue-500/20 transition-all shadow-inner"
+                        className="w-full bg-theme-glass border border-theme-glass rounded-xl px-4 py-3 text-sm text-theme-primary placeholder:text-theme-secondary/20 focus:outline-none focus:border-blue-500/50 transition-all font-medium"
                       />
                     </div>
                     <div className="space-y-2">
-                      <label className="text-[10px] font-black uppercase tracking-widest text-theme-secondary opacity-40 flex items-center gap-2">
+                      <label className="text-[11px] font-bold uppercase tracking-wider text-theme-secondary opacity-40 flex items-center gap-2">
                         <Globe className="w-3 h-3" />
                         Website
                       </label>
@@ -139,14 +139,14 @@ export const BrandContextModal: React.FC<BrandContextModalProps> = ({
                         value={formData.website}
                         onChange={e => setFormData(prev => ({ ...prev, website: e.target.value }))}
                         placeholder="https://exemplo.com"
-                        className="w-full bg-theme-glass/40 backdrop-blur-md border border-theme-glass/60 rounded-xl px-4 py-3 text-sm text-theme-primary placeholder:text-theme-secondary/30 focus:outline-none focus:border-blue-500/50 focus:ring-1 focus:ring-blue-500/20 transition-all shadow-inner"
+                        className="w-full bg-theme-glass border border-theme-glass rounded-xl px-4 py-3 text-sm text-theme-primary placeholder:text-theme-secondary/20 focus:outline-none focus:border-blue-500/50 transition-all font-medium"
                       />
                     </div>
                   </div>
 
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div className="space-y-2">
-                      <label className="text-[10px] font-black uppercase tracking-widest text-theme-secondary opacity-40 flex items-center gap-2">
+                      <label className="text-[11px] font-bold uppercase tracking-wider text-theme-secondary opacity-40 flex items-center gap-2">
                         <Target className="w-3 h-3" />
                         Indústria / Nicho
                       </label>
@@ -155,11 +155,11 @@ export const BrandContextModal: React.FC<BrandContextModalProps> = ({
                         value={formData.industry}
                         onChange={e => setFormData(prev => ({ ...prev, industry: e.target.value }))}
                         placeholder="Ex: SaaS B2B, E-commerce"
-                        className="w-full bg-theme-glass/40 backdrop-blur-md border border-theme-glass/60 rounded-xl px-4 py-3 text-sm text-theme-primary placeholder:text-theme-secondary/30 focus:outline-none focus:border-blue-500/50 focus:ring-1 focus:ring-blue-500/20 transition-all shadow-inner"
+                        className="w-full bg-theme-glass border border-theme-glass rounded-xl px-4 py-3 text-sm text-theme-primary placeholder:text-theme-secondary/20 focus:outline-none focus:border-blue-500/50 transition-all font-medium"
                       />
                     </div>
                     <div className="space-y-2">
-                      <label className="text-[10px] font-black uppercase tracking-widest text-theme-secondary opacity-40 flex items-center gap-2">
+                      <label className="text-[11px] font-bold uppercase tracking-wider text-theme-secondary opacity-40 flex items-center gap-2">
                         <Users className="w-3 h-3" />
                         Público-Alvo
                       </label>
@@ -168,13 +168,13 @@ export const BrandContextModal: React.FC<BrandContextModalProps> = ({
                         value={formData.targetAudience}
                         onChange={e => setFormData(prev => ({ ...prev, targetAudience: e.target.value }))}
                         placeholder="Ex: CMOs de empresas de tecnologia"
-                        className="w-full bg-theme-glass/40 backdrop-blur-md border border-theme-glass/60 rounded-xl px-4 py-3 text-sm text-theme-primary placeholder:text-theme-secondary/30 focus:outline-none focus:border-blue-500/50 focus:ring-1 focus:ring-blue-500/20 transition-all shadow-inner"
+                        className="w-full bg-theme-glass border border-theme-glass rounded-xl px-4 py-3 text-sm text-theme-primary placeholder:text-theme-secondary/20 focus:outline-none focus:border-blue-500/50 transition-all font-medium"
                       />
                     </div>
                   </div>
 
                   <div className="space-y-2">
-                    <label className="text-[10px] font-black uppercase tracking-widest text-theme-secondary opacity-40 flex items-center gap-2">
+                    <label className="text-[11px] font-bold uppercase tracking-wider text-theme-secondary opacity-40 flex items-center gap-2">
                       <Briefcase className="w-3 h-3" />
                       Contexto & Proposta de Valor
                     </label>
@@ -182,21 +182,21 @@ export const BrandContextModal: React.FC<BrandContextModalProps> = ({
                       value={formData.context}
                       onChange={e => setFormData(prev => ({ ...prev, context: e.target.value }))}
                       placeholder="Descreva a empresa, seus produtos, tom de voz e diferenciais..."
-                      className="w-full h-40 bg-theme-glass/40 backdrop-blur-md border border-theme-glass/60 rounded-xl px-4 py-3 text-sm text-theme-primary placeholder:text-theme-secondary/30 focus:outline-none focus:border-blue-500/50 focus:ring-1 focus:ring-blue-500/20 transition-all resize-none custom-scrollbar shadow-inner"
+                      className="w-full h-40 bg-theme-glass border border-theme-glass rounded-xl px-4 py-3 text-sm text-theme-primary placeholder:text-theme-secondary/20 focus:outline-none focus:border-blue-500/50 transition-all resize-none custom-scrollbar font-medium"
                     />
                   </div>
 
                   <div className="flex justify-end gap-3 pt-4">
                     <button
                       onClick={() => { setIsAdding(false); setEditingId(null); }}
-                      className="theme-button-secondary"
+                      className="btn-secondary px-6 py-2.5"
                     >
                       Cancelar
                     </button>
                     <button
                       onClick={handleSave}
                       disabled={isSubmitting}
-                      className="theme-button-primary px-8"
+                      className="btn-primary px-6 py-2.5"
                     >
                       {isSubmitting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
                       {editingId ? 'Atualizar Empresa' : 'Salvar Empresa'}
@@ -207,12 +207,12 @@ export const BrandContextModal: React.FC<BrandContextModalProps> = ({
                 <div className="space-y-4">
                   <button
                     onClick={() => setIsAdding(true)}
-                    className="w-full p-6 border-2 border-dashed border-theme-glass rounded-3xl flex flex-col items-center justify-center gap-3 text-theme-secondary opacity-40 hover:opacity-100 hover:border-blue-500/50 hover:bg-theme-glass/50 transition-all group shadow-inner"
+                    className="w-full p-8 border-2 border-dashed border-theme-glass rounded-3xl flex flex-col items-center justify-center gap-3 text-theme-secondary opacity-40 hover:opacity-100 hover:border-blue-500/50 hover:bg-theme-glass/50 transition-all group shadow-sm"
                   >
-                    <div className="w-12 h-12 rounded-2xl bg-theme-glass flex items-center justify-center group-hover:bg-blue-600 group-hover:text-white transition-all shadow-lg">
+                    <div className="w-12 h-12 rounded-2xl bg-theme-glass flex items-center justify-center group-hover:bg-blue-500 group-hover:text-white transition-all shadow-sm border border-theme-glass">
                       <Plus className="w-6 h-6" />
                     </div>
-                    <span className="text-[10px] font-black uppercase tracking-[0.2em]">Adicionar Nova Empresa</span>
+                    <span className="text-[11px] font-bold uppercase tracking-wider">Adicionar Nova Empresa</span>
                   </button>
 
                   <div className="grid grid-cols-1 gap-3">
@@ -223,21 +223,21 @@ export const BrandContextModal: React.FC<BrandContextModalProps> = ({
                         className={cn(
                           "p-6 rounded-3xl border transition-all cursor-pointer group relative overflow-hidden",
                           activeCompanyId === company.id
-                            ? "bg-blue-600/10 border-blue-500/40 shadow-lg shadow-blue-500/10"
-                            : "bg-theme-glass border-theme-glass hover:border-theme-glass/80"
+                            ? "bg-blue-500/5 border-blue-500/20 shadow-sm"
+                            : "bg-theme-surface border-theme-glass hover:border-theme-glass/80"
                         )}
                       >
                         <div className="flex items-start justify-between relative z-10">
                           <div className="flex items-center gap-4">
                             <div className={cn(
-                              "w-12 h-12 rounded-2xl flex items-center justify-center shadow-lg transition-all",
-                              activeCompanyId === company.id ? "bg-blue-600 text-white" : "bg-theme-glass text-theme-secondary opacity-40"
+                              "w-12 h-12 rounded-2xl flex items-center justify-center shadow-sm transition-all",
+                              activeCompanyId === company.id ? "bg-blue-500 text-white" : "bg-theme-glass text-theme-secondary opacity-40"
                             )}>
                               <Building2 className="w-6 h-6" />
                             </div>
                             <div>
-                              <h3 className="font-black text-theme-primary tracking-tight">{company.name}</h3>
-                              <p className="text-[10px] text-theme-secondary opacity-40 font-black uppercase tracking-widest">
+                              <h3 className="font-bold text-theme-primary tracking-tight">{company.name}</h3>
+                              <p className="text-[11px] text-theme-secondary opacity-40 font-bold uppercase tracking-wider">
                                 {company.industry || 'Indústria não definida'}
                               </p>
                             </div>
@@ -245,13 +245,13 @@ export const BrandContextModal: React.FC<BrandContextModalProps> = ({
                           <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
                             <button
                               onClick={(e) => startEdit(company, e)}
-                              className="p-2 hover:bg-theme-glass rounded-lg text-theme-secondary hover:text-blue-400 transition-all active:scale-95"
+                              className="btn-secondary p-2 text-blue-500 border-blue-500/20 hover:border-blue-500/40"
                             >
                               <Briefcase className="w-4 h-4" />
                             </button>
                             <button
                               onClick={(e) => handleDelete(company.id, e)}
-                              className="p-2 hover:bg-theme-glass rounded-lg text-theme-secondary hover:text-red-400 transition-all active:scale-95"
+                              className="btn-secondary p-2 text-rose-500 border-rose-500/20 hover:border-rose-500/40"
                             >
                               <Trash2 className="w-4 h-4" />
                             </button>
@@ -259,7 +259,7 @@ export const BrandContextModal: React.FC<BrandContextModalProps> = ({
                         </div>
                         {activeCompanyId === company.id && (
                           <div className="absolute top-0 right-0 p-4">
-                            <div className="w-2 h-2 bg-blue-500 rounded-full animate-pulse shadow-[0_0_10px_rgba(59,130,246,0.8)]" />
+                            <div className="w-1.5 h-1.5 bg-blue-500 rounded-full animate-pulse" />
                           </div>
                         )}
                       </div>

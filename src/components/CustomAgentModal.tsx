@@ -141,14 +141,14 @@ export const CustomAgentModal: React.FC<CustomAgentModalProps> = ({ onClose, onS
       <div className="p-6 border-t border-theme-glass bg-theme-glass/20 flex flex-col sm:flex-row justify-end gap-3 sm:gap-4">
         <button
           onClick={onClose}
-          className="theme-button-secondary w-full sm:w-auto"
+          className="btn-secondary w-full sm:w-auto"
         >
           Cancelar
         </button>
         <button
           onClick={handleSave}
           disabled={!name || !persona || !description || !prompt || isSubmitting}
-          className="theme-button-primary w-full sm:w-auto px-8"
+          className="btn-primary w-full sm:w-auto px-8"
         >
           {isSubmitting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
           Salvar Agente
