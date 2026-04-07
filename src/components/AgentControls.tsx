@@ -20,6 +20,8 @@ interface AgentControlsProps {
   manualAgentPriorities: Record<string, number>;
   setManualAgentPriorities: (value: Record<string, number>) => void;
   allSkills: MarketingSkill[];
+  googleTokens?: any;
+  connectGoogleDrive?: () => void;
 }
 
 export function AgentControls({
@@ -35,7 +37,9 @@ export function AgentControls({
   setIsDarkMode,
   manualAgentPriorities,
   setManualAgentPriorities,
-  allSkills
+  allSkills,
+  googleTokens,
+  connectGoogleDrive
 }: AgentControlsProps) {
   const [activeTooltip, setActiveTooltip] = useState<string | null>(null);
   const [isSwarmSettingsOpen, setIsSwarmSettingsOpen] = useState(false);
@@ -206,6 +210,45 @@ export function AgentControls({
                       ))
                     )}
                   </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </div>
+        </div>
+
+        <div className="flex items-center gap-1.5">
+          <div className="relative">
+            <div className={cn(
+              "chip overflow-hidden p-0",
+              googleTokens && "chip-active"
+            )}>
+              <button 
+                onClick={connectGoogleDrive}
+                className="flex items-center gap-2 pl-4 pr-2 py-2"
+              >
+                <Globe className={cn("w-4 h-4", googleTokens && "text-emerald-500")} />
+                <span className="hidden sm:inline">{googleTokens ? "Drive Ativo" : "Drive"}</span>
+              </button>
+              <button
+                onClick={(e) => { 
+                  e.stopPropagation(); 
+                  setActiveTooltip(activeTooltip === 'drive' ? null : 'drive'); 
+                }}
+                className="pr-3 pl-1 py-2 opacity-60 hover:opacity-100 transition-opacity"
+              >
+                <HelpCircle className="w-4 h-4" />
+              </button>
+            </div>
+            <AnimatePresence>
+              {activeTooltip === 'drive' && (
+                <motion.div 
+                  initial={{ opacity: 0, y: 10, scale: 0.9 }}
+                  animate={{ opacity: 1, y: 0, scale: 1 }}
+                  exit={{ opacity: 0, y: 10, scale: 0.9 }}
+                  className="absolute top-full mt-3 right-0 w-64 p-4 liquid-glass-panel text-xs text-theme-secondary z-50 shadow-2xl border border-theme-glass"
+                >
+                  <div className="font-black uppercase tracking-widest text-theme-blue mb-2 text-[10px]">Google Drive</div>
+                  Conecte sua conta para que os agentes possam ler documentos e pastas diretamente.
                 </motion.div>
               )}
             </AnimatePresence>

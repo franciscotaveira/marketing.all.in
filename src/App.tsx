@@ -1096,66 +1096,6 @@ export default function App() {
           />
 
           {/* Global Toggles */}
-          <div className="space-y-4">
-            <h2 className="text-[11px] uppercase tracking-wider font-bold text-theme-secondary/40 px-2 flex items-center gap-2">
-              <div className="w-1 h-1 rounded-full bg-blue-500/50" />
-              Navegação Principal
-            </h2>
-            <div className="space-y-1.5">
-              <motion.button 
-                whileHover={{ x: 4 }}
-                whileTap={{ scale: 0.98 }}
-                onClick={() => {
-                  setActiveTab('operations');
-                  if (window.innerWidth < 768) setIsSidebarOpen(false);
-                }}
-                className={cn(
-                  "w-full p-3 px-4 border rounded-xl text-sm font-bold transition-all flex items-center justify-between group",
-                  activeTab === 'operations'
-                    ? "bg-blue-500/10 border-blue-500/20 text-blue-500 shadow-sm"
-                    : "bg-theme-glass border-theme-glass text-theme-secondary hover:bg-theme-glass/80 hover:text-theme-primary"
-                )}
-              >
-                <div className="flex items-center gap-3">
-                  <Activity className="w-4 h-4" />
-                  <span>Gestão de Operações</span>
-                </div>
-                <ChevronRight className="w-3.5 h-3.5 opacity-40 group-hover:translate-x-1 transition-all" />
-              </motion.button>
-
-              <motion.button 
-                whileHover={{ x: 4 }}
-                whileTap={{ scale: 0.98 }}
-                onClick={() => setActiveTab('brain')}
-                className="w-full p-3 px-4 bg-purple-500/10 border border-purple-500/20 rounded-xl text-sm font-bold text-purple-500 hover:bg-purple-500/20 transition-all flex items-center justify-between group"
-              >
-                <div className="flex items-center gap-3">
-                  <Brain className="w-4 h-4" />
-                  <span>Cérebro Sináptico</span>
-                </div>
-                <ChevronRight className="w-3.5 h-3.5 opacity-40 group-hover:translate-x-1 transition-all" />
-              </motion.button>
-
-              <motion.button 
-                whileHover={{ x: 4 }}
-                whileTap={{ scale: 0.98 }}
-                onClick={connectGoogleDrive}
-                className={cn(
-                  "w-full p-3 px-4 border rounded-xl text-sm font-bold transition-all flex items-center justify-between group",
-                  googleTokens 
-                    ? "bg-emerald-500/10 border-emerald-500/20 text-emerald-500 hover:bg-emerald-500/20" 
-                    : "bg-orange-500/10 border-orange-500/20 text-orange-500 hover:bg-orange-500/20"
-                )}
-              >
-                <div className="flex items-center gap-3">
-                  <Globe className="w-4 h-4" />
-                  <span>{googleTokens ? "Google Drive Ativo" : "Conectar Drive"}</span>
-                </div>
-                <ChevronRight className="w-3.5 h-3.5 opacity-40 group-hover:translate-x-1 transition-all" />
-              </motion.button>
-            </div>
-          </div>
-
           <div className="h-px bg-gradient-to-r from-transparent via-theme-glass to-transparent opacity-50" />
 
           {/* Workflows */}
@@ -1329,7 +1269,14 @@ export default function App() {
                             {getCategoryIcon(skill.category)}
                           </div>
                           <div className="flex flex-col items-start min-w-0 flex-1">
-                            <span className="truncate w-full">{skill.name}</span>
+                            <div className="flex items-center gap-1.5 w-full">
+                              <span className="truncate">{skill.name}</span>
+                              {skill.isGoogleAI && (
+                                <div className="px-1 py-0.5 rounded-sm bg-blue-500/10 border border-blue-500/20 text-[7px] font-black text-blue-400 uppercase tracking-tighter shrink-0">
+                                  Google AI
+                                </div>
+                              )}
+                            </div>
                             <span className="text-[11px] opacity-60 font-medium truncate w-full tracking-tight">{skill.persona}</span>
                           </div>
                           {customSkills.some(s => s.id === skill.id) && (
@@ -1481,7 +1428,7 @@ export default function App() {
                   activeTab === 'operations' && "chip-active"
                 )}
               >
-                Operações
+                Gestão de Operações
               </motion.button>
               <motion.button 
                 whileHover={{ scale: 1.02 }}
@@ -1492,7 +1439,7 @@ export default function App() {
                   activeTab === 'brain' && "chip-active"
                 )}
               >
-                Cérebro
+                Cérebro Sináptico
               </motion.button>
               <motion.button 
                 whileHover={{ scale: 1.02 }}
@@ -1537,6 +1484,8 @@ export default function App() {
                 manualAgentPriorities={manualAgentPriorities}
                 setManualAgentPriorities={setManualAgentPriorities}
                 allSkills={[...MARKETING_SKILLS, ...customSkills]}
+                googleTokens={googleTokens}
+                connectGoogleDrive={connectGoogleDrive}
               />
             </div>
           </div>

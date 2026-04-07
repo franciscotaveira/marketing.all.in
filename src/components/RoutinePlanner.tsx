@@ -286,8 +286,13 @@ export default function RoutinePlanner() {
                         </div>
                         
                         <div className="min-w-0">
-                          <h3 className="text-base sm:text-lg font-bold text-theme-primary group-hover:text-orange-500 transition-colors mb-2 truncate">{routine.title}</h3>
-                          <div className="flex flex-wrap gap-1">
+                          <div className="flex items-center gap-2 mb-1">
+                            <h3 className="text-base sm:text-lg font-bold text-theme-primary group-hover:text-orange-500 transition-colors truncate">{routine.title}</h3>
+                            <span className="px-1.5 py-0.5 bg-orange-500/10 text-orange-500 text-[8px] font-black uppercase tracking-widest rounded border border-orange-500/20">
+                              {FREQUENCY_LABELS[routine.frequency]}
+                            </span>
+                          </div>
+                          <div className="flex flex-wrap gap-1 items-center">
                             {DAYS_OF_WEEK.map((day) => (
                               <span 
                                 key={day.id}
@@ -301,6 +306,14 @@ export default function RoutinePlanner() {
                                 {day.label}
                               </span>
                             ))}
+                            {routine.agentId && (
+                              <div className="ml-2 flex items-center gap-1.5 px-2 py-0.5 bg-theme-glass border border-theme-glass rounded-lg">
+                                <div className="w-1.5 h-1.5 rounded-full bg-theme-blue" />
+                                <span className="text-[8px] font-black uppercase tracking-widest text-theme-secondary opacity-60">
+                                  {MARKETING_SKILLS.find(s => s.id === routine.agentId)?.name || 'Agente'}
+                                </span>
+                              </div>
+                            )}
                           </div>
                         </div>
                       </div>
@@ -494,6 +507,26 @@ export default function RoutinePlanner() {
                     />
                   </div>
 
+                  <div>
+                    <label className="text-[11px] font-bold uppercase tracking-wider text-theme-secondary opacity-40 mb-2 block">Frequência</label>
+                    <div className="flex gap-2 bg-theme-glass/40 p-1 rounded-xl border border-theme-glass/60">
+                      {(['daily', 'weekly', 'monthly'] as const).map((freq) => (
+                        <button
+                          key={freq}
+                          onClick={() => setNewRoutine({ ...newRoutine, frequency: freq, days: freq === 'daily' ? DAYS_OF_WEEK.map(d => d.id) : [] })}
+                          className={cn(
+                            "flex-1 py-2 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all",
+                            newRoutine.frequency === freq 
+                              ? "bg-orange-500 text-white shadow-lg shadow-orange-500/20"
+                              : "text-theme-secondary opacity-40 hover:text-theme-primary hover:bg-theme-glass/50"
+                          )}
+                        >
+                          {FREQUENCY_LABELS[freq]}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
                   <div className="grid grid-cols-2 gap-4">
                     <div>
                       <label className="text-[11px] font-bold uppercase tracking-wider text-theme-secondary opacity-40 mb-2 block">Início</label>
@@ -532,23 +565,38 @@ export default function RoutinePlanner() {
                 </div>
 
                 <div>
-                  <label className="text-[11px] font-bold uppercase tracking-wider text-theme-secondary opacity-40 mb-2 block">Dias da Semana</label>
-                  <div className="grid grid-cols-4 gap-2">
-                    {DAYS_OF_WEEK.map((day) => (
-                      <button 
-                        key={day.id}
-                        onClick={() => toggleDay(day.id)}
-                        className={cn(
-                          "aspect-square rounded-xl flex items-center justify-center text-[10px] font-bold uppercase tracking-wider transition-all border",
-                          newRoutine.days?.includes(day.id)
-                            ? "bg-orange-500 border-orange-500 text-white shadow-sm"
-                            : "bg-theme-glass border-theme-glass text-theme-secondary opacity-30 hover:bg-theme-glass/80 hover:opacity-100 shadow-sm"
-                        )}
-                      >
-                        {day.label}
-                      </button>
-                    ))}
-                  </div>
+                  <label className="text-[11px] font-bold uppercase tracking-wider text-theme-secondary opacity-40 mb-2 block">
+                    {newRoutine.frequency === 'weekly' ? 'Dias da Semana' : 'Configuração de Repetição'}
+                  </label>
+                  
+                  {newRoutine.frequency === 'weekly' ? (
+                    <div className="grid grid-cols-4 gap-2">
+                      {DAYS_OF_WEEK.map((day) => (
+                        <button 
+                          key={day.id}
+                          onClick={() => toggleDay(day.id)}
+                          className={cn(
+                            "aspect-square rounded-xl flex items-center justify-center text-[10px] font-bold uppercase tracking-wider transition-all border",
+                            newRoutine.days?.includes(day.id)
+                              ? "bg-orange-500 border-orange-500 text-white shadow-sm"
+                              : "bg-theme-glass border-theme-glass text-theme-secondary opacity-30 hover:bg-theme-glass/80 hover:opacity-100 shadow-sm"
+                          )}
+                        >
+                          {day.label}
+                        </button>
+                      ))}
+                    </div>
+                  ) : newRoutine.frequency === 'daily' ? (
+                    <div className="p-4 bg-theme-glass/20 border border-theme-glass/40 rounded-2xl text-center">
+                      <p className="text-[10px] text-theme-secondary opacity-60 uppercase font-black tracking-widest">Execução Diária</p>
+                      <p className="text-xs text-theme-primary mt-1">Esta rotina será executada todos os dias nos horários definidos.</p>
+                    </div>
+                  ) : (
+                    <div className="p-4 bg-theme-glass/20 border border-theme-glass/40 rounded-2xl text-center">
+                      <p className="text-[10px] text-theme-secondary opacity-60 uppercase font-black tracking-widest">Execução Mensal</p>
+                      <p className="text-xs text-theme-primary mt-1">Esta rotina será executada uma vez por mês.</p>
+                    </div>
+                  )}
                 </div>
               </div>
 

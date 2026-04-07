@@ -33,6 +33,7 @@ export interface MarketingSkill {
   prompt: string;
   model?: string;
   tools?: string[]; // IDs das ferramentas que este agente pode usar
+  isGoogleAI?: boolean; // Se o agente utiliza tecnologias específicas do Google AI
 }
 
 

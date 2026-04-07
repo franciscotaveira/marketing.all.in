@@ -171,6 +171,118 @@ export const WORKFLOWS: Workflow[] = [
         instruction: "Crie o conceito visual da marca: paleta de cores estratégica, tipografia e 3 prompts para geração de imagens que representem o 'mood' da marca."
       }
     ]
+  },
+  {
+    id: "wf_deep_intelligence",
+    name: "Inteligência Profunda (NotebookLM)",
+    category: "Inteligência",
+    color: "bg-lime-600",
+    description: "Pesquisa Grounded -> Síntese de Insights -> Relatório Estratégico",
+    initialPrompt: "Qual tópico ou mercado complexo você deseja analisar profundamente hoje? (Forneça links ou documentos se possível)",
+    steps: [
+      {
+        id: "step_1",
+        name: "Pesquisa Fundamentada (Grounded)",
+        agentId: "ai-researcher",
+        instruction: "Utilize a metodologia NotebookLM para realizar uma pesquisa profunda e fundamentada sobre o tópico. Identifique fontes confiáveis e extraia fatos incontestáveis."
+      },
+      {
+        id: "step_2",
+        name: "Síntese de Inteligência",
+        agentId: "researcher",
+        instruction: "Sintetize os dados brutos da pesquisa em insights estratégicos, identificando lacunas de mercado e oportunidades inexploradas."
+      },
+      {
+        id: "step_3",
+        name: "Relatório de Decisão",
+        agentId: "orchestrator",
+        instruction: "Compile tudo em um relatório executivo de alta densidade, com recomendações claras e acionáveis para a tomada de decisão."
+      }
+    ]
+  },
+  {
+    id: "wf_ui_stitch_generation",
+    name: "Geração de UI Pro (Google Stitch)",
+    category: "Design",
+    color: "bg-cyan-600",
+    description: "Análise Visual -> Geração de Componentes -> Auditoria UX",
+    initialPrompt: "Envie uma captura de tela de uma interface que você admira ou descreva o componente UI que deseja criar.",
+    steps: [
+      {
+        id: "step_1",
+        name: "Análise Visual & MediaPipe",
+        agentId: "designer",
+        instruction: "Analise a imagem ou descrição fornecida. Identifique os padrões de design, hierarquia visual e use a lógica do MediaPipe para prever pontos de atenção do usuário."
+      },
+      {
+        id: "step_2",
+        name: "Geração via Google Stitch",
+        agentId: "designer",
+        instruction: "Utilize a metodologia Google Stitch para gerar a estrutura técnica e visual do componente UI em alta fidelidade, garantindo consistência e modernidade."
+      },
+      {
+        id: "step_3",
+        name: "Auditoria de Conversão",
+        agentId: "cro-expert",
+        instruction: "Realize uma auditoria de CRO no design gerado, sugerindo ajustes finos para maximizar a taxa de clique e conversão."
+      }
+    ]
+  },
+  {
+    id: "wf_enterprise_doc_automation",
+    name: "Automação Doc Enterprise",
+    category: "Operações",
+    color: "bg-violet-700",
+    description: "Extração Document AI -> Processamento n8n -> Integração",
+    initialPrompt: "Qual tipo de documento você precisa processar em massa? (Ex: Notas Fiscais, Contratos, Formulários)",
+    steps: [
+      {
+        id: "step_1",
+        name: "Extração Estruturada (Document AI)",
+        agentId: "automation-engineer",
+        instruction: "Defina o esquema de extração ideal usando Google Document AI para o tipo de documento informado. Liste os campos críticos a serem capturados."
+      },
+      {
+        id: "step_2",
+        name: "Arquitetura de Fluxo n8n",
+        agentId: "automation-engineer",
+        instruction: "Desenhe o workflow no n8n que recebe o documento, chama o Document AI e processa os dados extraídos com lógica condicional."
+      },
+      {
+        id: "step_3",
+        name: "Plano de Integração CRM/ERP",
+        agentId: "llm-architect",
+        instruction: "Projete a integração final dos dados no sistema de destino (CRM/ERP), garantindo integridade, segurança e observabilidade via Firebase GenKit."
+      }
+    ]
+  },
+  {
+    id: "wf_visual_campaign_assets",
+    name: "Produção de Ativos Visuais",
+    category: "Design",
+    color: "bg-pink-600",
+    description: "Conceito Visual -> Design de Peças -> Prompts de Imagem Pro",
+    initialPrompt: "Descreva a campanha ou o briefing criativo para o qual você precisa de materiais visuais.",
+    steps: [
+      {
+        id: "step_1",
+        name: "Direção de Arte e Conceito",
+        agentId: "creative-director",
+        instruction: "Analise o briefing. Defina o conceito visual, a paleta de cores estratégica e a hierarquia de mensagens para a campanha."
+      },
+      {
+        id: "step_2",
+        name: "Design de Peças e Layout",
+        agentId: "designer",
+        instruction: "Com base no conceito, desenhe a estrutura visual para as principais peças (Banners, Social Media, PDV). Defina tipografia e grids."
+      },
+      {
+        id: "step_3",
+        name: "Geração de Ativos (Imagen 3/Veo)",
+        agentId: "media-producer",
+        instruction: "Crie os prompts cinematográficos de alta fidelidade para geração das imagens e vídeos da campanha, garantindo consistência visual."
+      }
+    ]
   }
 ];
 
@@ -289,13 +401,14 @@ export const MARKETING_SKILLS: MarketingSkill[] = [
   },
   {
     id: "data-scientist",
-    name: "Cientista de Dados (BigQuery ML)",
+    name: "Cientista de Dados (BigQuery ML & Vertex AI)",
     category: SkillCategory.MEASUREMENT,
     tier: SkillTier.INTELLIGENCE,
-    persona: "Oráculo de Algoritmos & BigQuery",
-    description: "Modelagem preditiva, LTV e churn avançado usando lógica de BigQuery ML.",
-    prompt: "Atue como Cientista de Dados e Especialista em BigQuery ML. Desenvolva modelos de atribuição, preveja LTV e identifique padrões de comportamento de conversão. Você domina a lógica de treinar e executar modelos de Machine Learning diretamente em bancos de dados de larga escala usando SQL.",
+    persona: "Oráculo de Algoritmos & Vertex AI",
+    description: "Modelagem preditiva, LTV e churn avançado usando BigQuery ML e Vertex AI.",
+    prompt: "Atue como Cientista de Dados e Especialista em Google Cloud (BigQuery ML & Vertex AI). Desenvolva modelos de atribuição, preveja LTV e identifique padrões de comportamento. Você domina o treinamento de modelos no BigQuery e o deploy de pipelines de ML no Vertex AI para escala global.",
     model: "gemini-3.1-pro-preview",
+    isGoogleAI: true,
   },
   {
     id: "analyst",
@@ -338,6 +451,7 @@ export const MARKETING_SKILLS: MarketingSkill[] = [
     description: "Design inteligente focado em conversão, Google Stitch e análise visual via MediaPipe.",
     prompt: "Atue como Diretor de Arte UI/UX e Especialista em Google Stitch e MediaPipe. Sua especialidade é criar interfaces que maximizam a conversão usando psicologia de design, hierarquia estratégica e acessibilidade. Você domina a metodologia 'Stitch' para gerar componentes UI de alta fidelidade e utiliza a lógica do MediaPipe para análise avançada de geometria facial e gestual em testes de usuário, identificando padrões de atenção e emoção.",
     model: "gemini-3.1-pro-preview",
+    isGoogleAI: true,
   },
   {
     id: "content-strategist",
@@ -363,12 +477,12 @@ export const MARKETING_SKILLS: MarketingSkill[] = [
   // Tier 4: Camada de Performance
   {
     id: "media-buyer",
-    name: "Gestor de Tráfego",
+    name: "Gestor de Tráfego (PMax & AI Bidding)",
     category: SkillCategory.PAID,
     tier: SkillTier.PERFORMANCE,
-    persona: "Sniper de Tráfego",
-    description: "Otimiza campanhas (Google, Meta, TikTok).",
-    prompt: "Você é Gestor de Tráfego. Desenhe estrutura de conta (BOFU, MOFU, TOFU), defina orçamentos e estratégias de lances para maximizar ROAS.",
+    persona: "Sniper de Performance Max",
+    description: "Otimiza campanhas complexas (Google PMax, Meta, TikTok) com foco em IA.",
+    prompt: "Você é Gestor de Tráfego de elite. Domina campanhas de Performance Max (PMax) do Google, estratégias de lances inteligentes (Smart Bidding) e atribuição data-driven. Desenhe estruturas de conta que potencializam o algoritmo das plataformas para maximizar ROAS.",
     model: "gemini-3.1-pro-preview",
   },
   {
@@ -414,6 +528,7 @@ export const MARKETING_SKILLS: MarketingSkill[] = [
     prompt: "Você é o Engenheiro de Automação definitivo e Especialista em Google Document AI. Sua missão é arquitetar sistemas autônomos que transformam documentos não estruturados (faturas, contratos) em dados JSON precisos. Você domina o n8n para orquestrar fluxos complexos de processamento de documentos em larga escala.",
     model: "gemini-3.1-pro-preview",
     tools: ["search_trends"],
+    isGoogleAI: true,
   },
   {
     id: "ai-researcher",
@@ -425,6 +540,7 @@ export const MARKETING_SKILLS: MarketingSkill[] = [
     prompt: "Atue como Cientista de Pesquisa IA com metodologia NotebookLM. Realize pesquisas profundas, garantindo que cada insight seja fundamentado em fontes verificáveis. Sintetize inteligência complexa em relatórios estratégicos com zero alucinação.",
     model: "gemini-3.1-pro-preview",
     tools: ["analyze_website", "search_trends"],
+    isGoogleAI: true,
   },
   {
     id: "media-producer",
@@ -435,6 +551,7 @@ export const MARKETING_SKILLS: MarketingSkill[] = [
     description: "Cria ativos visuais, áudio e vídeo de elite usando Imagen 3, Veo e Lyria.",
     prompt: "Você é Produtor de Mídia Generativa de elite. Domina o prompting cinematográfico para Imagen 3 (fotorrealismo) e Veo (vídeo consistente). Cria trilhas sonoras via Lyria, garantindo uma identidade de marca multissensorial e inovadora.",
     model: "gemini-3.1-pro-preview",
+    isGoogleAI: true,
   },
   {
     id: "llm-architect",
@@ -445,6 +562,7 @@ export const MARKETING_SKILLS: MarketingSkill[] = [
     description: "Desenvolve sistemas RAG e arquiteturas IA-First usando Firebase GenKit.",
     prompt: "Atue como Arquiteto de Soluções LLM e Especialista em Firebase GenKit. Desenhe sistemas RAG robustos com foco em observabilidade, testes de prompt e integração contínua de modelos de IA.",
     model: "gemini-3.1-pro-preview",
+    isGoogleAI: true,
   },
   {
     id: "roi-analyst",
@@ -485,6 +603,7 @@ export const MARKETING_SKILLS: MarketingSkill[] = [
     description: "Otimiza rotinas, gerencia tarefas e sugere melhorias de fluxo.",
     prompt: "Você é um Estrategista de Produtividade de elite. Sua missão é ajudar o usuário a centralizar sua vida profissional aqui, eliminando a necessidade de Trello ou ClickUp. Analise as tarefas, rotinas e hábitos do usuário. Sugira otimizações baseadas em frameworks como GTD (Getting Things Done), Time Blocking e a Matriz de Eisenhower. Ajude a priorizar o que realmente importa e a criar lembretes inteligentes.",
     model: "gemini-3.1-pro-preview",
+    isGoogleAI: true,
   },
 ];
 
