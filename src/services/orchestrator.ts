@@ -80,6 +80,38 @@ export async function orchestrateRequest(
   const brainContext = await getBrainContext(userMessage, selectedAgentId);
   const enrichedMessage = `${userMessage}${brainContext}`;
 
+  // Se nenhum agente foi selecionado e o modo Swarm está desligado, o Orquestrador decide se delega ou responde
+  if (!selectedAgentId && !useSwarmMode) {
+    onLog("orchestrator", "Analisando necessidade de especialista...", "info", true);
+    
+    const decisionPrompt = `
+Desafio: "${userMessage}"
+
+Agentes Disponíveis:
+${allSkills.filter(s => s.id !== "orchestrator").map(s => `- ${s.id}: ${s.name} (${s.description})`).join("\n")}
+
+Decida se você (Orquestrador) deve responder diretamente ou se deve delegar para UM especialista específico.
+Responda APENAS com o ID do agente ou "orchestrator".
+    `;
+
+    try {
+      const decision = await sendMessageToAgent(
+        "orchestrator",
+        decisionPrompt,
+        "gemini-3-flash-preview", // Fast model for decision
+        "Você é o Orquestrador. Decida o melhor caminho para o desafio."
+      );
+      
+      const cleanedDecision = decision.trim().toLowerCase();
+      if (cleanedDecision !== "orchestrator" && allSkills.some(s => s.id === cleanedDecision)) {
+        targetAgentId = cleanedDecision;
+        onLog("orchestrator", `Delegando para o especialista: ${allSkills.find(s => s.id === targetAgentId)?.name}`, "success", true);
+      }
+    } catch (e) {
+      console.warn("Decision error, staying as orchestrator", e);
+    }
+  }
+
   if (useSwarmMode) {
     onLog("orchestrator", "Iniciando Modo Swarm (Brainstorming)...", "info", true);
     
@@ -193,10 +225,14 @@ Retorne APENAS um JSON no formato:
 Desafio original do usuário:
 "${userMessage}"
 
-Perspectivas dos especialistas:
+Perspectivas dos especialistas consultados:
 ${perspectives.join("\n")}
 
-Como Orquestrador, sintetize essas visões em uma estratégia única, coesa e acionável. Destaque os melhores pontos de cada um e crie um plano de ação claro.
+Como Orquestrador de Enxame, sua missão é sintetizar essas visões em uma estratégia única, coesa e acionável. 
+1. Comece com uma breve visão geral da estratégia orquestrada.
+2. Destaque os melhores pontos de cada especialista consultado.
+3. Crie um plano de ação claro e integrado.
+4. Mantenha um tom de autoridade e coordenação.
     `;
 
     finalResponse = await sendMessageToAgent(
@@ -224,7 +260,7 @@ Como Orquestrador, sintetize essas visões em uma estratégia única, coesa e ac
     
     const toolDeclarations = getToolDeclarations(skill?.tools);
 
-    finalResponse = await sendMessageToAgent(
+    const rawResponse = await sendMessageToAgent(
       targetAgentId,
       enrichedMessage,
       skill?.model || model,
@@ -234,6 +270,29 @@ Como Orquestrador, sintetize essas visões em uma estratégia única, coesa e ac
       history,
       useGrounding
     );
+
+    // Se o Orquestrador delegou, ele faz uma breve introdução/conclusão para dar contexto de gestão
+    if (targetAgentId !== "orchestrator" && !selectedAgentId) {
+      onLog("orchestrator", "Finalizando orquestração do especialista...", "info", true);
+      const wrapPrompt = `
+Desafio: "${userMessage}"
+Resposta do Especialista (${skill.name}):
+"${rawResponse}"
+
+Como Orquestrador, adicione uma breve introdução (1 frase) explicando por que você escolheu este especialista e uma breve conclusão (1 frase) reforçando o próximo passo estratégico. 
+Mantenha a resposta do especialista intacta entre a introdução e a conclusão.
+      `;
+      
+      finalResponse = await sendMessageToAgent(
+        "orchestrator",
+        wrapPrompt,
+        "gemini-3-flash-preview",
+        "Você é o Orquestrador. Adicione contexto de gestão à resposta do especialista."
+      );
+    } else {
+      finalResponse = rawResponse;
+    }
+    
     onLog(targetAgentId, "Resposta gerada com sucesso.", "success", false);
   }
 

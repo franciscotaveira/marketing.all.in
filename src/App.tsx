@@ -85,6 +85,7 @@ import { AgentControls } from "./components/AgentControls";
 import { SidebarChatHistory } from "./components/SidebarChatHistory";
 import { BrandContextModal } from "./components/BrandContextModal";
 import Logo from "./components/Logo";
+import { ConfirmationModal } from "./components/ConfirmationModal";
 import { MARKETING_SKILLS, MARKETING_FRAMEWORKS, CATEGORY_COLORS, CATEGORY_TEXT_COLORS, CATEGORY_BG_LIGHT_COLORS, WORKFLOWS } from "./constants";
 import { MarketingSkill, SkillCategory, Message, SkillTier, Artifact, BrainMemory, Company, Workflow, ChatSession } from "./types";
 import { cn } from "./lib/utils";
@@ -99,7 +100,9 @@ import {
 export default function App() {
   const [user, setUser] = useState<FirebaseUser | null>(null);
   const [isAuthReady, setIsAuthReady] = useState(false);
-  const [selectedSkill, setSelectedSkill] = useState<MarketingSkill | null>(null);
+  const [selectedSkill, setSelectedSkill] = useState<MarketingSkill | null>(() => {
+    return MARKETING_SKILLS.find(s => s.id === 'orchestrator') || null;
+  });
   const [customSkills, setCustomSkills] = useState<MarketingSkill[]>([]);
   const [isCustomAgentModalOpen, setIsCustomAgentModalOpen] = useState(false);
   const [editingCustomAgent, setEditingCustomAgent] = useState<MarketingSkill | null>(null);
@@ -421,6 +424,10 @@ export default function App() {
   const [currentChatId, setCurrentChatId] = useState<string | null>(null);
   const [chatSessions, setChatSessions] = useState<ChatSession[]>([]);
   const [isHistoryLoading, setIsHistoryLoading] = useState(false);
+  const [deleteConfirm, setDeleteConfirm] = useState<{ isOpen: boolean; type: 'single' | 'all'; chatId?: string }>({
+    isOpen: false,
+    type: 'single'
+  });
   const [lastVisibleDoc, setLastVisibleDoc] = useState<any>(null);
   const [hasMoreMessages, setHasMoreMessages] = useState(false);
   const [isPaginationLoading, setIsPaginationLoading] = useState(false);
@@ -522,42 +529,49 @@ export default function App() {
 
   const handleDeleteChat = async (chatId: string) => {
     if (!user) return;
-    if (confirm("Tem certeza que deseja excluir esta conversa?")) {
-      try {
-        const { error } = await firebaseService.deleteChat(chatId);
-        if (!error) {
-          setChatSessions(prev => prev.filter(s => s.id !== chatId));
-          if (currentChatId === chatId) {
-            setCurrentChatId(null);
-            setMessages([]);
-            setLastVisibleDoc(null);
-            setHasMoreMessages(false);
-          }
-        }
-      } catch (error) {
-        console.error("Error deleting chat:", error);
-      }
-    }
+    setDeleteConfirm({ isOpen: true, type: 'single', chatId });
   };
 
-  const handleDeleteAllChats = async () => {
-    if (!user) return;
-    if (confirm("ATENÇÃO: Isso excluirá TODO o seu histórico de conversas permanentemente. Continuar?")) {
-      setIsHistoryLoading(true);
-      try {
-        const { error } = await firebaseService.deleteAllChats();
-        if (!error) {
-          setChatSessions([]);
+  const confirmDeleteChat = async () => {
+    if (!user || !deleteConfirm.chatId) return;
+    const chatId = deleteConfirm.chatId;
+    try {
+      const { error } = await firebaseService.deleteChat(chatId);
+      if (!error) {
+        setChatSessions(prev => prev.filter(s => s.id !== chatId));
+        if (currentChatId === chatId) {
           setCurrentChatId(null);
           setMessages([]);
           setLastVisibleDoc(null);
           setHasMoreMessages(false);
         }
-      } catch (error) {
-        console.error("Error deleting all chats:", error);
-      } finally {
-        setIsHistoryLoading(false);
       }
+    } catch (error) {
+      console.error("Error deleting chat:", error);
+    }
+  };
+
+  const handleDeleteAllChats = async () => {
+    if (!user) return;
+    setDeleteConfirm({ isOpen: true, type: 'all' });
+  };
+
+  const confirmDeleteAllChats = async () => {
+    if (!user) return;
+    setIsHistoryLoading(true);
+    try {
+      const { error } = await firebaseService.deleteAllChats();
+      if (!error) {
+        setChatSessions([]);
+        setCurrentChatId(null);
+        setMessages([]);
+        setLastVisibleDoc(null);
+        setHasMoreMessages(false);
+      }
+    } catch (error) {
+      console.error("Error deleting all chats:", error);
+    } finally {
+      setIsHistoryLoading(false);
     }
   };
   useEffect(() => {
@@ -1408,7 +1422,12 @@ export default function App() {
                   <span className="text-blue-400/80">{activeTab === 'chat' ? "Chat Intelligence" : "Operations"}</span>
                 </div>
                 <h1 className="text-sm font-bold tracking-tight flex items-center gap-2.5 text-theme-primary">
-                  {activeTab === 'chat' ? (selectedSkill ? selectedSkill.name : "Marketing Intelligence") : "Gestão de Operações"}
+                  {activeTab === 'chat' ? (selectedSkill ? (selectedSkill.id === 'orchestrator' ? "Orquestrador de Enxame" : selectedSkill.name) : "Marketing Intelligence") : "Gestão de Operações"}
+                  {selectedSkill?.id === 'orchestrator' && (
+                    <div className="flex items-center gap-1.5 ml-1">
+                      <div className="px-1.5 py-0.5 rounded bg-blue-500/10 border border-blue-500/20 text-[9px] font-bold text-blue-400 uppercase tracking-tighter">Swarm Active</div>
+                    </div>
+                  )}
                   <div className="w-1.5 h-1.5 bg-blue-500 rounded-full animate-pulse shadow-[0_0_8px_rgba(59,130,246,0.6)]" />
                 </h1>
               </div>
@@ -1879,6 +1898,17 @@ export default function App() {
           color: #2563EB;
         }
       `}</style>
+      <ConfirmationModal
+        isOpen={deleteConfirm.isOpen}
+        onClose={() => setDeleteConfirm(prev => ({ ...prev, isOpen: false }))}
+        onConfirm={deleteConfirm.type === 'single' ? confirmDeleteChat : confirmDeleteAllChats}
+        title={deleteConfirm.type === 'single' ? "Excluir Conversa" : "Excluir Todo o Histórico"}
+        message={deleteConfirm.type === 'single' 
+          ? "Tem certeza que deseja excluir esta conversa? Esta ação não pode ser desfeita." 
+          : "ATENÇÃO: Isso excluirá TODO o seu histórico de conversas permanentemente. Esta ação é irreversível. Continuar?"}
+        confirmText="Excluir"
+        variant="danger"
+      />
     </div>
     </ErrorBoundary>
   );
