@@ -126,7 +126,7 @@ function startRoutineExecutor() {
               try {
                 // 3. Call Gemini
                 const response = await ai.models.generateContent({
-                  model: 'gemini-3.1-pro-preview',
+                  model: 'gemini-3-flash-preview',
                   contents: prompt,
                   config: {
                     systemInstruction: 'Você é um assistente de produtividade executando uma rotina agendada.'

@@ -4,7 +4,9 @@ import {
   Globe, Brain, Terminal, LayoutDashboard, HelpCircle, Users, Building2, Sun, Moon, Settings, Search
 } from 'lucide-react';
 import { cn } from '../lib/utils';
-import { MarketingSkill, Company } from '../types';
+import { MarketingSkill, Company, SkillCategory } from '../types';
+import { AgentIcon } from './AgentIcon';
+import { CATEGORY_COLORS, CATEGORY_TEXT_COLORS, CATEGORY_BG_LIGHT_COLORS } from '../constants';
 
 interface AgentControlsProps {
   selectedSkill: MarketingSkill | null;
@@ -186,10 +188,19 @@ export function AgentControls({
                       <div className="text-center py-4 text-xs text-theme-secondary opacity-60">Nenhum agente encontrado.</div>
                     ) : (
                       filteredAgents.map(agent => (
-                        <div key={agent.id} className="space-y-2">
+                        <div key={agent.id} className={cn(
+                          "p-3 rounded-2xl border transition-all space-y-3",
+                          CATEGORY_BG_LIGHT_COLORS[agent.category as SkillCategory],
+                          "border-transparent hover:border-current/10"
+                        )}>
                           <div className="flex items-center justify-between">
-                            <span className="text-[10px] font-bold text-theme-primary">{agent.name}</span>
-                            <span className="text-[10px] font-black text-theme-blue">
+                            <div className="flex items-center gap-2">
+                              <AgentIcon agent={agent} size="sm" />
+                              <span className={cn("text-[10px] font-bold", CATEGORY_TEXT_COLORS[agent.category as SkillCategory])}>
+                                {agent.name}
+                              </span>
+                            </div>
+                            <span className={cn("text-[10px] font-black", CATEGORY_TEXT_COLORS[agent.category as SkillCategory])}>
                               {manualAgentPriorities[agent.id] !== undefined ? `P${manualAgentPriorities[agent.id]}` : 'Auto'}
                             </span>
                           </div>
@@ -200,7 +211,17 @@ export function AgentControls({
                             step="1"
                             value={manualAgentPriorities[agent.id] || 0}
                             onChange={(e) => handlePriorityChange(agent.id, parseInt(e.target.value))}
-                            className="w-full h-1 bg-theme-glass rounded-lg appearance-none cursor-pointer accent-theme-blue"
+                            className={cn(
+                              "w-full h-1.5 rounded-lg appearance-none cursor-pointer bg-white/20",
+                              agent.category === SkillCategory.STRATEGY ? "accent-blue-500" :
+                              agent.category === SkillCategory.GROWTH ? "accent-emerald-500" :
+                              agent.category === SkillCategory.PAID ? "accent-rose-500" :
+                              agent.category === SkillCategory.CONTENT ? "accent-amber-500" :
+                              agent.category === SkillCategory.SEO ? "accent-indigo-500" :
+                              agent.category === SkillCategory.CRO ? "accent-orange-500" :
+                              agent.category === SkillCategory.AI_ENGINEERING ? "accent-cyan-500" :
+                              "accent-theme-blue"
+                            )}
                           />
                           <div className="flex justify-between text-[8px] text-theme-secondary opacity-40 font-black uppercase tracking-tighter">
                             <span>Auto/Baixa</span>

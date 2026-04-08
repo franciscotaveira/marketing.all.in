@@ -17,6 +17,7 @@ import {
   GripVertical,
   Calendar,
   Trash2,
+  Edit2,
   Flag,
   ArrowRight,
   X,
@@ -30,7 +31,7 @@ import {
   Brain,
   Check,
   Activity,
-  Sparkles
+  Bot
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Task, BrainMemory, MarketingSkill } from '../types';
@@ -53,6 +54,7 @@ import {
 import { orchestrateRequest } from '../services/orchestrator';
 import { MARKETING_SKILLS } from '../constants';
 import { cn } from '../lib/utils';
+import { ConfirmationModal } from './ConfirmationModal';
 
 const PRIORITY_COLORS = {
   low: 'text-blue-500 bg-blue-500/10 border-blue-500/20 shadow-sm',
@@ -382,7 +384,7 @@ export default function TaskBoard() {
       const result = await orchestrateRequest(
         prompt,
         'productivity-strategist',
-        'gemini-3.1-pro-preview',
+        'gemini-3-flash-preview',
         'Você é um assistente de produtividade que ajuda a mover tarefas no Kanban.',
         false,
         false,
@@ -440,7 +442,7 @@ export default function TaskBoard() {
       const result = await orchestrateRequest(
         prompt,
         'productivity-strategist',
-        'gemini-3.1-pro-preview',
+        'gemini-3-flash-preview',
         'Você é um mestre em produtividade e gestão de tempo.',
         false,
         false,
@@ -466,7 +468,7 @@ export default function TaskBoard() {
         className="mt-3 p-3 bg-theme-orange/10 border border-theme-orange/20 rounded-xl"
       >
         <div className="flex items-start gap-2">
-          <Sparkles className="w-4 h-4 text-theme-orange mt-0.5 flex-shrink-0" />
+          <Bot className="w-4 h-4 text-theme-orange mt-0.5 flex-shrink-0" />
           <div className="flex-1">
             <p className="text-xs text-theme-primary font-medium mb-2">{aiSuggestion.suggestion}</p>
             <div className="flex items-center gap-2">
@@ -638,7 +640,7 @@ export default function TaskBoard() {
             className="btn-orange w-full sm:w-auto"
             title="Sugerir melhor ordem com base em prazos e prioridades"
           >
-            {isOptimizing ? <Loader2 className="w-4 h-4 animate-spin" /> : <Sparkles className="w-4 h-4" />}
+            {isOptimizing ? <Loader2 className="w-4 h-4 animate-spin" /> : <Bot className="w-4 h-4" />}
             <span>Otimizar Tarefas Pendentes</span>
           </button>
 
@@ -753,7 +755,7 @@ export default function TaskBoard() {
               <div className="p-6 border-b border-theme-glass flex items-center justify-between bg-theme-surface/50">
                 <div className="flex items-center gap-3">
                   <div className="w-10 h-10 rounded-xl bg-theme-orange/10 flex items-center justify-center relative">
-                    <Sparkles className="w-5 h-5 text-theme-orange" />
+                    <Bot className="w-5 h-5 text-theme-orange" />
                     <div className="absolute -top-1 -right-1 w-4 h-4 bg-blue-500 rounded-full flex items-center justify-center border-2 border-theme-surface shadow-sm">
                       <div className="w-1.5 h-1.5 bg-white rounded-full animate-pulse" />
                     </div>
@@ -1035,6 +1037,23 @@ export default function TaskBoard() {
                               className="flex-1 cursor-pointer"
                               onClick={() => setEditingTask(task)}
                             >
+                              <div className="flex items-center gap-2 mb-1">
+                                <select
+                                  value={task.priority}
+                                  onChange={(e) => handleUpdateTask(task.id, { priority: e.target.value as any })}
+                                  onClick={(e) => e.stopPropagation()}
+                                  className={cn(
+                                    "px-2 py-0.5 rounded text-[8px] font-black uppercase tracking-widest border focus:outline-none cursor-pointer transition-all",
+                                    task.priority === 'high' ? "text-rose-500 border-rose-500/20 bg-rose-500/5" : 
+                                    task.priority === 'medium' ? "text-amber-500 border-amber-500/20 bg-amber-500/5" : 
+                                    "text-blue-500 border-blue-500/20 bg-blue-500/5"
+                                  )}
+                                >
+                                  <option value="low">Baixa</option>
+                                  <option value="medium">Média</option>
+                                  <option value="high">Alta</option>
+                                </select>
+                              </div>
                               <h3 className={cn(
                                 "text-sm font-bold leading-tight group-hover:text-theme-primary transition-colors",
                                 task.status === 'done' ? "text-theme-secondary opacity-50 line-through" : "text-theme-primary"
@@ -1056,29 +1075,6 @@ export default function TaskBoard() {
                               >
                                 {expandedTasks.includes(task.id) ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
                               </button>
-                              {task.status !== 'done' && (
-                                <button 
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    setSettingReminderTask(task);
-                                    if (task.reminderAt) {
-                                      const date = task.reminderAt instanceof Timestamp ? task.reminderAt.toDate() : new Date(task.reminderAt);
-                                      setReminderDateTime(date.toISOString().slice(0, 16));
-                                    } else {
-                                      setReminderDateTime('');
-                                    }
-                                  }}
-                                  className={cn(
-                                    "p-1.5 rounded-lg transition-all active:scale-95",
-                                    task.reminderAt 
-                                      ? "bg-theme-blue/20 text-theme-blue" 
-                                      : "hover:bg-theme-blue/10 text-theme-secondary hover:text-theme-blue"
-                                  )}
-                                  title="Definir Lembrete"
-                                >
-                                  <Bell className="w-3.5 h-3.5" />
-                                </button>
-                              )}
                               <button 
                                 onClick={() => handleSaveToBrain(task)}
                                 disabled={savingToBrain === task.id || savedToBrain.includes(task.id)}
@@ -1096,6 +1092,16 @@ export default function TaskBoard() {
                                 ) : (
                                   <Brain className="w-3.5 h-3.5" />
                                 )}
+                              </button>
+                              <button 
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setEditingTask(task);
+                                }}
+                                className="p-1.5 hover:bg-blue-500/10 rounded-lg text-theme-secondary hover:text-blue-400 transition-all active:scale-95"
+                                title="Editar Tarefa"
+                              >
+                                <Edit2 className="w-3.5 h-3.5" />
                               </button>
                               <button 
                                 onClick={() => setTaskToDelete(task.id)}
@@ -1187,11 +1193,31 @@ export default function TaskBoard() {
                                   {isOverdue(task.dueDate) && task.status !== 'done' && <AlertCircle className="w-2.5 h-2.5 ml-0.5 animate-pulse" />}
                                 </div>
                               )}
-                              {task.reminderAt && (
-                                <div className="flex items-center gap-1 text-[10px] font-black uppercase tracking-widest font-mono text-theme-blue">
+                              {task.status !== 'done' && (
+                                <button
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    setSettingReminderTask(task);
+                                    if (task.reminderAt) {
+                                      const date = task.reminderAt instanceof Timestamp ? task.reminderAt.toDate() : new Date(task.reminderAt);
+                                      setReminderDateTime(date.toISOString().slice(0, 16));
+                                    } else {
+                                      setReminderDateTime('');
+                                    }
+                                  }}
+                                  className={cn(
+                                    "flex items-center gap-1 text-[10px] font-black uppercase tracking-widest font-mono transition-all",
+                                    task.reminderAt 
+                                      ? "text-theme-blue bg-theme-blue/10 px-1.5 py-0.5 rounded border border-theme-blue/20" 
+                                      : "text-theme-secondary opacity-0 group-hover:opacity-40 hover:opacity-100 hover:text-theme-blue"
+                                  )}
+                                  title={task.reminderAt ? "Editar Lembrete" : "Definir Lembrete"}
+                                >
                                   <Bell className="w-3 h-3" />
-                                  {task.reminderAt instanceof Timestamp ? task.reminderAt.toDate().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : new Date(task.reminderAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                                </div>
+                                  {task.reminderAt && (
+                                    task.reminderAt instanceof Timestamp ? task.reminderAt.toDate().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : new Date(task.reminderAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+                                  )}
+                                </button>
                               )}
                               {task.assignedTo && (
                                 <div className="flex items-center gap-1 text-[10px] font-black uppercase tracking-widest text-theme-blue bg-theme-blue/10 border border-theme-blue/20 px-1.5 py-0.5 rounded">
@@ -1210,7 +1236,7 @@ export default function TaskBoard() {
                                   isAnalyzing === task.id && "animate-pulse opacity-100"
                                 )}
                               >
-                                {isAnalyzing === task.id ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Sparkles className="w-3.5 h-3.5" />}
+                                {isAnalyzing === task.id ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Bot className="w-3.5 h-3.5" />}
                               </button>
                               {col.id !== 'done' && (
                                 <button 
@@ -1271,29 +1297,6 @@ export default function TaskBoard() {
                       >
                         {expandedTasks.includes(task.id) ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
                       </button>
-                      {task.status !== 'done' && (
-                        <button 
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            setSettingReminderTask(task);
-                            if (task.reminderAt) {
-                              const date = task.reminderAt instanceof Timestamp ? task.reminderAt.toDate() : new Date(task.reminderAt);
-                              setReminderDateTime(date.toISOString().slice(0, 16));
-                            } else {
-                              setReminderDateTime('');
-                            }
-                          }}
-                          className={cn(
-                            "p-1 rounded-lg transition-all active:scale-95",
-                            task.reminderAt 
-                              ? "bg-theme-blue/20 text-theme-blue" 
-                              : "hover:bg-theme-blue/10 text-theme-secondary hover:text-theme-blue"
-                          )}
-                          title="Definir Lembrete"
-                        >
-                          <Bell className="w-3 h-3" />
-                        </button>
-                      )}
                       <h3 className={cn(
                         "text-sm font-bold",
                         task.status === 'done' ? "text-theme-secondary opacity-50 line-through" : "text-theme-primary"
@@ -1387,14 +1390,59 @@ export default function TaskBoard() {
                       {isOverdue(task.dueDate) && task.status !== 'done' && <AlertCircle className="w-2.5 h-2.5 ml-0.5 animate-pulse" />}
                     </div>
                   )}
-                  {task.reminderAt && (
-                    <div className="flex items-center gap-1 text-[10px] font-black uppercase tracking-widest font-mono text-theme-blue">
+                  {task.status !== 'done' && (
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setSettingReminderTask(task);
+                        if (task.reminderAt) {
+                          const date = task.reminderAt instanceof Timestamp ? task.reminderAt.toDate() : new Date(task.reminderAt);
+                          setReminderDateTime(date.toISOString().slice(0, 16));
+                        } else {
+                          setReminderDateTime('');
+                        }
+                      }}
+                      className={cn(
+                        "flex items-center gap-1 text-[10px] font-black uppercase tracking-widest font-mono transition-all",
+                        task.reminderAt 
+                          ? "text-theme-blue bg-theme-blue/10 px-1.5 py-0.5 rounded border border-theme-blue/20" 
+                          : "text-theme-secondary opacity-0 group-hover:opacity-40 hover:opacity-100 hover:text-theme-blue"
+                      )}
+                      title={task.reminderAt ? "Editar Lembrete" : "Definir Lembrete"}
+                    >
                       <Bell className="w-3 h-3" />
-                      {task.reminderAt instanceof Timestamp ? task.reminderAt.toDate().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : new Date(task.reminderAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                    </div>
+                      {task.reminderAt && (
+                        task.reminderAt instanceof Timestamp ? task.reminderAt.toDate().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : new Date(task.reminderAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+                      )}
+                    </button>
                   )}
                 </div>
-                <div className="flex items-center gap-2 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity justify-end md:justify-start">
+                <div className="flex items-center gap-4">
+                  <select
+                    value={task.priority}
+                    onChange={(e) => handleUpdateTask(task.id, { priority: e.target.value as any })}
+                    className={cn(
+                      "px-2 py-1 rounded-lg text-[10px] font-black uppercase tracking-widest border focus:outline-none cursor-pointer transition-all",
+                      task.priority === 'high' ? "text-rose-500 border-rose-500/20 bg-rose-500/5" : 
+                      task.priority === 'medium' ? "text-amber-500 border-amber-500/20 bg-amber-500/5" : 
+                      "text-blue-500 border-blue-500/20 bg-blue-500/5"
+                    )}
+                  >
+                    <option value="low">Baixa</option>
+                    <option value="medium">Média</option>
+                    <option value="high">Alta</option>
+                  </select>
+                  <div className="flex items-center gap-2 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity justify-end md:justify-start">
+                  <button 
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setEditingTask(task);
+                    }}
+                    className="p-2 hover:bg-blue-500/10 rounded-xl text-theme-secondary opacity-50 md:opacity-20 hover:text-blue-400 hover:opacity-100 transition-all"
+                    title="Editar Tarefa"
+                  >
+                    <Edit2 className="w-4 h-4" />
+                  </button>
                   <button 
                     onClick={() => setTaskToDelete(task.id)}
                     className="p-2 hover:bg-red-500/10 rounded-xl text-theme-secondary opacity-50 md:opacity-20 hover:text-red-400 hover:opacity-100 transition-all"
@@ -1402,7 +1450,8 @@ export default function TaskBoard() {
                     <Trash2 className="w-4 h-4" />
                   </button>
                 </div>
-              </motion.div>
+              </div>
+            </motion.div>
               {renderAISuggestion(task.id)}
             </React.Fragment>
           ))}
@@ -1538,40 +1587,61 @@ export default function TaskBoard() {
                   </div>
                 )}
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div className="space-y-2">
-                    <label className="text-[10px] font-black uppercase tracking-widest text-theme-secondary opacity-40 px-1">Atribuído a</label>
-                    <div className="relative">
-                      <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-theme-secondary opacity-30" />
-                      <input 
-                        placeholder="Nome ou ID do usuário..."
-                        value={editingTask.assignedTo || ''}
-                        onChange={(e) => setEditingTask({ ...editingTask, assignedTo: e.target.value })}
-                        className="w-full bg-theme-glass border border-theme-glass rounded-xl pl-10 pr-4 py-2 text-sm text-theme-primary focus:outline-none focus:border-theme-blue/50"
-                      />
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <div className="space-y-2">
+                      <label className="text-[10px] font-black uppercase tracking-widest text-theme-secondary opacity-40 px-1">Atribuído a</label>
+                      <div className="relative">
+                        <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-theme-secondary opacity-30" />
+                        <input 
+                          placeholder="Nome ou ID do usuário..."
+                          value={editingTask.assignedTo || ''}
+                          onChange={(e) => setEditingTask({ ...editingTask, assignedTo: e.target.value })}
+                          className="w-full bg-theme-glass border border-theme-glass rounded-xl pl-10 pr-4 py-2 text-sm text-theme-primary focus:outline-none focus:border-theme-blue/50"
+                        />
+                      </div>
                     </div>
-                  </div>
 
-                  <div className="space-y-2">
-                    <label className="text-[10px] font-black uppercase tracking-widest text-theme-secondary opacity-40 px-1">Status</label>
-                    <div className="flex gap-1 bg-theme-glass p-1 rounded-xl border border-theme-glass">
-                      {STATUS_COLUMNS.map((col) => (
-                        <button
-                          key={col.id}
-                          onClick={() => setEditingTask({ ...editingTask, status: col.id as any })}
-                          className={cn(
-                            "flex-1 py-2 rounded-lg text-[9px] font-black uppercase tracking-widest transition-all",
-                            editingTask.status === col.id 
-                              ? "bg-theme-blue text-white shadow-lg"
-                              : "text-theme-secondary opacity-40 hover:text-theme-primary"
-                          )}
-                        >
-                          {col.name}
-                        </button>
-                      ))}
+                    <div className="space-y-2">
+                      <label className="text-[10px] font-black uppercase tracking-widest text-theme-secondary opacity-40 px-1">Status</label>
+                      <div className="flex gap-1 bg-theme-glass p-1 rounded-xl border border-theme-glass">
+                        {STATUS_COLUMNS.map((col) => (
+                          <button
+                            key={col.id}
+                            onClick={() => setEditingTask({ ...editingTask, status: col.id as any })}
+                            className={cn(
+                              "flex-1 py-2 rounded-lg text-[9px] font-black uppercase tracking-widest transition-all",
+                              editingTask.status === col.id 
+                                ? "bg-theme-blue text-white shadow-lg"
+                                : "text-theme-secondary opacity-40 hover:text-theme-primary"
+                            )}
+                          >
+                            {col.name}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+
+                    <div className="space-y-2">
+                      <label className="text-[10px] font-black uppercase tracking-widest text-theme-secondary opacity-40 px-1">Prioridade</label>
+                      <div className="flex gap-1 bg-theme-glass p-1 rounded-xl border border-theme-glass">
+                        {Object.entries(PRIORITY_ICONS).map(([p, Icon]) => (
+                          <button
+                            key={p}
+                            onClick={() => setEditingTask({ ...editingTask, priority: p as any })}
+                            className={cn(
+                              "flex-1 py-2 rounded-lg text-[9px] font-black uppercase tracking-widest transition-all flex items-center justify-center gap-1.5",
+                              editingTask.priority === p 
+                                ? PRIORITY_COLORS[p as keyof typeof PRIORITY_COLORS]
+                                : "text-theme-secondary opacity-40 hover:text-theme-primary"
+                            )}
+                          >
+                            <Icon className="w-3 h-3" />
+                            {p === 'low' ? 'Baixa' : p === 'medium' ? 'Média' : 'Alta'}
+                          </button>
+                        ))}
+                      </div>
                     </div>
                   </div>
-                </div>
               </div>
 
               <div className="flex flex-col sm:flex-row items-center justify-between mt-10 gap-4">
@@ -1670,47 +1740,17 @@ export default function TaskBoard() {
           </div>
         )}
 
-        {taskToDelete && (
-          <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/80 backdrop-blur-md">
-            <motion.div 
-              initial={{ opacity: 0, scale: 0.9, y: 20 }}
-              animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.9, y: 20 }}
-              className="w-full max-w-sm bg-theme-main border border-theme-glass rounded-[32px] p-8 shadow-2xl relative overflow-hidden"
-            >
-              <div className="absolute top-0 left-0 w-full h-1 bg-theme-rose" />
-              
-              <div className="flex flex-col items-center text-center space-y-4">
-                <div className="w-16 h-16 bg-theme-rose/10 rounded-full flex items-center justify-center mb-2">
-                  <Trash2 className="w-8 h-8 text-theme-rose" />
-                </div>
-                
-                <h2 className="text-2xl font-black uppercase tracking-tighter text-theme-primary italic">
-                  Confirmar <span className="text-theme-rose">Exclusão</span>
-                </h2>
-                
-                <p className="text-theme-secondary opacity-60 text-sm leading-relaxed">
-                  Tem certeza que deseja excluir esta tarefa? Esta ação não pode ser desfeita e removerá todos os dados permanentemente.
-                </p>
-              </div>
-
-              <div className="flex flex-col gap-3 mt-8">
-                <button 
-                  onClick={() => handleDeleteTask(taskToDelete)}
-                  className="w-full py-4 bg-theme-rose text-white font-black uppercase tracking-widest rounded-2xl hover:bg-theme-rose/90 transition-all shadow-lg shadow-rose-500/20 active:scale-[0.98]"
-                >
-                  Excluir
-                </button>
-                <button 
-                  onClick={() => setTaskToDelete(null)}
-                  className="w-full py-4 bg-theme-glass text-theme-secondary font-black uppercase tracking-widest rounded-2xl hover:bg-theme-glass/80 transition-all active:scale-[0.98]"
-                >
-                  Cancelar
-                </button>
-              </div>
-            </motion.div>
-          </div>
-        )}
+        {/* Confirmation Modal for Deletion */}
+        <ConfirmationModal
+          isOpen={!!taskToDelete}
+          onClose={() => setTaskToDelete(null)}
+          onConfirm={() => taskToDelete && handleDeleteTask(taskToDelete)}
+          title="Confirmar Exclusão"
+          message="Tem certeza que deseja excluir esta tarefa? Esta ação não pode ser desfeita e removerá todos os dados permanentemente."
+          confirmText="Excluir"
+          cancelText="Cancelar"
+          variant="danger"
+        />
       </AnimatePresence>
     </div>
   );

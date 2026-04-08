@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { Sparkles, Lightbulb, TrendingUp, Zap, ChevronRight, Loader2, RefreshCw } from 'lucide-react';
+import { Bot, Lightbulb, TrendingUp, Zap, ChevronRight, Loader2, RefreshCw } from 'lucide-react';
 import { cn } from '../lib/utils';
 import { db, auth } from '../firebase';
 import { collection, query, onSnapshot, where, limit } from 'firebase/firestore';
@@ -50,7 +50,7 @@ export const AISuggestions: React.FC = () => {
       const result = await orchestrateRequest(
         prompt,
         'productivity-strategist',
-        'gemini-3.1-pro-preview',
+        'gemini-3-flash-preview',
         'Você é um estrategista de produtividade que gera sugestões em JSON.',
         false,
         false,
@@ -75,7 +75,7 @@ export const AISuggestions: React.FC = () => {
       <div className="p-6 border-b border-theme-glass flex items-center justify-between bg-theme-surface/50">
         <div className="flex items-center gap-3">
           <div className="w-8 h-8 rounded-lg bg-purple-500/10 flex items-center justify-center text-purple-500 border border-purple-500/20">
-            <Sparkles className="w-4 h-4" />
+            <Bot className="w-4 h-4" />
           </div>
           <div>
             <h3 className="text-sm font-bold uppercase tracking-wider text-theme-primary">Sugestões de IA</h3>

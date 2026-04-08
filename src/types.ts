@@ -103,7 +103,7 @@ export interface Artifact {
     dataPoints?: DataPoint[];
     campaignTimeline?: { date: string; task: string; status: string }[];
     colors?: { name: string; hex: string; variable: string }[];
-    typography?: { name: string; size: string; weight: string; family: string }[];
+    typography?: { name: string; usage: string; size: string }[];
     spacing?: { name: string; size: string; value: string }[];
     researchFindings?: { topic: string; insight: string; confidence: number }[];
     automationWorkflow?: { step: string; action: string; tool: string }[];
@@ -113,6 +113,8 @@ export interface Artifact {
     audioUrl?: string;
     imageUrl?: string;
     groundingMetadata?: any;
+    grids?: { label: string; value: string }[];
+    imagePrompt?: string;
   };
 }
 

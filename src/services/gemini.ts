@@ -4,7 +4,7 @@ const apiKey = process.env.GEMINI_API_KEY!;
 
 export const MODELS = {
   GENERAL: "gemini-3-flash-preview",
-  COMPLEX: "gemini-3.1-pro-preview",
+  COMPLEX: "gemini-3-flash-preview",
   FAST: "gemini-3.1-flash-lite-preview",
   IMAGE_GEN: "gemini-3.1-flash-image-preview",
   IMAGE_STUDIO: "gemini-3-pro-image-preview",

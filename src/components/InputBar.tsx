@@ -220,7 +220,13 @@ export function InputBar({
             </div>
             
             <div className="relative">
-              <div className="flex items-center btn-primary p-0 overflow-hidden">
+              <div className={cn(
+                "flex items-center p-0 overflow-hidden transition-all duration-500 rounded-[10px] border",
+                useSwarmMode 
+                  ? "bg-purple-600 border-purple-400/50 shadow-[0_0_15px_rgba(139,92,246,0.4)] text-white" 
+                  : "btn-primary",
+                (!input.trim() && selectedImages.length === 0 && !useSwarmMode) && "opacity-20 grayscale border-rose-500/40 scale-95"
+              )}>
                 <button
                   onClick={handleSend}
                   disabled={(!input.trim() && selectedImages.length === 0) || isLoading}

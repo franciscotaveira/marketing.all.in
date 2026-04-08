@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useMemo } from "react";
 
 import { motion, AnimatePresence } from "motion/react";
 import { orchestrateRequest } from "./services/orchestrator";
@@ -84,8 +84,10 @@ import { InputBar } from "./components/InputBar";
 import { AgentControls } from "./components/AgentControls";
 import { SidebarChatHistory } from "./components/SidebarChatHistory";
 import { BrandContextModal } from "./components/BrandContextModal";
+import { CampaignAssetViewer } from "./components/CampaignAssetViewer";
 import Logo from "./components/Logo";
 import { ConfirmationModal } from "./components/ConfirmationModal";
+import { AgentIcon } from "./components/AgentIcon";
 import { MARKETING_SKILLS, MARKETING_FRAMEWORKS, CATEGORY_COLORS, CATEGORY_TEXT_COLORS, CATEGORY_BG_LIGHT_COLORS, WORKFLOWS } from "./constants";
 import { MarketingSkill, SkillCategory, Message, SkillTier, Artifact, BrainMemory, Company, Workflow, ChatSession } from "./types";
 import { cn } from "./lib/utils";
@@ -103,10 +105,10 @@ export default function App() {
   const [selectedSkill, setSelectedSkill] = useState<MarketingSkill | null>(() => {
     return MARKETING_SKILLS.find(s => s.id === 'orchestrator') || null;
   });
+  const [expandedCategory, setExpandedCategory] = useState<SkillCategory | null>(SkillCategory.STRATEGY);
   const [customSkills, setCustomSkills] = useState<MarketingSkill[]>([]);
   const [isCustomAgentModalOpen, setIsCustomAgentModalOpen] = useState(false);
   const [editingCustomAgent, setEditingCustomAgent] = useState<MarketingSkill | null>(null);
-  const [expandedCategory, setExpandedCategory] = useState<SkillCategory | null>(null);
   const [input, setInput] = useState("");
 
   const [messages, setMessages] = useState<Message[]>([]);
@@ -165,6 +167,76 @@ export default function App() {
   const [showCommandMenu, setShowCommandMenu] = useState(false);
   const [commandFilter, setCommandFilter] = useState("");
   const [selectedCommandIndex, setSelectedCommandIndex] = useState(0);
+  const allArtifacts = useMemo(() => {
+    const artifacts: Artifact[] = [];
+    // Robust regex to catch variations in artifact format
+    const artifactRegex = /```artifact\s*:\s*([a-zA-Z0-9_-]+)\s*:\s*([^\n]+?)\s*\n?([\s\S]*?)```/g;
+
+    messages.forEach(msg => {
+      // First, use pre-parsed artifacts if they exist
+      if (msg.artifacts && msg.artifacts.length > 0) {
+        msg.artifacts.forEach(art => {
+          if (!artifacts.find(a => a.id === art.id)) {
+            artifacts.push(art);
+          }
+        });
+      }
+
+      // Then, try to extract from content in case they weren't pre-parsed or format changed slightly
+      let match;
+      if (!msg.content) return;
+      // Reset regex index for each message
+      artifactRegex.lastIndex = 0;
+      while ((match = artifactRegex.exec(msg.content)) !== null) {
+        const type = match[1].trim();
+        const title = match[2].trim();
+        let content = match[3].trim();
+        let metadata = undefined;
+
+        // Extract metadata if present
+        if (type !== 'n8n') {
+          try {
+            // Look for JSON block anywhere in the content
+            const jsonBlockMatch = content.match(/```json\s*([\s\S]*?)\s*```/);
+            if (jsonBlockMatch) {
+              const cleanedJson = jsonBlockMatch[1].trim();
+              const parsed = JSON.parse(cleanedJson);
+              metadata = parsed.metadata !== undefined ? parsed.metadata : parsed;
+              // Only remove the JSON block from content if it's at the end or start
+              content = content.replace(jsonBlockMatch[0], '').trim();
+            } else {
+              // Fallback: try to find anything that looks like a JSON object at the end
+              const lastBraceIndex = content.lastIndexOf('}');
+              const firstBraceIndex = content.lastIndexOf('{', lastBraceIndex);
+              if (firstBraceIndex !== -1 && lastBraceIndex !== -1) {
+                const potentialJson = content.substring(firstBraceIndex, lastBraceIndex + 1);
+                try {
+                  const parsed = JSON.parse(potentialJson);
+                  metadata = parsed.metadata !== undefined ? parsed.metadata : parsed;
+                  content = content.substring(0, firstBraceIndex).trim();
+                } catch (e) {}
+              }
+            }
+          } catch (e) {}
+        }
+        
+        // Avoid duplicates by title and type if id is not available
+        if (!artifacts.find(a => a.title === title && a.type === type)) {
+          artifacts.push({
+            id: `extracted-${title.replace(/\s+/g, '-').toLowerCase()}-${type}`,
+            type: type as any,
+            title,
+            content,
+            metadata,
+            agentName: msg.agentName || "Assistente"
+          });
+        }
+      }
+    });
+
+    return artifacts.reverse();
+  }, [messages]);
+
   const [activeArtifact, setActiveArtifact] = useState<Artifact | null>(null);
   const [activeTab, setActiveTab] = useState<'chat' | 'operations' | 'brain' | 'terminal' | 'workspace'>('chat');
   const [googleTokens, setGoogleTokens] = useState<any>(() => {
@@ -259,6 +331,12 @@ export default function App() {
   };
 
   const handleStartWorkflow = (workflow: Workflow) => {
+    if (activeWorkflow?.id === workflow.id) {
+      setActiveWorkflow(null);
+      activeWorkflowRef.current = null;
+      setWorkflowStepIndex(0);
+      return;
+    }
     setSelectedSkill(null);
     setActiveWorkflow(workflow);
     activeWorkflowRef.current = workflow.id;
@@ -301,10 +379,21 @@ export default function App() {
       
       const systemInstruction = `Você é ${agent.persona} (${agent.name}). 
       Sua tarefa é cumprir a instrução da etapa atual do workflow com base no contexto fornecido.
-      Gere a saída de forma clara e profissional. Se for gerar um material prático, use o formato de artefato:
-      \`\`\`artifact:tipo:título
-      conteúdo do artefato aqui
-      \`\`\``;
+      Gere a saída de forma clara e profissional. 
+      
+      IMPORTANTE: Você DEVE gerar um artefato técnico para documentar seu trabalho usando EXATAMENTE este formato:
+      \`\`\`artifact : tipo : título
+      conteúdo detalhado aqui
+      
+      \`\`\`json
+      { \"metadata\": { ... } }
+      \`\`\`
+      \`\`\`
+      
+      Tipos válidos: 'campaign', 'architecture', 'research', 'content'.
+      Certifique-se de incluir os metadados solicitados na instrução da etapa (cores, tipografia, grids, etc) no bloco JSON dentro do artefato.
+      
+      IMPORTANTE: Use espaços antes e depois dos dois pontos ( : ) no cabeçalho do artefato para garantir a compatibilidade.`;
 
       try {
         const result = await orchestrateRequest(
@@ -324,32 +413,34 @@ export default function App() {
         setActiveAgentId(null);
         
         const artifacts: Artifact[] = [];
-        const artifactRegex = /```artifact:([a-zA-Z0-9_-]+):([^\n]+)\n([\s\S]*?)```/g;
+        // Use the same robust regex as the memo
+        const artifactRegex = /```artifact\s*:\s*([a-zA-Z0-9_-]+)\s*:\s*([^\n]+?)\s*\n?([\s\S]*?)```/g;
         let match;
         while ((match = artifactRegex.exec(aiResponse)) !== null) {
-          const type = match[1];
+          const type = match[1].trim();
+          const title = match[2].trim();
           let content = match[3].trim();
           let metadata = undefined;
           
           if (type !== 'n8n') {
             try {
+              // Look for JSON block anywhere in the content
               const jsonBlockMatch = content.match(/```json\s*([\s\S]*?)\s*```/);
               if (jsonBlockMatch) {
-                const parsed = JSON.parse(jsonBlockMatch[1]);
+                const cleanedJson = jsonBlockMatch[1].trim();
+                const parsed = JSON.parse(cleanedJson);
                 metadata = parsed.metadata !== undefined ? parsed.metadata : parsed;
                 content = content.replace(jsonBlockMatch[0], '').trim();
               } else {
-                const jsonStart = content.lastIndexOf('{');
-                const jsonEnd = content.lastIndexOf('}');
-                if (jsonStart !== -1 && jsonEnd !== -1 && jsonEnd > jsonStart) {
-                  const possibleJson = content.substring(jsonStart, jsonEnd + 1);
+                // Fallback: try to find anything that looks like a JSON object at the end
+                const lastBraceIndex = content.lastIndexOf('}');
+                const firstBraceIndex = content.lastIndexOf('{', lastBraceIndex);
+                if (firstBraceIndex !== -1 && lastBraceIndex !== -1) {
+                  const potentialJson = content.substring(firstBraceIndex, lastBraceIndex + 1);
                   try {
-                    const parsed = JSON.parse(possibleJson);
+                    const parsed = JSON.parse(potentialJson);
                     metadata = parsed.metadata !== undefined ? parsed.metadata : parsed;
-                    content = content.substring(0, jsonStart).trim();
-                    if (content.endsWith('```')) {
-                      content = content.substring(0, content.length - 3).trim();
-                    }
+                    content = content.substring(0, firstBraceIndex).trim();
                   } catch (e) {}
                 }
               }
@@ -357,21 +448,41 @@ export default function App() {
           }
 
           artifacts.push({
-            id: Math.random().toString(36).substr(2, 9),
+            id: `art-${Math.random().toString(36).substr(2, 9)}`,
             type: type as any,
-            title: match[2].trim(),
-            content: content,
-            agentName: agent.persona,
+            title,
+            content,
+            agentName: agent.name,
             metadata
           });
         }
 
         if (artifacts.length > 0) {
+          addLog('workflow', `[Workflow] ${artifacts.length} artefato(s) extraído(s) com sucesso.`, 'success');
           setActiveArtifact(artifacts[0]);
           setActiveTab('workspace');
+        } else {
+          addLog('workflow', `[Workflow] Nenhum artefato detectado na resposta do agente.`, 'info');
+          // Fallback: if the response is long but no artifact block, create a generic one
+          if (aiResponse.length > 500) {
+            const fallbackArt: Artifact = {
+              id: `art-fallback-${Math.random().toString(36).substr(2, 9)}`,
+              type: 'campaign',
+              title: `Relatório: ${step.name}`,
+              content: aiResponse,
+              agentName: agent.name
+            };
+            artifacts.push(fallbackArt);
+            setActiveArtifact(fallbackArt);
+            setActiveTab('workspace');
+            addLog('workflow', `[Workflow] Criado artefato de fallback a partir da resposta.`, 'info');
+          }
         }
 
-        const formattedResponse = aiResponse.replace(artifactRegex, '> *Artefato gerado: $2*');
+        // Replace artifacts in the response text for cleaner chat display
+        const formattedResponse = aiResponse.replace(artifactRegex, (match, type, title) => {
+          return `\n\n> 📦 **Artefato Gerado:** ${title.trim()} (${type.trim()})\n> *Disponível no Workspace*\n\n`;
+        });
 
         setMessages(prev => {
           const newMsgs = [...prev];
@@ -830,7 +941,7 @@ export default function App() {
       8. ANÁLISE VISUAL: Você possui capacidades multimodais avançadas e pode ver imagens enviadas pelo usuário. Ao receber uma imagem, analise-a detalhadamente para fornecer insights estratégicos, identificar problemas de UX/UI, sugerir melhorias de conversão em peças criativas ou extrair informações relevantes para o contexto de marketing e automação.`;
 
       let aiResponse: string;
-      const model = selectedSkill?.model || "gemini-3.1-pro-preview";
+      const model = selectedSkill?.model || "gemini-3-flash-preview";
       
       try {
         // Create a new chat if it doesn't exist
@@ -886,68 +997,61 @@ export default function App() {
 
       // Extract artifacts and metadata
       const artifacts: Artifact[] = [];
-      const artifactRegex = /```artifact:([a-zA-Z0-9_-]+):([^\n]+)\n([\s\S]*?)```/g;
+      const artifactRegex = /```artifact\s*:\s*([a-zA-Z0-9_-]+)\s*:\s*([^\n]+?)\s*\n?([\s\S]*?)```/g;
       let match;
       while ((match = artifactRegex.exec(aiResponse)) !== null) {
-        const type = match[1];
+        const type = match[1].trim();
+        const title = match[2].trim();
         let content = match[3].trim();
         let metadata = undefined;
         
-        // Skip metadata extraction for n8n workflows as the entire content is the JSON
         if (type !== 'n8n') {
-          // Try to extract JSON metadata from the content
           try {
-            // Look for a markdown JSON block
+            // Look for JSON block anywhere in the content
             const jsonBlockMatch = content.match(/```json\s*([\s\S]*?)\s*```/);
             if (jsonBlockMatch) {
-              const parsed = JSON.parse(jsonBlockMatch[1]);
+              const cleanedJson = jsonBlockMatch[1].trim();
+              const parsed = JSON.parse(cleanedJson);
               metadata = parsed.metadata !== undefined ? parsed.metadata : parsed;
               content = content.replace(jsonBlockMatch[0], '').trim();
             } else {
-              // Fallback: look for a JSON object at the end of the content
-              const jsonStart = content.lastIndexOf('{');
-              const jsonEnd = content.lastIndexOf('}');
-              
-              if (jsonStart !== -1 && jsonEnd !== -1 && jsonEnd > jsonStart) {
-                const possibleJson = content.substring(jsonStart, jsonEnd + 1);
+              // Fallback: try to find anything that looks like a JSON object at the end
+              const lastBraceIndex = content.lastIndexOf('}');
+              const firstBraceIndex = content.lastIndexOf('{', lastBraceIndex);
+              if (firstBraceIndex !== -1 && lastBraceIndex !== -1) {
+                const potentialJson = content.substring(firstBraceIndex, lastBraceIndex + 1);
                 try {
-                  const parsed = JSON.parse(possibleJson);
+                  const parsed = JSON.parse(potentialJson);
                   metadata = parsed.metadata !== undefined ? parsed.metadata : parsed;
-                  content = content.substring(0, jsonStart).trim();
-                  // Remove trailing ``` if any
-                  if (content.endsWith('```')) {
-                    content = content.substring(0, content.length - 3).trim();
-                  }
-                } catch (e) {
-                  // Not valid JSON, ignore
-                }
+                  content = content.substring(0, firstBraceIndex).trim();
+                } catch (e) {}
               }
             }
-          } catch (e) {
-            console.error("Failed to parse artifact metadata", e);
-          }
+          } catch (e) {}
         }
 
         artifacts.push({
-          id: Math.random().toString(36).substr(2, 9),
+          id: `art-${Math.random().toString(36).substr(2, 9)}`,
           type: type as any,
-          title: match[2].trim(),
-          content: content,
-          agentName: selectedSkill?.persona || "Assistente Geral",
+          title,
+          content,
+          agentName: selectedSkill?.name || "Assistente Geral",
           metadata
         });
       }
-
-
 
       if (artifacts.length > 0) {
         setActiveArtifact(artifacts[0]);
         setActiveTab('workspace');
       }
 
+      const formattedResponse = aiResponse.replace(artifactRegex, (match, type, title) => {
+        return `\n\n> 📦 **Artefato Gerado:** ${title.trim()} (${type.trim()})\n> *Disponível no Workspace*\n\n`;
+      });
+
       const aiMsg: Omit<Message, 'createdAt'> = { 
         role: "ai", 
-        content: aiResponse.replace(artifactRegex, '> *Artefato gerado: $2*'),
+        content: formattedResponse,
         agentName: selectedSkill?.persona || "Assistente Geral",
         agentTier: selectedSkill?.tier,
         artifacts: artifacts.length > 0 ? artifacts : undefined
@@ -1262,11 +1366,11 @@ export default function App() {
                           )}
                         >
                           <div className={cn(
-                            "w-7 h-7 rounded-md flex items-center justify-center transition-all",
+                            "w-7 h-7 rounded-md flex items-center justify-center transition-all overflow-hidden",
                             selectedSkill?.id === skill.id ? CATEGORY_BG_LIGHT_COLORS[category] : "bg-theme-glass",
                             CATEGORY_TEXT_COLORS[category]
                           )}>
-                            {getCategoryIcon(skill.category)}
+                            <AgentIcon agent={skill} size="sm" className="w-full h-full" />
                           </div>
                           <div className="flex flex-col items-start min-w-0 flex-1">
                             <div className="flex items-center gap-1.5 w-full">
@@ -1591,55 +1695,101 @@ export default function App() {
                     </div>
                   </div>
                   
-                  <div className="flex-1 overflow-y-auto p-8 custom-scrollbar">
-                    {activeArtifact ? (
-                      <div className="space-y-8 max-w-3xl mx-auto">
-                        <div className="flex items-start justify-between">
-                          <div className="space-y-3">
-                            <div className="flex items-center gap-2">
-                              <span className="px-3 py-1 bg-theme-blue/20 text-theme-blue rounded-full text-[10px] font-black uppercase tracking-widest border border-theme-blue/20">
-                                {activeArtifact.type}
-                              </span>
-                              <span className="text-[10px] font-black text-theme-secondary uppercase tracking-widest">
-                                Gerado por {activeArtifact.agentName}
-                              </span>
+                  <div className="flex-1 flex min-h-0">
+                    {/* Artifacts Sidebar */}
+                    <div className="w-64 border-r border-theme-glass overflow-y-auto custom-scrollbar p-4 space-y-4 bg-theme-glass/5">
+                      <h4 className="text-[10px] font-black uppercase tracking-widest text-theme-secondary opacity-40 px-2">Recentes</h4>
+                      <div className="space-y-2">
+                        {allArtifacts.length > 0 ? (
+                          allArtifacts.map((art) => (
+                            <button
+                              key={art.id}
+                              onClick={() => setActiveArtifact(art)}
+                              className={cn(
+                                "w-full p-3 rounded-xl text-left transition-all border group",
+                                activeArtifact?.id === art.id 
+                                  ? "bg-theme-blue/10 border-theme-blue/30 text-theme-blue" 
+                                  : "bg-theme-glass border-theme-glass text-theme-secondary hover:bg-theme-glass/80"
+                              )}
+                            >
+                              <div className="flex items-center gap-2 mb-1">
+                                <FileText className="w-3 h-3 opacity-40" />
+                                <span className="text-[8px] font-black uppercase tracking-widest opacity-60">{art.type}</span>
+                              </div>
+                              <p className="text-[11px] font-bold truncate">{art.title}</p>
+                            </button>
+                          ))
+                        ) : (
+                          <div className="p-4 text-center space-y-2 opacity-20">
+                            <FileText className="w-8 h-8 mx-auto mb-2" />
+                            <p className="text-[10px] font-bold uppercase tracking-widest leading-tight">
+                              Nenhum artefato técnico nesta conversa
+                            </p>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+
+                    <div className="flex-1 overflow-y-auto p-8 custom-scrollbar">
+                      {activeArtifact ? (
+                        <div className="max-w-5xl mx-auto">
+                          {activeArtifact.type === 'campaign' || activeArtifact.type === 'architecture' ? (
+                            <CampaignAssetViewer artifact={activeArtifact} />
+                          ) : (
+                            <div className="space-y-8">
+                              <div className="flex items-start justify-between">
+                                <div className="space-y-3">
+                                  <div className="flex items-center gap-2">
+                                    <span className="px-3 py-1 bg-theme-blue/20 text-theme-blue rounded-full text-[10px] font-black uppercase tracking-widest border border-theme-blue/20">
+                                      {activeArtifact.type}
+                                    </span>
+                                    <span className="text-[10px] font-black text-theme-secondary uppercase tracking-widest">
+                                      Gerado por {activeArtifact.agentName}
+                                    </span>
+                                  </div>
+                                  <h2 className="text-4xl font-black tracking-tighter leading-tight italic text-theme-primary">
+                                    {activeArtifact.title}
+                                  </h2>
+                                </div>
+                                <div className="flex items-center gap-2">
+                                  <button 
+                                    onClick={() => copyToClipboard(activeArtifact.content, activeArtifact.id)}
+                                    className="p-4 bg-theme-surface border border-theme-glass rounded-2xl hover:bg-theme-glass transition-all active:scale-90 group/copy shadow-xl"
+                                  >
+                                    {copiedId === activeArtifact.id ? <Check className="w-5 h-5 text-emerald-500" /> : <Copy className="w-5 h-5 text-theme-secondary group-hover/copy:text-theme-primary" />}
+                                  </button>
+                                </div>
+                              </div>
+                              
+                              <motion.div 
+                                initial={{ opacity: 0, y: 20 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                className="relative"
+                              >
+                                <div className="bg-theme-surface border border-theme-glass rounded-3xl p-8 min-h-[600px] relative overflow-hidden shadow-2xl">
+                                  <div className="absolute top-0 left-0 w-full h-1 bg-theme-blue" />
+                                  <div className="prose prose-invert prose-sm max-w-none">
+                                    <ReactMarkdown>{activeArtifact.content}</ReactMarkdown>
+                                  </div>
+                                </div>
+                              </motion.div>
                             </div>
-                            <h2 className="text-4xl font-black tracking-tighter leading-tight italic text-theme-primary">
-                              {activeArtifact.title}
-                            </h2>
+                          )}
+                        </div>
+                      ) : (
+                        <div className="h-full flex flex-col items-center justify-center text-center space-y-8">
+                          <div className="w-24 h-24 bg-theme-glass rounded-[2rem] flex items-center justify-center border border-theme-glass shadow-inner">
+                            <FileText className="w-12 h-12 text-theme-secondary opacity-20" />
                           </div>
-                          <button 
-                            onClick={() => copyToClipboard(activeArtifact.content, activeArtifact.id)}
-                            className="p-4 bg-theme-surface border border-theme-glass rounded-2xl hover:bg-theme-glass transition-all active:scale-90 group/copy shadow-xl"
-                          >
-                            {copiedId === activeArtifact.id ? <Check className="w-5 h-5 text-emerald-500" /> : <Copy className="w-5 h-5 text-theme-secondary group-hover/copy:text-theme-primary" />}
-                          </button>
-                        </div>
-                        
-                        <motion.div 
-                          initial={{ opacity: 0, y: 20 }}
-                          animate={{ opacity: 1, y: 0 }}
-                          className="bg-theme-surface border border-theme-glass rounded-3xl p-8 min-h-[600px] relative overflow-hidden shadow-2xl"
-                        >
-                          <div className="absolute top-0 left-0 w-full h-1 bg-theme-blue" />
-                          <div className="prose prose-invert prose-sm max-w-none">
-                            <ReactMarkdown>{activeArtifact.content}</ReactMarkdown>
+                          <div className="space-y-2">
+                            <h3 className="font-black text-theme-secondary uppercase tracking-widest text-sm">Nenhum Artefato Ativo</h3>
+                            <p className="text-xs font-medium text-theme-secondary opacity-40 max-w-[200px] leading-relaxed">
+                              Selecione um artefato no chat ou na lista ao lado para visualizar.
+                            </p>
                           </div>
-                        </motion.div>
-                      </div>
-                    ) : (
-                      <div className="h-full flex flex-col items-center justify-center text-center space-y-8">
-                        <div className="w-24 h-24 bg-theme-glass rounded-[2rem] flex items-center justify-center border border-theme-glass shadow-inner">
-                          <FileText className="w-12 h-12 text-theme-secondary opacity-20" />
                         </div>
-                        <div className="space-y-2">
-                          <h3 className="font-black text-theme-secondary uppercase tracking-widest text-sm">Nenhum Artefato Ativo</h3>
-                          <p className="text-xs font-medium text-theme-secondary opacity-40 max-w-[200px] leading-relaxed">
-                            Selecione um artefato no chat para visualizar e editar aqui.
-                          </p>
-                        </div>
-                      </div>
-                    )}
+                      )}
+                    </div>
                   </div>
                 </motion.div>
               ) : (
