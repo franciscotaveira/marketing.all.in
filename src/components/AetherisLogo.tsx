@@ -1,81 +1,72 @@
-import React, { useState, useEffect } from 'react';
-import { Loader2, Bot } from 'lucide-react';
-import { generateImageWithRetry } from '../lib/imageGeneration';
-
-const getCachedLogo = () => {
-  try {
-    return localStorage.getItem('aetheris_swarm_logo');
-  } catch (e) {
-    return null;
-  }
-};
-
-const setCachedLogo = (url: string) => {
-  try {
-    localStorage.setItem('aetheris_swarm_logo', url);
-  } catch (e) {
-  }
-};
+import React from 'react';
+import { motion } from 'motion/react';
 
 export function AetherisLogo() {
-  const [logoUrl, setLogoUrl] = useState<string | null>(getCachedLogo());
-  const [isLoading, setIsLoading] = useState(!getCachedLogo());
-  const [error, setError] = useState<string | null>(null);
-
-  useEffect(() => {
-    if (logoUrl) return;
-
-    let isMounted = true;
-
-    async function generateLogo() {
-      try {
-        const prompt = 'A professional and futuristic logo for an AI marketing swarm called "Aetheris Swarm". The logo should feature a central core representing "Aetheris" with a swarm of smaller, interconnected nodes or particles orbiting it, symbolizing "Elite Orchestration". Use a color palette of deep blues, vibrant purples, and emerald greens. The style should be clean, minimalist, and high-tech, suitable for a premium SaaS application. No text in the image, just the icon.';
-        
-        const url = await generateImageWithRetry(prompt);
-        
-        if (isMounted) {
-          setCachedLogo(url);
-          setLogoUrl(url);
-          setIsLoading(false);
-        }
-      } catch (err) {
-        console.error('Error generating logo:', err);
-        if (isMounted) {
-          setError('Failed to generate logo');
-          setIsLoading(false);
-        }
-      }
-    }
-
-    generateLogo();
-    return () => { isMounted = false; };
-  }, []);
-
-  if (isLoading) {
-    return (
-      <div className="w-10 h-10 flex items-center justify-center bg-theme-glass rounded-xl border border-theme-glass animate-pulse">
-        <Loader2 className="w-5 h-5 text-blue-500 animate-spin" />
-      </div>
-    );
-  }
-
-  if (error || !logoUrl) {
-    return (
-      <div className="w-10 h-10 flex items-center justify-center bg-theme-glass rounded-xl border border-theme-glass text-theme-orange">
-        <Bot className="w-5 h-5" />
-      </div>
-    );
-  }
-
   return (
-    <div className="relative group">
-      <div className="absolute inset-0 bg-blue-500/20 blur-lg rounded-full opacity-0 group-hover:opacity-100 transition-opacity" />
-      <img 
-        src={logoUrl} 
-        alt="Aetheris Swarm Logo" 
-        className="w-10 h-10 rounded-xl border border-theme-glass shadow-lg relative z-10"
-        referrerPolicy="no-referrer"
-      />
+    <div className="relative group w-10 h-10">
+      <div className="absolute inset-0 bg-blue-500/20 blur-lg rounded-full opacity-50 group-hover:opacity-100 transition-opacity" />
+      <div className="relative z-10 w-10 h-10 rounded-xl bg-theme-surface border border-theme-glass flex items-center justify-center overflow-hidden shadow-lg">
+        {/* Futuristic SVG Logo */}
+        <svg viewBox="0 0 100 100" className="w-7 h-7">
+          <defs>
+            <radialGradient id="coreGradient" cx="50%" cy="50%" r="50%">
+              <stop offset="0%" stopColor="#60A5FA" />
+              <stop offset="100%" stopColor="#2563EB" />
+            </radialGradient>
+            <filter id="glow">
+              <feGaussianBlur stdDeviation="2" result="blur" />
+              <feComposite in="SourceGraphic" in2="blur" operator="over" />
+            </filter>
+          </defs>
+          
+          {/* Orbiting nodes */}
+          <motion.g
+            animate={{ rotate: 360 }}
+            transition={{ duration: 10, repeat: Infinity, ease: "linear" }}
+            style={{ originX: "50px", originY: "50px" }}
+          >
+            <circle cx="20" cy="50" r="4" fill="#A855F7" filter="url(#glow)" />
+            <circle cx="80" cy="50" r="3" fill="#10B981" filter="url(#glow)" />
+            <circle cx="50" cy="20" r="3.5" fill="#3B82F6" filter="url(#glow)" />
+            <circle cx="50" cy="80" r="2.5" fill="#8B5CF6" filter="url(#glow)" />
+          </motion.g>
+          
+          <motion.g
+            animate={{ rotate: -360 }}
+            transition={{ duration: 15, repeat: Infinity, ease: "linear" }}
+            style={{ originX: "50px", originY: "50px" }}
+          >
+            <circle cx="35" cy="35" r="2" fill="#34D399" opacity="0.6" />
+            <circle cx="65" cy="65" r="2.5" fill="#60A5FA" opacity="0.6" />
+            <circle cx="35" cy="65" r="1.5" fill="#F472B6" opacity="0.6" />
+            <circle cx="65" cy="35" r="2" fill="#A78BFA" opacity="0.6" />
+          </motion.g>
+
+          {/* Central Core */}
+          <motion.circle 
+            cx="50" cy="50" r="12" 
+            fill="url(#coreGradient)" 
+            filter="url(#glow)"
+            animate={{ 
+              scale: [1, 1.1, 1],
+              opacity: [0.8, 1, 0.8]
+            }}
+            transition={{ 
+              duration: 3, 
+              repeat: Infinity, 
+              ease: "easeInOut" 
+            }}
+          />
+          
+          {/* Interconnecting lines */}
+          <path 
+            d="M50 50 L20 50 M50 50 L80 50 M50 50 L50 20 M50 50 L50 80" 
+            stroke="white" 
+            strokeWidth="0.5" 
+            opacity="0.2" 
+          />
+        </svg>
+      </div>
     </div>
   );
 }

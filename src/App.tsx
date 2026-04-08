@@ -17,9 +17,10 @@ import {
   BarChart3, 
   Target, 
   RefreshCw, 
-  Users, 
-  Zap, 
-  TrendingUp, 
+  Users,
+  Zap,
+  BookOpen,
+  TrendingUp,
   DollarSign,
   Heart,
   Menu,
@@ -85,6 +86,7 @@ import { AgentControls } from "./components/AgentControls";
 import { SidebarChatHistory } from "./components/SidebarChatHistory";
 import { BrandContextModal } from "./components/BrandContextModal";
 import { CampaignAssetViewer } from "./components/CampaignAssetViewer";
+import { BrandSummary } from "./components/BrandSummary";
 import Logo from "./components/Logo";
 import { ConfirmationModal } from "./components/ConfirmationModal";
 import { AgentIcon } from "./components/AgentIcon";
@@ -1178,250 +1180,273 @@ export default function App() {
         <div className="p-6 border-b border-theme-glass flex items-center justify-between bg-theme-surface/50">
           <Logo />
           <button onClick={() => setIsSidebarOpen(false)} className="btn-secondary p-2 md:hidden">
-            <X className="w-5 h-5 text-theme-secondary opacity-40" />
+            <X className="w-5 h-5 text-theme-secondary" />
           </button>
         </div>
-        <div className="flex-1 overflow-y-auto custom-scrollbar p-4 space-y-8">
+        <div className="flex-1 overflow-y-auto custom-scrollbar p-4 space-y-10">
+          <BrandSummary company={companies.find(c => c.id === activeCompanyId) || null} />
 
-          {/* Sidebar */}
-          <SidebarChatHistory 
-            currentChatId={currentChatId}
-            onSelectChat={handleSelectChat}
-            onDeleteChat={handleDeleteChat}
-            onDeleteAllChats={handleDeleteAllChats}
-            onNewChat={() => {
-              setCurrentChatId(null);
-              setMessages([]);
-              setLastVisibleDoc(null);
-              setHasMoreMessages(false);
-            }}
-            sessions={chatSessions}
-            isLoading={isHistoryLoading}
-          />
-
-          {/* Global Toggles */}
-          <div className="h-px bg-gradient-to-r from-transparent via-theme-glass to-transparent opacity-50" />
-
-          {/* Workflows */}
+          {/* Chat History Section */}
           <div className="space-y-4">
-            <h2 className="text-[11px] uppercase tracking-wider font-bold text-theme-secondary/50 px-2 flex items-center gap-2">
-              <div className="w-1 h-1 rounded-full bg-blue-500/50" />
-              Workflows Automatizados
-            </h2>
-            <div className="space-y-6">
-              {Object.entries(
-                WORKFLOWS.reduce((acc, wf) => {
-                  if (!acc[wf.category]) acc[wf.category] = [];
-                  acc[wf.category].push(wf);
-                  return acc;
-                }, {} as Record<string, Workflow[]>)
-              ).map(([category, workflows]) => (
-                <div key={category} className="space-y-2">
-                  <div className="flex items-center gap-2 px-2">
-                    <div className={cn("w-1 h-1 rounded-full", workflows[0].color)} />
-                    <span className="text-[10px] font-bold uppercase tracking-wider text-theme-secondary/40">{category}</span>
-                  </div>
-                  <div className="grid grid-cols-1 gap-1.5">
-                    {workflows.map((workflow) => (
-                      <motion.button 
-                        whileHover={{ x: 4 }}
-                        whileTap={{ scale: 0.98 }}
-                        key={workflow.id}
-                        onClick={() => handleStartWorkflow(workflow)}
-                        className={cn(
-                          "p-3 rounded-xl text-sm font-medium transition-all text-left flex items-center justify-between group border relative overflow-hidden",
-                          activeWorkflow?.id === workflow.id
-                            ? cn(workflow.color, "border-white/20 text-white shadow-md") 
-                            : "bg-theme-glass border-theme-glass text-theme-secondary hover:bg-theme-glass/80 hover:text-theme-primary"
-                        )}
-                      >
-                        <div className="flex flex-col min-w-0 relative z-10">
-                          <span className="truncate">{workflow.name}</span>
-                          <span className={cn(
-                            "text-[11px] opacity-60 truncate font-medium mt-0.5 tracking-tight",
-                            activeWorkflow?.id === workflow.id ? "text-white/90" : "text-theme-secondary"
-                          )}>{workflow.description}</span>
-                        </div>
-                        <div className="relative z-10">
-                          {activeWorkflow?.id === workflow.id ? (
-                            <Check className="w-3.5 h-3.5" />
-                          ) : (
-                            <Play className="w-3.5 h-3.5 opacity-0 group-hover:opacity-100 transition-opacity" />
-                          )}
-                        </div>
-                      </motion.button>
-                    ))}
-                  </div>
-                </div>
-              ))}
+            <div className="flex items-center gap-2 px-2">
+              <div className="w-6 h-6 rounded-lg bg-blue-500/10 flex items-center justify-center">
+                <History className="w-3.5 h-3.5 text-blue-500" />
+              </div>
+              <h2 className="text-[11px] uppercase tracking-wider font-bold text-theme-primary/80">Histórico de Inteligência</h2>
             </div>
+            <SidebarChatHistory 
+              currentChatId={currentChatId}
+              onSelectChat={handleSelectChat}
+              onDeleteChat={handleDeleteChat}
+              onDeleteAllChats={handleDeleteAllChats}
+              onNewChat={() => {
+                setCurrentChatId(null);
+                setMessages([]);
+                setLastVisibleDoc(null);
+                setHasMoreMessages(false);
+              }}
+              sessions={chatSessions}
+              isLoading={isHistoryLoading}
+            />
           </div>
 
-          <div className="h-px bg-gradient-to-r from-transparent via-theme-glass to-transparent opacity-50" />
+          <div className="h-px bg-gradient-to-r from-transparent via-theme-glass to-transparent opacity-30" />
 
-          {/* Framework Selector */}
-          <div className="space-y-3">
-            <h2 className="text-[11px] uppercase tracking-wider font-bold text-theme-secondary/50 px-2">Framework</h2>
-            <div className="grid grid-cols-1 gap-1.5">
-              {MARKETING_FRAMEWORKS.map((framework) => (
-                <motion.button 
-                  whileHover={{ x: 4 }}
-                  whileTap={{ scale: 0.98 }}
-                  key={framework.id}
-                  onClick={() => setSelectedFramework(selectedFramework === framework.id ? null : framework.id)}
-                  className={cn(
-                    "p-3 rounded-xl text-sm font-medium transition-all text-left flex items-center justify-between group border",
-                    selectedFramework === framework.id 
-                      ? "bg-blue-500 border-blue-500 text-white shadow-sm" 
-                      : "bg-theme-glass border-theme-glass text-theme-secondary hover:bg-theme-glass/80 hover:text-theme-primary"
-                  )}
-                >
-                  <div className="flex flex-col min-w-0">
-                    <span className="truncate">{framework.name}</span>
-                    <span className={cn(
-                      "text-[11px] opacity-70 truncate font-medium mt-0.5 tracking-tight",
-                      selectedFramework === framework.id ? "text-blue-50" : ""
-                    )}>{framework.description}</span>
-                  </div>
-                  {selectedFramework === framework.id && <Check className="w-3.5 h-3.5" />}
-                </motion.button>
-              ))}
-            </div>
-          </div>
-
-          <div className="h-px bg-gradient-to-r from-transparent via-theme-glass to-transparent opacity-50" />
-
-          {/* Skill Categories */}
-          <div className="flex items-center justify-between px-2 mb-3">
-            <h2 className="text-[11px] uppercase tracking-wider font-bold text-theme-secondary/50 flex items-center gap-2">
-              <div className="w-1 h-1 rounded-full bg-emerald-500/50" />
-              Agentes Especialistas
-            </h2>
-            <button 
-              onClick={() => setIsCustomAgentModalOpen(true)}
-              className="btn-secondary p-1.5"
-              title="Criar Agente Personalizado"
-            >
-              <Plus className="w-3.5 h-3.5" />
-            </button>
-          </div>
-          {Object.values(SkillCategory).map((category) => {
-            const isExpanded = expandedCategory === category;
-            const allSkills = [...MARKETING_SKILLS, ...customSkills];
-            const categorySkills = allSkills.filter(s => s.category === category);
+          {/* Workflows & Frameworks Group */}
+          <div className="space-y-8 bg-theme-card/20 p-5 rounded-[32px] border border-theme-glass/40 shadow-sm relative overflow-hidden">
+            <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-amber-500/20 via-emerald-500/20 to-amber-500/20 opacity-30" />
             
-            if (categorySkills.length === 0) return null;
-
-            return (
-              <div key={category} className="space-y-1">
-                <motion.button
-                  whileHover={{ x: 4 }}
-                  whileTap={{ scale: 0.98 }}
-                  onClick={() => setExpandedCategory(isExpanded ? null : category)}
-                  className={cn(
-                    "w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-sm font-bold transition-all border",
-                    isExpanded 
-                      ? "bg-theme-glass border-theme-glass text-theme-primary shadow-sm" 
-                      : "bg-transparent border-transparent text-theme-secondary hover:text-theme-primary hover:bg-theme-glass/50 hover:border-theme-glass"
-                  )}
-                >
-                  <div className="flex items-center gap-3">
-                    <div className={cn(
-                      "w-6 h-6 rounded-lg flex items-center justify-center transition-colors", 
-                      isExpanded ? CATEGORY_BG_LIGHT_COLORS[category] : "bg-theme-glass",
-                      CATEGORY_TEXT_COLORS[category]
-                    )}>
-                      {getCategoryIcon(category)}
+            {/* Workflows Section */}
+            <div className="space-y-4">
+              <div className="flex items-center gap-2 px-2">
+                <div className="w-7 h-7 rounded-xl bg-amber-500/10 flex items-center justify-center border border-amber-500/20 shadow-sm">
+                  <Zap className="w-4 h-4 text-amber-500" />
+                </div>
+                <h2 className="text-[11px] uppercase tracking-widest font-black text-theme-primary">Workflows</h2>
+              </div>
+              <div className="space-y-6">
+                {Object.entries(
+                  WORKFLOWS.reduce((acc, wf) => {
+                    if (!acc[wf.category]) acc[wf.category] = [];
+                    acc[wf.category].push(wf);
+                    return acc;
+                  }, {} as Record<string, Workflow[]>)
+                ).map(([category, workflows]) => (
+                  <div key={category} className="space-y-3">
+                    <div className="flex items-center gap-2 px-2">
+                      <div className="h-px flex-1 bg-theme-glass/30" />
+                      <span className="text-[8px] font-black uppercase tracking-widest text-theme-secondary opacity-50 whitespace-nowrap">{category}</span>
+                      <div className="h-px flex-1 bg-theme-glass/30" />
                     </div>
-                    {category}
-                  </div>
-                  <ChevronRight className={cn("w-3.5 h-3.5 transition-transform opacity-40", isExpanded ? "rotate-90" : "")} />
-                </motion.button>
-                
-                <AnimatePresence>
-                  {isExpanded && (
-                    <motion.div 
-                      initial={{ height: 0, opacity: 0 }}
-                      animate={{ height: 'auto', opacity: 1 }}
-                      exit={{ height: 0, opacity: 0 }}
-                      className="space-y-1 overflow-hidden"
-                    >
-                      {categorySkills.map((skill) => (
-                        <motion.button
-                          whileHover={{ x: 4 }}
+                    <div className="grid grid-cols-1 gap-2.5">
+                      {workflows.map((workflow) => (
+                        <motion.button 
+                          whileHover={{ x: 4, scale: 1.01 }}
                           whileTap={{ scale: 0.98 }}
-                          key={skill.id}
-                          onClick={() => {
-                            setSelectedSkill(skill);
-                            setActiveWorkflow(null);
-                            activeWorkflowRef.current = null;
-                            setWorkflowStepIndex(-1);
-                            if (window.innerWidth < 768) setIsSidebarOpen(false);
-                          }}
+                          key={workflow.id}
+                          onClick={() => handleStartWorkflow(workflow)}
                           className={cn(
-                            "w-full flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all group relative overflow-hidden text-sm font-bold border",
-                            selectedSkill?.id === skill.id 
-                              ? "bg-theme-glass border-theme-glass text-theme-primary shadow-sm" 
-                              : "bg-transparent border-transparent hover:bg-theme-glass/50 text-theme-secondary hover:text-theme-primary hover:border-theme-glass"
+                            "p-4 rounded-2xl text-sm font-bold transition-all text-left flex items-center justify-between group border relative overflow-hidden shadow-md",
+                            activeWorkflow?.id === workflow.id
+                              ? cn(workflow.color, "border-white/30 text-white shadow-lg") 
+                              : "bg-theme-card border-theme-glass text-theme-secondary hover:bg-theme-glass hover:text-theme-primary hover:border-theme-secondary/40"
                           )}
                         >
-                          <div className={cn(
-                            "w-7 h-7 rounded-md flex items-center justify-center transition-all overflow-hidden",
-                            selectedSkill?.id === skill.id ? CATEGORY_BG_LIGHT_COLORS[category] : "bg-theme-glass",
-                            CATEGORY_TEXT_COLORS[category]
-                          )}>
-                            <AgentIcon agent={skill} size="sm" className="w-full h-full" />
+                          <div className="flex flex-col min-w-0 relative z-10">
+                            <span className="truncate">{workflow.name}</span>
+                            <span className={cn(
+                              "text-[10px] opacity-80 truncate font-medium mt-1 tracking-tight leading-tight",
+                              activeWorkflow?.id === workflow.id ? "text-white/90" : "text-theme-secondary"
+                            )}>{workflow.description}</span>
                           </div>
-                          <div className="flex flex-col items-start min-w-0 flex-1">
-                            <div className="flex items-center gap-1.5 w-full">
-                              <span className="truncate">{skill.name}</span>
-                              {skill.isGoogleAI && (
-                                <div className="px-1 py-0.5 rounded-sm bg-blue-500/10 border border-blue-500/20 text-[7px] font-black text-blue-400 uppercase tracking-tighter shrink-0">
-                                  Google AI
-                                </div>
-                              )}
-                            </div>
-                            <span className="text-[11px] opacity-60 font-medium truncate w-full tracking-tight">{skill.persona}</span>
+                          <div className="relative z-10 ml-3 shrink-0">
+                            {activeWorkflow?.id === workflow.id ? (
+                              <Check className="w-4 h-4" />
+                            ) : (
+                              <div className="w-7 h-7 rounded-lg bg-theme-glass/50 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                                <Play className="w-3.5 h-3.5" />
+                              </div>
+                            )}
                           </div>
-                          {customSkills.some(s => s.id === skill.id) && (
-                            <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                              <button 
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  setEditingCustomAgent(skill);
-                                  setIsCustomAgentModalOpen(true);
-                                }}
-                                className="p-1.5 hover:bg-theme-glass/80 rounded-lg text-theme-secondary hover:text-theme-primary transition-all"
-                                title="Editar Agente"
-                              >
-                                <PenTool className="w-3 h-3" />
-                              </button>
-                              <button 
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  handleDeleteCustomAgent(skill.id);
-                                }}
-                                className="p-1.5 hover:bg-red-500/10 rounded-lg text-theme-secondary hover:text-red-500 transition-all"
-                                title="Excluir Agente"
-                              >
-                                <Trash2 className="w-3 h-3" />
-                              </button>
-                            </div>
-                          )}
-                          {selectedSkill?.id === skill.id && (
-                            <motion.div 
-                              layoutId="active-pill"
-                              className={cn("absolute left-0 top-0 bottom-0 w-0.5", CATEGORY_COLORS[category])}
-                            />
-                          )}
                         </motion.button>
                       ))}
-                    </motion.div>
-                  )}
-                </AnimatePresence>
+                    </div>
+                  </div>
+                ))}
               </div>
-            );
-          })}
+            </div>
+
+            <div className="h-px bg-theme-glass/40 mx-2" />
+
+            {/* Framework Section */}
+            <div className="space-y-4">
+              <div className="flex items-center gap-2 px-2">
+                <div className="w-7 h-7 rounded-xl bg-emerald-500/10 flex items-center justify-center border border-emerald-500/20 shadow-sm">
+                  <BookOpen className="w-4 h-4 text-emerald-500" />
+                </div>
+                <h2 className="text-[11px] uppercase tracking-widest font-black text-theme-primary">Frameworks</h2>
+              </div>
+              <div className="grid grid-cols-1 gap-2.5">
+                {MARKETING_FRAMEWORKS.map((framework) => (
+                  <motion.button 
+                    whileHover={{ x: 4, scale: 1.01 }}
+                    whileTap={{ scale: 0.98 }}
+                    key={framework.id}
+                    onClick={() => setSelectedFramework(selectedFramework === framework.id ? null : framework.id)}
+                    className={cn(
+                      "p-4 rounded-2xl text-sm font-bold transition-all text-left flex items-center justify-between group border shadow-md",
+                      selectedFramework === framework.id 
+                        ? "bg-emerald-600 border-emerald-400 text-white shadow-lg" 
+                        : "bg-theme-card border-theme-glass text-theme-secondary hover:bg-theme-glass hover:text-theme-primary hover:border-theme-secondary/40"
+                    )}
+                  >
+                    <div className="flex flex-col min-w-0">
+                      <span className="truncate">{framework.name}</span>
+                      <span className={cn(
+                        "text-[10px] opacity-80 truncate font-medium mt-1 tracking-tight leading-tight",
+                        selectedFramework === framework.id ? "text-emerald-50" : "text-theme-secondary"
+                      )}>{framework.description}</span>
+                    </div>
+                    {selectedFramework === framework.id && <Check className="w-4 h-4 ml-3 shrink-0" />}
+                  </motion.button>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          <div className="h-px bg-gradient-to-r from-transparent via-theme-glass to-transparent opacity-30" />
+
+          {/* Specialist Agents Group */}
+          <div className="space-y-4 bg-theme-card/20 p-5 rounded-[32px] border border-theme-glass/40 shadow-sm relative overflow-hidden">
+            <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-purple-500/20 via-blue-500/20 to-purple-500/20 opacity-30" />
+            
+            <div className="flex items-center justify-between px-2">
+              <div className="flex items-center gap-2">
+                <div className="w-7 h-7 rounded-xl bg-purple-500/10 flex items-center justify-center border border-purple-500/20 shadow-sm">
+                  <Users className="w-4 h-4 text-purple-500" />
+                </div>
+                <h2 className="text-[11px] uppercase tracking-widest font-black text-theme-primary">Agentes</h2>
+              </div>
+              <button 
+                onClick={() => setIsCustomAgentModalOpen(true)}
+                className="btn-secondary p-2 rounded-xl shadow-sm"
+                title="Criar Agente Personalizado"
+              >
+                <Plus className="w-4 h-4" />
+              </button>
+            </div>
+            
+            <div className="space-y-2.5">
+              {Object.values(SkillCategory).map((category) => {
+                const isExpanded = expandedCategory === category;
+                const allSkills = [...MARKETING_SKILLS, ...customSkills];
+                const categorySkills = allSkills.filter(s => s.category === category);
+                
+                if (categorySkills.length === 0) return null;
+
+                return (
+                  <div key={category} className="space-y-2">
+                    <motion.button
+                      whileHover={{ x: 4 }}
+                      whileTap={{ scale: 0.98 }}
+                      onClick={() => setExpandedCategory(isExpanded ? null : category)}
+                      className={cn(
+                        "w-full flex items-center justify-between px-4 py-3.5 rounded-2xl text-sm font-black transition-all border shadow-md",
+                        isExpanded 
+                          ? "bg-theme-glass border-theme-secondary/40 text-theme-primary shadow-lg" 
+                          : "bg-theme-card border-theme-glass text-theme-secondary hover:text-theme-primary hover:bg-theme-glass hover:border-theme-secondary/30"
+                      )}
+                    >
+                      <div className="flex items-center gap-3">
+                        <div className={cn(
+                          "w-7 h-7 rounded-xl flex items-center justify-center transition-all shadow-sm border border-theme-glass/20", 
+                          isExpanded ? CATEGORY_BG_LIGHT_COLORS[category] : "bg-theme-glass",
+                          CATEGORY_TEXT_COLORS[category]
+                        )}>
+                          {getCategoryIcon(category)}
+                        </div>
+                        <span className="truncate tracking-tight">{category}</span>
+                      </div>
+                      <ChevronRight className={cn("w-4 h-4 transition-transform opacity-40", isExpanded ? "rotate-90" : "")} />
+                    </motion.button>
+                    
+                    <AnimatePresence>
+                      {isExpanded && (
+                        <motion.div 
+                          initial={{ height: 0, opacity: 0 }}
+                          animate={{ height: 'auto', opacity: 1 }}
+                          exit={{ height: 0, opacity: 0 }}
+                          className="space-y-2 overflow-hidden pl-3 pr-1 py-1"
+                        >
+                          {categorySkills.map((skill) => (
+                            <motion.button
+                              whileHover={{ x: 4 }}
+                              whileTap={{ scale: 0.98 }}
+                              key={skill.id}
+                              onClick={() => {
+                                setSelectedSkill(skill);
+                                setActiveWorkflow(null);
+                                activeWorkflowRef.current = null;
+                                setWorkflowStepIndex(-1);
+                                if (window.innerWidth < 768) setIsSidebarOpen(false);
+                              }}
+                              className={cn(
+                                "w-full flex items-center gap-3 px-4 py-3.5 rounded-2xl transition-all group relative overflow-hidden text-xs font-black border shadow-sm",
+                                selectedSkill?.id === skill.id 
+                                  ? "bg-theme-glass border-theme-secondary/40 text-theme-primary shadow-md" 
+                                  : "bg-theme-card/60 border-theme-glass text-theme-secondary hover:bg-theme-glass hover:text-theme-primary hover:border-theme-secondary/30"
+                              )}
+                            >
+                              <div className={cn(
+                                "w-7 h-7 rounded-lg flex items-center justify-center transition-all overflow-hidden shrink-0 shadow-sm border border-theme-glass/20",
+                                selectedSkill?.id === skill.id ? CATEGORY_BG_LIGHT_COLORS[category] : "bg-theme-glass",
+                                CATEGORY_TEXT_COLORS[category]
+                              )}>
+                                <AgentIcon agent={skill} size="sm" className="w-full h-full" />
+                              </div>
+                              <div className="flex flex-col items-start min-w-0 flex-1">
+                                <div className="flex items-center gap-1.5 w-full">
+                                  <span className="truncate tracking-tight">{skill.name}</span>
+                                  {skill.isGoogleAI && (
+                                    <div className="px-1.5 py-0.5 rounded-md bg-blue-500/10 border border-blue-500/20 text-[7px] font-black text-blue-400 uppercase tracking-widest shrink-0 shadow-sm">
+                                      AI
+                                    </div>
+                                  )}
+                                </div>
+                              </div>
+                              {customSkills.some(s => s.id === skill.id) && (
+                                <div className="flex items-center gap-1.5 opacity-0 group-hover:opacity-100 transition-opacity">
+                                  <button 
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      setEditingCustomAgent(skill);
+                                      setIsCustomAgentModalOpen(true);
+                                    }}
+                                    className="p-1.5 hover:bg-theme-glass/80 rounded-lg text-theme-secondary hover:text-theme-primary transition-all shadow-sm"
+                                  >
+                                    <PenTool className="w-3 h-3" />
+                                  </button>
+                                  <button 
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      handleDeleteCustomAgent(skill.id);
+                                    }}
+                                    className="p-1.5 hover:bg-red-500/10 rounded-lg text-theme-secondary hover:text-red-500 transition-all shadow-sm"
+                                  >
+                                    <Trash2 className="w-3 h-3" />
+                                  </button>
+                                </div>
+                              )}
+                            </motion.button>
+                          ))}
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
         </div>
 
         <div className="p-4 border-t border-theme-glass space-y-4 bg-theme-surface/50">
@@ -1431,7 +1456,7 @@ export default function App() {
             </div>
             <div className="flex flex-col overflow-hidden">
               <span className="text-xs font-bold text-theme-primary truncate">{user?.displayName || "Usuário"}</span>
-              <span className="text-[10px] font-bold text-theme-secondary opacity-40 truncate">{user?.email}</span>
+              <span className="text-[10px] font-bold text-theme-secondary truncate">{user?.email}</span>
             </div>
             <button 
               onClick={handleLogout}
@@ -1442,7 +1467,7 @@ export default function App() {
           </div>
 
           <div className="flex items-center justify-between px-2">
-            <span className="text-[10px] font-bold text-theme-secondary uppercase tracking-wider opacity-40">v2.1.0-PRO</span>
+            <span className="text-[10px] font-bold text-theme-secondary uppercase tracking-wider">v2.1.0-PRO</span>
             <div className="flex gap-1.5">
               <div className="w-1 h-1 bg-emerald-500 rounded-full animate-pulse" />
               <div className="w-1 h-1 bg-emerald-500 rounded-full animate-pulse delay-75" />
@@ -1618,7 +1643,7 @@ export default function App() {
                     </div>
                     <div className="flex-1 min-w-0">
                       <h4 className="text-xs font-black uppercase tracking-widest text-theme-blue mb-1">Dica de Operações</h4>
-                      <p className="text-[11px] text-theme-secondary opacity-60 leading-relaxed">
+                      <p className="text-[11px] text-theme-secondary leading-relaxed">
                         Transforme suas tarefas em rotinas arrastando-as para os blocos de tempo. Isso ajuda a automatizar seu foco e garantir que nada seja esquecido.
                       </p>
                     </div>
@@ -1714,7 +1739,7 @@ export default function App() {
                             >
                               <div className="flex items-center gap-2 mb-1">
                                 <FileText className="w-3 h-3 opacity-40" />
-                                <span className="text-[8px] font-black uppercase tracking-widest opacity-60">{art.type}</span>
+                                <span className="text-[8px] font-black uppercase tracking-widest">{art.type}</span>
                               </div>
                               <p className="text-[11px] font-bold truncate">{art.title}</p>
                             </button>

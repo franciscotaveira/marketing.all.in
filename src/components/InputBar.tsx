@@ -102,8 +102,8 @@ export function InputBar({
         </div>
         
           <div className={cn(
-            "group bg-theme-glass border border-theme-glass rounded-3xl p-2 transition-all focus-within:border-blue-500/40 flex flex-col md:flex-row items-end gap-2 relative shadow-sm",
-            isLoading && "animate-pulse border-blue-500/20"
+            "group bg-theme-card border border-theme-glass rounded-3xl p-3 transition-all focus-within:border-blue-500/50 flex flex-col md:flex-row items-end gap-2 relative shadow-xl",
+            isLoading && "animate-pulse border-blue-500/30"
           )}>
           
           <AnimatePresence>
@@ -116,7 +116,7 @@ export function InputBar({
                 className="absolute bottom-full left-0 mb-4 w-72 bg-theme-surface border border-theme-glass rounded-2xl shadow-2xl overflow-hidden z-50"
               >
                 <div className="p-3 border-b border-theme-glass bg-theme-surface/50">
-                  <span className="text-[11px] font-bold uppercase tracking-wider text-theme-secondary opacity-40">Comandos Disponíveis</span>
+                  <span className="text-[11px] font-bold uppercase tracking-wider text-theme-secondary">Comandos Disponíveis</span>
                 </div>
                 <div className="max-h-80 overflow-y-auto custom-scrollbar">
                   {filteredCommands.map((cmd, index) => (
@@ -133,7 +133,7 @@ export function InputBar({
                       </div>
                       <div className="flex-1">
                         <div className="text-sm font-bold text-theme-primary leading-none mb-1">{cmd.label}</div>
-                        <div className="text-[11px] font-bold text-theme-secondary uppercase tracking-wider opacity-40">/{cmd.id}</div>
+                        <div className="text-[11px] font-bold text-theme-secondary uppercase tracking-wider">/{cmd.id}</div>
                       </div>
                     </button>
                   ))}
@@ -148,7 +148,7 @@ export function InputBar({
             onPaste={handlePaste}
             onKeyDown={handleInputKeyDown}
             placeholder={selectedSkill ? `Pergunte sobre ${selectedSkill.name.toLowerCase()}...` : "Qual é o seu desafio de marketing hoje? (Digite '/' para comandos)"}
-            className="flex-1 w-full bg-transparent rounded-2xl p-4 focus:outline-none transition-all min-h-[60px] max-h-[300px] resize-none font-medium text-base md:text-sm text-theme-primary placeholder:text-theme-secondary/20"
+            className="flex-1 w-full bg-transparent rounded-2xl p-4 focus:outline-none transition-all min-h-[60px] max-h-[300px] resize-none font-medium text-base md:text-sm text-theme-primary placeholder:text-theme-secondary/50"
           />
             <div className="flex gap-1.5 md:gap-3 pb-1 pr-1 w-full md:w-auto overflow-x-auto custom-scrollbar justify-end items-center">
               <input 
@@ -257,7 +257,7 @@ export function InputBar({
             </div>
           </div>
         </div>
-        <div className="mt-4 flex flex-wrap items-center justify-center gap-2 md:gap-6 opacity-20 text-center">
+        <div className="mt-4 flex flex-wrap items-center justify-center gap-2 md:gap-6 opacity-60 text-center">
           <p className="text-[10px] md:text-[11px] font-bold uppercase tracking-wider text-theme-primary">Gemini 3 Flash Intelligence</p>
           <div className="hidden md:block w-1 h-1 bg-theme-primary rounded-full opacity-20" />
           <p className="text-[10px] md:text-[11px] font-bold uppercase tracking-wider text-theme-primary">Enxame de Marketing v2.1 PRO</p>

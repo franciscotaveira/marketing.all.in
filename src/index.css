@@ -21,14 +21,14 @@
 }
 
 :root {
-  --bg-main: #09090b;
-  --bg-surface: #18181b;
-  --bg-gradient: linear-gradient(to bottom, #09090b, #000000);
-  --text-primary: #fafafa;
-  --text-secondary: #a1a1aa;
-  --glass-bg: rgba(24, 24, 27, 0.6);
-  --glass-border: rgba(63, 63, 70, 0.4);
-  --glass-shadow: rgba(0, 0, 0, 0.5);
+  --bg-main: #0a0a0c;
+  --bg-surface: #121217;
+  --bg-gradient: linear-gradient(to bottom, #0a0a0c, #121217);
+  --text-primary: #ffffff;
+  --text-secondary: #e4e4e7;
+  --glass-bg: rgba(18, 18, 23, 0.95);
+  --glass-border: #3f3f46;
+  --glass-shadow: rgba(0, 0, 0, 0.8);
   --card-bg: #18181b;
   --card-hover-bg: #27272a;
   --accent-blue: #3b82f6;
@@ -40,14 +40,14 @@
 }
 
 .light {
-  --bg-main: #f4f4f5;
-  --bg-surface: #ffffff;
-  --bg-gradient: linear-gradient(to bottom, #f4f4f5, #ffffff);
-  --text-primary: #09090b;
-  --text-secondary: #71717a;
-  --glass-bg: rgba(255, 255, 255, 0.6);
-  --glass-border: rgba(228, 228, 231, 0.8);
-  --glass-shadow: rgba(0, 0, 0, 0.05);
+  --bg-main: #ffffff;
+  --bg-surface: #fafafa;
+  --bg-gradient: linear-gradient(to bottom, #ffffff, #f4f4f5);
+  --text-primary: #000000;
+  --text-secondary: #3f3f46;
+  --glass-bg: rgba(255, 255, 255, 0.9);
+  --glass-border: #e4e4e7;
+  --glass-shadow: rgba(0, 0, 0, 0.1);
   --card-bg: #ffffff;
   --card-hover-bg: #f4f4f5;
   --accent-blue: #2563eb;
@@ -60,7 +60,7 @@
 
 @layer base {
   body {
-    @apply antialiased overflow-hidden transition-colors duration-500 font-sans font-normal leading-relaxed tracking-normal;
+    @apply antialiased overflow-hidden transition-colors duration-500 font-sans font-medium leading-relaxed tracking-tight;
     background: var(--bg-gradient);
     background-attachment: fixed;
     color: var(--text-primary);
@@ -68,7 +68,7 @@
   }
 
   h1, h2, h3, h4, h5, h6 {
-    @apply font-display font-semibold tracking-tight;
+    @apply font-display font-bold tracking-tighter;
   }
 }
 
@@ -76,36 +76,35 @@
   .glass-panel {
     @apply rounded-3xl transition-all duration-300 backdrop-blur-xl;
     background: var(--glass-bg);
-    border: 1px solid var(--glass-border);
-    box-shadow: 0 8px 32px 0 var(--glass-shadow);
+    border: 1px solid #3f3f46;
+    box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.4);
   }
 
   .glass-card {
     @apply rounded-2xl transition-all duration-200 backdrop-blur-lg;
     background: var(--card-bg);
-    border: 1px solid var(--glass-border);
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    border: 1px solid #3f3f46;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
   }
 
   .glass-card:hover {
-    @apply -translate-y-0.5 shadow-md;
+    @apply -translate-y-0.5 shadow-lg;
     background: var(--card-hover-bg);
-    border-color: var(--text-secondary);
+    border-color: #52525b;
   }
 
   /* Professional Button Hierarchy */
   .btn-primary {
     @apply flex items-center justify-center gap-2 px-5 py-2.5 rounded-[10px] font-bold text-xs tracking-wide uppercase transition-all active:scale-95;
-    background: #18181b;
-    color: #ffffff;
-    border: 1px solid #27272a;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+    background: #ffffff;
+    color: #000000;
+    border: 1px solid #ffffff;
+    box-shadow: 0 4px 12px rgba(255, 255, 255, 0.1);
   }
 
   .btn-primary:hover {
-    @apply -translate-y-0.5 shadow-xl brightness-125;
-    background: #27272a;
-    border-color: #3f3f46;
+    @apply -translate-y-0.5 shadow-xl brightness-90;
+    background: #f4f4f5;
   }
 
   .btn-orange {
@@ -136,16 +135,16 @@
 
   .btn-secondary {
     @apply flex items-center justify-center gap-2 px-5 py-2.5 rounded-[10px] font-bold text-xs tracking-wide uppercase transition-all active:scale-95 border;
-    background: var(--bg-surface);
-    border-color: var(--glass-border);
-    color: var(--text-primary);
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+    background: #27272a;
+    border-color: #52525b;
+    color: #ffffff;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
   }
 
   .btn-secondary:hover {
-    @apply -translate-y-0.5 shadow-md;
-    background: var(--card-hover-bg);
-    border-color: var(--text-secondary);
+    @apply -translate-y-0.5 shadow-lg brightness-110;
+    background: #3f3f46;
+    border-color: #71717a;
   }
 
   .btn-ghost {
@@ -207,15 +206,15 @@
   .liquid-glass-panel {
     @apply rounded-[2.5rem] transition-all duration-500 backdrop-blur-3xl;
     background: var(--bg-surface);
-    border: 1px solid var(--glass-border);
-    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+    border: 1px solid #3f3f46;
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.6);
   }
 
   .liquid-glass-card {
     @apply rounded-3xl transition-all duration-300 backdrop-blur-2xl;
     background: var(--glass-bg);
-    border: 1px solid var(--glass-border);
-    box-shadow: 0 10px 30px -5px rgba(0, 0, 0, 0.3);
+    border: 1px solid #3f3f46;
+    box-shadow: 0 10px 30px -5px rgba(0, 0, 0, 0.4);
   }
 
   .liquid-glass-card:hover {

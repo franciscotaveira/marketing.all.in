@@ -287,7 +287,7 @@ export default function NotificationCenter() {
                     <div className="w-16 h-16 bg-theme-glass rounded-2xl flex items-center justify-center mb-4 border border-theme-glass">
                       <BellOff className="w-8 h-8 text-theme-secondary opacity-20" />
                     </div>
-                    <p className="text-[11px] text-theme-secondary font-bold uppercase tracking-wider opacity-40">Nenhuma notificação</p>
+                    <p className="text-[11px] text-theme-secondary font-bold uppercase tracking-wider">Nenhuma notificação</p>
                   </div>
                 )}
               </div>

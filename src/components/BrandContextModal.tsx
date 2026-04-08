@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { X, Building2, Plus, Trash2, Save, Globe, Target, Users, Briefcase, Loader2 } from 'lucide-react';
+import { X, Building2, Plus, Trash2, Save, Globe, Target, Users, Briefcase, Loader2, Mic, Trophy, Heart, Sparkles } from 'lucide-react';
 import { Company } from '../types';
 import { cn } from '../lib/utils';
 
@@ -30,8 +30,14 @@ export const BrandContextModal: React.FC<BrandContextModalProps> = ({
     website: '',
     industry: '',
     targetAudience: '',
+    toneOfVoice: '',
+    brandValues: [],
+    primaryGoals: [],
     context: ''
   });
+
+  const [newValue, setNewValue] = useState('');
+  const [newGoal, setNewGoal] = useState('');
 
   const handleSave = async () => {
     if (!formData.name || !formData.context || isSubmitting) return;
@@ -40,26 +46,46 @@ export const BrandContextModal: React.FC<BrandContextModalProps> = ({
     // Simulate a small delay for visual feedback
     await new Promise(resolve => setTimeout(resolve, 600));
 
+    const companyData: Company = {
+      id: editingId || Math.random().toString(36).substr(2, 9),
+      name: formData.name!,
+      website: formData.website || '',
+      industry: formData.industry || '',
+      targetAudience: formData.targetAudience || '',
+      toneOfVoice: formData.toneOfVoice || '',
+      brandValues: formData.brandValues || [],
+      primaryGoals: formData.primaryGoals || [],
+      context: formData.context!,
+      createdAt: editingId ? (companies.find(c => c.id === editingId)?.createdAt || new Date().toISOString()) : new Date().toISOString()
+    };
+
     if (editingId) {
-      setCompanies(prev => prev.map(c => c.id === editingId ? { ...c, ...formData } as Company : c));
+      setCompanies(prev => prev.map(c => c.id === editingId ? companyData : c));
       setEditingId(null);
     } else {
-      const newCompany: Company = {
-        id: Math.random().toString(36).substr(2, 9),
-        name: formData.name!,
-        website: formData.website || '',
-        industry: formData.industry || '',
-        targetAudience: formData.targetAudience || '',
-        context: formData.context!,
-        createdAt: new Date().toISOString()
-      };
-      setCompanies(prev => [...prev, newCompany]);
-      if (!activeCompanyId) setActiveCompanyId(newCompany.id);
+      setCompanies(prev => [...prev, companyData]);
+      if (!activeCompanyId) setActiveCompanyId(companyData.id);
     }
 
-    setFormData({ name: '', website: '', industry: '', targetAudience: '', context: '' });
+    setFormData({ name: '', website: '', industry: '', targetAudience: '', toneOfVoice: '', brandValues: [], primaryGoals: [], context: '' });
     setIsAdding(false);
     setIsSubmitting(false);
+  };
+
+  const addTag = (field: 'brandValues' | 'primaryGoals', value: string, setter: (v: string) => void) => {
+    if (!value.trim()) return;
+    setFormData(prev => ({
+      ...prev,
+      [field]: [...(prev[field] || []), value.trim()]
+    }));
+    setter('');
+  };
+
+  const removeTag = (field: 'brandValues' | 'primaryGoals', index: number) => {
+    setFormData(prev => ({
+      ...prev,
+      [field]: (prev[field] || []).filter((_, i) => i !== index)
+    }));
   };
 
   const handleDelete = (id: string, e: React.MouseEvent) => {
@@ -70,7 +96,11 @@ export const BrandContextModal: React.FC<BrandContextModalProps> = ({
 
   const startEdit = (company: Company, e: React.MouseEvent) => {
     e.stopPropagation();
-    setFormData(company);
+    setFormData({
+      ...company,
+      brandValues: company.brandValues || [],
+      primaryGoals: company.primaryGoals || []
+    });
     setEditingId(company.id);
     setIsAdding(true);
   };
@@ -175,14 +205,86 @@ export const BrandContextModal: React.FC<BrandContextModalProps> = ({
 
                   <div className="space-y-2">
                     <label className="text-[11px] font-bold uppercase tracking-wider text-theme-secondary opacity-40 flex items-center gap-2">
-                      <Briefcase className="w-3 h-3" />
+                      <Mic className="w-3 h-3" />
+                      Tom de Voz
+                    </label>
+                    <input
+                      type="text"
+                      value={formData.toneOfVoice}
+                      onChange={e => setFormData(prev => ({ ...prev, toneOfVoice: e.target.value }))}
+                      placeholder="Ex: Profissional, mas acessível; Técnico e direto..."
+                      className="w-full bg-theme-glass border border-theme-glass rounded-xl px-4 py-3 text-sm text-theme-primary placeholder:text-theme-secondary/20 focus:outline-none focus:border-blue-500/50 transition-all font-medium"
+                    />
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div className="space-y-2">
+                      <label className="text-[11px] font-bold uppercase tracking-wider text-theme-secondary opacity-40 flex items-center gap-2">
+                        <Heart className="w-3 h-3" />
+                        Valores da Marca
+                      </label>
+                      <div className="flex gap-2">
+                        <input
+                          type="text"
+                          value={newValue}
+                          onChange={e => setNewValue(e.target.value)}
+                          onKeyDown={e => e.key === 'Enter' && addTag('brandValues', newValue, setNewValue)}
+                          placeholder="Adicionar valor..."
+                          className="flex-1 bg-theme-glass border border-theme-glass rounded-xl px-4 py-2 text-sm text-theme-primary placeholder:text-theme-secondary/20 focus:outline-none focus:border-blue-500/50 transition-all font-medium"
+                        />
+                        <button onClick={() => addTag('brandValues', newValue, setNewValue)} className="p-2 bg-theme-glass border border-theme-glass rounded-xl hover:bg-blue-500 hover:text-white transition-all">
+                          <Plus className="w-4 h-4" />
+                        </button>
+                      </div>
+                      <div className="flex flex-wrap gap-2 pt-1">
+                        {formData.brandValues?.map((val, i) => (
+                          <span key={i} className="flex items-center gap-1.5 px-2.5 py-1 bg-blue-500/10 text-blue-500 rounded-lg text-[10px] font-bold uppercase tracking-wider border border-blue-500/20">
+                            {val}
+                            <button onClick={() => removeTag('brandValues', i)}><X className="w-3 h-3" /></button>
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+
+                    <div className="space-y-2">
+                      <label className="text-[11px] font-bold uppercase tracking-wider text-theme-secondary opacity-40 flex items-center gap-2">
+                        <Trophy className="w-3 h-3" />
+                        Objetivos Principais
+                      </label>
+                      <div className="flex gap-2">
+                        <input
+                          type="text"
+                          value={newGoal}
+                          onChange={e => setNewGoal(e.target.value)}
+                          onKeyDown={e => e.key === 'Enter' && addTag('primaryGoals', newGoal, setNewGoal)}
+                          placeholder="Adicionar objetivo..."
+                          className="flex-1 bg-theme-glass border border-theme-glass rounded-xl px-4 py-2 text-sm text-theme-primary placeholder:text-theme-secondary/20 focus:outline-none focus:border-blue-500/50 transition-all font-medium"
+                        />
+                        <button onClick={() => addTag('primaryGoals', newGoal, setNewGoal)} className="p-2 bg-theme-glass border border-theme-glass rounded-xl hover:bg-blue-500 hover:text-white transition-all">
+                          <Plus className="w-4 h-4" />
+                        </button>
+                      </div>
+                      <div className="flex flex-wrap gap-2 pt-1">
+                        {formData.primaryGoals?.map((goal, i) => (
+                          <span key={i} className="flex items-center gap-1.5 px-2.5 py-1 bg-emerald-500/10 text-emerald-500 rounded-lg text-[10px] font-bold uppercase tracking-wider border border-emerald-500/20">
+                            {goal}
+                            <button onClick={() => removeTag('primaryGoals', i)}><X className="w-3 h-3" /></button>
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="space-y-2">
+                    <label className="text-[11px] font-bold uppercase tracking-wider text-theme-secondary opacity-40 flex items-center gap-2">
+                      <Sparkles className="w-3 h-3" />
                       Contexto & Proposta de Valor
                     </label>
                     <textarea
                       value={formData.context}
                       onChange={e => setFormData(prev => ({ ...prev, context: e.target.value }))}
-                      placeholder="Descreva a empresa, seus produtos, tom de voz e diferenciais..."
-                      className="w-full h-40 bg-theme-glass border border-theme-glass rounded-xl px-4 py-3 text-sm text-theme-primary placeholder:text-theme-secondary/20 focus:outline-none focus:border-blue-500/50 transition-all resize-none custom-scrollbar font-medium"
+                      placeholder="Descreva a empresa, seus produtos e diferenciais..."
+                      className="w-full h-32 bg-theme-glass border border-theme-glass rounded-xl px-4 py-3 text-sm text-theme-primary placeholder:text-theme-secondary/20 focus:outline-none focus:border-blue-500/50 transition-all resize-none custom-scrollbar font-medium"
                     />
                   </div>
 

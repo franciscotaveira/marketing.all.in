@@ -30,32 +30,34 @@ export const ChatMessage = memo(function ChatMessage({
       )}
     >
       <div className={cn(
-        "w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 mt-1 shadow-sm transition-transform group-hover:scale-105",
-        msg.role === "user" ? "bg-theme-primary text-theme-main" : "bg-blue-500 text-white"
+        "w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 mt-1 shadow-md transition-all group-hover:scale-105 border",
+        msg.role === "user" 
+          ? "bg-theme-card border-theme-glass text-theme-primary" 
+          : "bg-blue-600 border-blue-400/30 text-white"
       )}>
         {msg.role === "user" ? <User className="w-5 h-5" /> : <Bot className="w-5 h-5" />}
       </div>
       <div className={cn(
-        "max-w-[85%] min-w-0 space-y-2",
-        msg.role === "user" ? "text-right items-end" : "text-left items-start"
+        "max-w-[85%] min-w-0 space-y-2 flex flex-col",
+        msg.role === "user" ? "items-end" : "items-start"
       )}>
         {msg.role === "ai" && (
-          <div className="flex items-center gap-2.5 mb-1">
-            <span className="text-[11px] font-bold uppercase tracking-wider text-blue-500">
+          <div className="flex items-center gap-2.5 mb-1 px-1">
+            <span className="text-[11px] font-black uppercase tracking-widest text-blue-500">
               {msg.agentName}
             </span>
             {msg.agentTier && (
-              <span className="text-[9px] px-2 py-0.5 bg-blue-500/10 text-blue-500 rounded-full font-bold tracking-wider border border-blue-500/20 uppercase">
+              <span className="text-[9px] px-2 py-0.5 bg-blue-500/10 text-blue-400 rounded-full font-black tracking-widest border border-blue-500/20 uppercase">
                 {msg.agentTier}
               </span>
             )}
           </div>
         )}
         <div className={cn(
-          "p-4 rounded-2xl shadow-sm relative transition-all group-hover:shadow-md overflow-hidden break-words border",
+          "p-5 rounded-2xl shadow-sm relative transition-all group-hover:shadow-lg overflow-hidden break-words border",
           msg.role === "user" 
-            ? "bg-theme-surface text-theme-primary rounded-tr-none border-theme-glass" 
-            : "bg-theme-surface border-theme-glass text-theme-primary rounded-tl-none"
+            ? "bg-theme-card text-theme-primary rounded-tr-none border-theme-glass/60" 
+            : "bg-theme-surface border-theme-glass text-theme-primary rounded-tl-none shadow-inner"
         )}>
           <div className={cn(
             "prose prose-sm max-w-none",
@@ -76,7 +78,7 @@ export const ChatMessage = memo(function ChatMessage({
           
           {msg.artifacts && msg.artifacts.length > 0 && (
             <div className="mt-4 pt-4 border-t border-theme-glass space-y-3">
-              <p className="text-[11px] font-bold uppercase tracking-wider text-theme-secondary opacity-40">Artefatos Gerados</p>
+              <p className="text-[11px] font-bold uppercase tracking-wider text-theme-secondary">Artefatos Gerados</p>
               <div className="flex flex-wrap gap-2">
                 {msg.artifacts.map((art) => (
                   <button 

@@ -193,15 +193,15 @@ export default function RoutinePlanner() {
   };
 
   return (
-    <div className="flex flex-col h-full bg-theme-surface border border-theme-glass rounded-3xl overflow-hidden shadow-sm">
+    <div className="flex flex-col h-full bg-theme-surface border border-theme-glass rounded-3xl overflow-hidden shadow-lg">
       {/* Header */}
-      <div className="p-6 border-b border-theme-glass flex flex-col sm:flex-row sm:items-center justify-between gap-6 bg-theme-surface/50">
+      <div className="p-6 border-b border-theme-glass flex flex-col sm:flex-row sm:items-center justify-between gap-6 bg-theme-card/30">
         <div className="space-y-1">
           <h2 className="text-xl font-bold tracking-tight text-theme-primary flex items-center gap-3">
             <Target className="w-5 h-5 text-orange-500" />
             Planejamento de <span className="text-orange-500">Rotinas</span>
           </h2>
-          <p className="text-theme-secondary text-[11px] font-medium uppercase tracking-wider opacity-60">Otimize seu tempo com blocos de foco.</p>
+          <p className="text-theme-secondary text-[11px] font-medium uppercase tracking-wider">Otimize seu tempo com blocos de foco.</p>
         </div>
         <button 
           onClick={() => setIsAddingRoutine(true)}
@@ -224,7 +224,7 @@ export default function RoutinePlanner() {
                   <Flame className="w-5 h-5 text-orange-500" />
                 </div>
                 <div className="min-w-0">
-                  <div className="text-[10px] font-bold uppercase tracking-wider text-theme-secondary opacity-60 truncate">Total de Blocos</div>
+                  <div className="text-[10px] font-bold uppercase tracking-wider text-theme-secondary truncate">Total de Blocos</div>
                   <div className="text-lg font-bold text-theme-primary">{routines.length}</div>
                 </div>
               </div>
@@ -233,7 +233,7 @@ export default function RoutinePlanner() {
                   <Clock className="w-5 h-5 text-blue-500" />
                 </div>
                 <div className="min-w-0">
-                  <div className="text-[10px] font-bold uppercase tracking-wider text-theme-secondary opacity-60 truncate">Horas Planejadas</div>
+                  <div className="text-[10px] font-bold uppercase tracking-wider text-theme-secondary truncate">Horas Planejadas</div>
                   <div className="text-lg font-bold text-theme-primary">--h</div>
                 </div>
               </div>
@@ -242,7 +242,7 @@ export default function RoutinePlanner() {
                   <Zap className="w-5 h-5 text-emerald-500" />
                 </div>
                 <div className="min-w-0">
-                  <div className="text-[10px] font-bold uppercase tracking-wider text-theme-secondary opacity-60 truncate">Foco Semanal</div>
+                  <div className="text-[10px] font-bold uppercase tracking-wider text-theme-secondary truncate">Foco Semanal</div>
                   <div className="text-lg font-bold text-theme-primary">85%</div>
                 </div>
               </div>
@@ -414,26 +414,34 @@ export default function RoutinePlanner() {
                       }}
                       onDragEnd={() => setDraggedTaskId(null)}
                       className={cn(
-                        "p-4 bg-theme-surface border border-theme-glass rounded-2xl cursor-grab active:cursor-grabbing hover:border-orange-500/30 transition-all group/task shadow-sm hover:scale-[1.02]",
+                        "p-5 bg-theme-card border border-theme-glass rounded-2xl cursor-grab active:cursor-grabbing hover:border-orange-500/40 transition-all group/task shadow-md hover:scale-[1.01] hover:shadow-lg",
                         draggedTaskId === task.id && "opacity-40"
                       )}
                     >
-                      <div className="flex items-center justify-between mb-2">
+                      <div className="flex items-center justify-between mb-3">
                         <div className="flex items-center gap-2">
                           <div className={cn(
-                            "w-2 h-2 rounded-full",
-                            task.priority === 'high' ? 'bg-rose-500' : 
-                            task.priority === 'medium' ? 'bg-amber-500' : 'bg-blue-500'
+                            "w-2.5 h-2.5 rounded-full shadow-sm",
+                            task.priority === 'high' ? 'bg-rose-500 shadow-rose-500/20' : 
+                            task.priority === 'medium' ? 'bg-amber-500 shadow-amber-500/20' : 'bg-blue-500 shadow-blue-500/20'
                           )} />
-                          <span className="text-[9px] font-bold uppercase tracking-wider text-theme-secondary opacity-40">
+                          <span className="text-[9px] font-black uppercase tracking-widest text-theme-secondary opacity-60">
                             {task.priority}
                           </span>
                         </div>
-                        {task.reminderAt && <Bell className="w-3 h-3 text-orange-500 animate-pulse" />}
+                        {task.reminderAt && (
+                          <div className="flex items-center gap-1.5 px-2 py-0.5 bg-orange-500/10 rounded-full border border-orange-500/20">
+                            <Bell className="w-2.5 h-2.5 text-orange-500 animate-pulse" />
+                            <span className="text-[8px] font-bold text-orange-500 uppercase">Alerta</span>
+                          </div>
+                        )}
                       </div>
-                      <h4 className="text-sm font-medium text-theme-primary line-clamp-2 leading-tight group-hover/task:text-orange-500 transition-colors">
+                      <h4 className="text-sm font-bold text-theme-primary line-clamp-2 leading-tight group-hover/task:text-orange-500 transition-colors mb-2">
                         {task.title}
                       </h4>
+                      <div className="flex items-center gap-2 mt-auto pt-2 border-t border-theme-glass/30">
+                        <span className="text-[9px] font-mono text-theme-secondary opacity-50">#TASK-{task.id.slice(-4)}</span>
+                      </div>
                     </div>
                   ))
                 )}
@@ -497,7 +505,7 @@ export default function RoutinePlanner() {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                 <div className="space-y-6">
                   <div>
-                    <label className="text-[11px] font-bold uppercase tracking-wider text-theme-secondary opacity-40 mb-2 block">Título da Rotina</label>
+                    <label className="text-[11px] font-bold uppercase tracking-wider text-theme-secondary mb-2 block">Título da Rotina</label>
                     <input 
                       autoFocus
                       placeholder="Ex: Foco Profundo - Marketing"
@@ -508,7 +516,7 @@ export default function RoutinePlanner() {
                   </div>
 
                   <div>
-                    <label className="text-[11px] font-bold uppercase tracking-wider text-theme-secondary opacity-40 mb-2 block">Frequência</label>
+                    <label className="text-[11px] font-bold uppercase tracking-wider text-theme-secondary mb-2 block">Frequência</label>
                     <div className="flex gap-2 bg-theme-glass/40 p-1 rounded-xl border border-theme-glass/60">
                       {(['daily', 'weekly', 'monthly'] as const).map((freq) => (
                         <button
@@ -549,7 +557,7 @@ export default function RoutinePlanner() {
                   </div>
 
                   <div>
-                    <label className="text-[11px] font-bold uppercase tracking-wider text-theme-secondary opacity-40 mb-2 block">Agente Responsável</label>
+                    <label className="text-[11px] font-bold uppercase tracking-wider text-theme-secondary mb-2 block">Agente Responsável</label>
                     <select 
                       value={newRoutine.agentId}
                       onChange={(e) => setNewRoutine({ ...newRoutine, agentId: e.target.value })}

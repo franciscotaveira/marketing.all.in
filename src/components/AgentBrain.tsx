@@ -432,7 +432,7 @@ ${selectedMemory.content}`;
                   ))}
                 </div>
                 <div className="flex items-center justify-between mt-4">
-                  <p className="text-[9px] text-theme-secondary opacity-40 font-black uppercase tracking-widest">
+                  <p className="text-[9px] text-theme-secondary font-black uppercase tracking-widest">
                     {new Date(memory.createdAt).toLocaleDateString()}
                   </p>
                   <ChevronRight className={cn("w-3 h-3 transition-all", selectedMemory?.id === memory.id ? "text-theme-blue translate-x-0" : "text-theme-secondary opacity-10 -translate-x-2 group-hover:translate-x-0 group-hover:text-theme-secondary/40")} />
@@ -628,7 +628,7 @@ ${selectedMemory.content}`;
                         <div className="absolute inset-0 bg-gradient-to-b from-white/30 to-transparent" />
                       </motion.div>
                     </div>
-                    <p className="text-[11px] text-theme-secondary opacity-60 font-black uppercase tracking-widest max-w-[280px] mx-auto leading-relaxed italic">
+                    <p className="text-[11px] text-theme-secondary font-black uppercase tracking-widest max-w-[280px] mx-auto leading-relaxed italic">
                       {neuralPulse > 70 ? "ALERTA: Otimizando conexões neurais críticas..." : "SISTEMA OPERANDO EM CAPACIDADE NOMINAL ESTÁVEL."}
                     </p>
                   </div>
@@ -726,7 +726,7 @@ ${selectedMemory.content}`;
                     className="p-10 liquid-glass-card relative overflow-hidden group bg-theme-glass/20 border border-theme-glass"
                   >
                     <div className="absolute top-0 left-0 w-1.5 h-full bg-theme-emerald shadow-[0_0_25px_rgba(16,185,129,0.9)]" />
-                    <h3 className="text-[11px] font-black text-theme-secondary opacity-50 uppercase tracking-[0.3em] mb-6">ROI Projetado</h3>
+                    <h3 className="text-[11px] font-black text-theme-secondary uppercase tracking-[0.3em] mb-6">ROI Projetado</h3>
                     <p className="text-6xl font-black text-theme-emerald tracking-tighter italic">+24.5%</p>
                     <div className="mt-6 flex items-center gap-3 text-[10px] font-black text-theme-emerald opacity-80 uppercase tracking-widest">
                       <Activity className="w-4 h-4" /> Tendência de Alta
@@ -737,7 +737,7 @@ ${selectedMemory.content}`;
                     className="p-10 liquid-glass-card relative overflow-hidden group bg-theme-glass/20 border border-theme-glass"
                   >
                     <div className="absolute top-0 left-0 w-1.5 h-full bg-theme-blue shadow-[0_0_25px_rgba(59,130,246,0.9)]" />
-                    <h3 className="text-[11px] font-black text-theme-secondary opacity-50 uppercase tracking-[0.3em] mb-6">Conversão Estimada</h3>
+                    <h3 className="text-[11px] font-black text-theme-secondary uppercase tracking-[0.3em] mb-6">Conversão Estimada</h3>
                     <p className="text-6xl font-black text-theme-blue tracking-tighter italic">3.8%</p>
                     <div className="mt-6 flex items-center gap-3 text-[10px] font-black text-theme-blue opacity-80 uppercase tracking-widest">
                       <Zap className="w-4 h-4" /> Otimizado por IA
@@ -748,7 +748,7 @@ ${selectedMemory.content}`;
                     className="p-10 liquid-glass-card relative overflow-hidden group bg-theme-glass/20 border border-theme-glass"
                   >
                     <div className="absolute top-0 left-0 w-1.5 h-full bg-theme-orange shadow-[0_0_25px_rgba(249,115,22,0.9)]" />
-                    <h3 className="text-[11px] font-black text-theme-secondary opacity-50 uppercase tracking-[0.3em] mb-6">Custo por Aquisição</h3>
+                    <h3 className="text-[11px] font-black text-theme-secondary uppercase tracking-[0.3em] mb-6">Custo por Aquisição</h3>
                     <p className="text-6xl font-black text-theme-orange tracking-tighter italic drop-shadow-[0_0_20px_rgba(251,146,60,0.5)]">$12.40</p>
                     <div className="mt-6 flex items-center gap-3 text-[10px] font-black text-theme-orange opacity-80 uppercase tracking-widest">
                       <Database className="w-4 h-4" /> Base Histórica
@@ -783,7 +783,7 @@ ${selectedMemory.content}`;
                   </div>
                   <div className="space-y-8">
                     <div className="space-y-3">
-                      <label className="text-[11px] font-black uppercase tracking-[0.3em] text-theme-secondary opacity-40 ml-4">Título do Insight</label>
+                      <label className="text-[11px] font-black uppercase tracking-[0.3em] text-theme-secondary ml-4">Título do Insight</label>
                       <input 
                         type="text" 
                         placeholder="Ex: Padrão de Conversão Meta Ads Q1"
@@ -793,7 +793,7 @@ ${selectedMemory.content}`;
                       />
                     </div>
                     <div className="space-y-3">
-                      <label className="text-[11px] font-black uppercase tracking-[0.3em] text-theme-secondary opacity-40 ml-4">Conteúdo Estratégico</label>
+                      <label className="text-[11px] font-black uppercase tracking-[0.3em] text-theme-secondary ml-4">Conteúdo Estratégico</label>
                       <textarea 
                         placeholder="Descreva o insight técnico aqui (Markdown suportado)..."
                         className="w-full bg-theme-glass border border-theme-glass rounded-2xl p-6 text-theme-primary h-64 focus:outline-none focus:border-theme-blue/50 transition-all resize-none font-medium text-base shadow-inner leading-relaxed"

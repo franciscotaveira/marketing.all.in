@@ -69,7 +69,7 @@ const PRIORITY_ICONS = {
 };
 
 const STATUS_COLUMNS = [
-  { id: 'todo', name: 'A Fazer', icon: Circle, color: 'text-theme-secondary opacity-60' },
+  { id: 'todo', name: 'A Fazer', icon: Circle, color: 'text-theme-secondary' },
   { id: 'in-progress', name: 'Em Progresso', icon: Clock, color: 'text-blue-500' },
   { id: 'done', name: 'Concluído', icon: CheckCircle2, color: 'text-emerald-500' },
 ];
@@ -563,26 +563,26 @@ export default function TaskBoard() {
   };
 
   return (
-    <div className="flex flex-col h-full bg-theme-surface border border-theme-glass rounded-3xl overflow-hidden shadow-sm">
+    <div className="flex flex-col h-full bg-theme-surface border border-theme-glass rounded-3xl overflow-hidden shadow-lg">
       {/* Header */}
-      <div className="p-6 border-b border-theme-glass flex flex-col md:flex-row md:items-center justify-between gap-4 bg-theme-surface/50">
+      <div className="p-6 border-b border-theme-glass flex flex-col md:flex-row md:items-center justify-between gap-4 bg-theme-card/30">
         <div className="space-y-1">
           <h2 className="text-xl font-bold tracking-tight text-theme-primary flex items-center gap-3">
             <LayoutGrid className="w-5 h-5 text-blue-500" />
             Gestão de <span className="text-blue-500">Operações</span>
           </h2>
-          <p className="text-theme-secondary text-[11px] font-medium uppercase tracking-wider opacity-60">Centralize suas tarefas e rotinas estratégicas.</p>
+          <p className="text-theme-secondary text-[11px] font-medium uppercase tracking-wider">Centralize suas tarefas e rotinas estratégicas.</p>
         </div>
 
         <div className="flex flex-wrap items-center justify-start md:justify-end gap-3 w-full md:w-auto">
           <div className="relative group w-full sm:w-auto flex-1 sm:flex-none">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-theme-secondary opacity-40 group-focus-within:text-blue-500 transition-colors" />
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-theme-secondary group-focus-within:text-blue-500 transition-colors" />
             <input 
               type="text"
               placeholder="Buscar tarefas..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-10 pr-10 py-2 bg-theme-glass border border-theme-glass rounded-xl text-sm text-theme-primary placeholder:text-theme-secondary/40 focus:outline-none focus:border-blue-500/30 transition-all w-full sm:w-64"
+              className="pl-10 pr-10 py-2.5 bg-theme-card border border-theme-glass rounded-xl text-sm text-theme-primary placeholder:text-theme-secondary/60 focus:outline-none focus:border-blue-500/50 focus:ring-1 focus:ring-blue-500/20 transition-all w-full sm:w-64 shadow-inner"
             />
             {searchQuery && (
               <button 
@@ -765,7 +765,7 @@ export default function TaskBoard() {
                       Otimização de Prioridades
                       <span className="px-1.5 py-0.5 bg-blue-500/10 border border-blue-500/20 rounded text-[8px] font-black text-blue-500 uppercase tracking-widest">Google AI</span>
                     </h3>
-                    <p className="text-[10px] text-theme-secondary uppercase tracking-widest font-black opacity-60">Sugestão da Inteligência Artificial</p>
+                    <p className="text-[10px] text-theme-secondary uppercase tracking-widest font-black">Sugestão da Inteligência Artificial</p>
                   </div>
                 </div>
                 <button 
@@ -807,7 +807,7 @@ export default function TaskBoard() {
                               </span>
                             </div>
                           </div>
-                          <p className="text-[11px] text-theme-secondary opacity-70 leading-relaxed">{item.reason}</p>
+                          <p className="text-[11px] text-theme-secondary leading-relaxed">{item.reason}</p>
                         </div>
                       </div>
                     );
@@ -1009,7 +1009,7 @@ export default function TaskBoard() {
                           whileHover={{ scale: 1.01 }}
                           whileTap={{ scale: 0.99 }}
                           className={cn(
-                            "group bg-theme-glass border border-theme-glass rounded-2xl p-4 hover:border-theme-glass/80 hover:bg-theme-glass/80 transition-all cursor-grab active:cursor-grabbing relative overflow-hidden shadow-xl",
+                            "group bg-theme-card border border-theme-glass rounded-2xl p-5 hover:border-theme-secondary/30 hover:bg-theme-glass transition-all cursor-grab active:cursor-grabbing relative overflow-hidden shadow-lg",
                             draggedTaskId === task.id && "opacity-40 grayscale-[0.5]",
                             isOverdue(task.dueDate) && task.status !== 'done' && "border-theme-rose/50 bg-theme-rose/5 shadow-[0_0_20px_rgba(244,63,94,0.15)]"
                           )}
@@ -1056,7 +1056,7 @@ export default function TaskBoard() {
                               </div>
                               <h3 className={cn(
                                 "text-sm font-bold leading-tight group-hover:text-theme-primary transition-colors",
-                                task.status === 'done' ? "text-theme-secondary opacity-50 line-through" : "text-theme-primary"
+                                task.status === 'done' ? "text-theme-secondary line-through" : "text-theme-primary"
                               )}>
                                 {task.title}
                               </h3>
@@ -1480,7 +1480,7 @@ export default function TaskBoard() {
 
               <div className="space-y-6">
                 <div className="space-y-2">
-                  <label className="text-[10px] font-black uppercase tracking-widest text-theme-secondary opacity-40 px-1">Título</label>
+                  <label className="text-[10px] font-black uppercase tracking-widest text-theme-secondary px-1">Título</label>
                   <input 
                     value={editingTask.title}
                     onChange={(e) => setEditingTask({ ...editingTask, title: e.target.value })}
@@ -1489,7 +1489,7 @@ export default function TaskBoard() {
                 </div>
 
                 <div className="space-y-2">
-                  <label className="text-[10px] font-black uppercase tracking-widest text-theme-secondary opacity-40 px-1">Descrição</label>
+                  <label className="text-[10px] font-black uppercase tracking-widest text-theme-secondary px-1">Descrição</label>
                   <textarea 
                     value={editingTask.description || ''}
                     onChange={(e) => setEditingTask({ ...editingTask, description: e.target.value })}
@@ -1498,7 +1498,7 @@ export default function TaskBoard() {
                 </div>
 
                 <div className="space-y-2">
-                  <label className="text-[10px] font-black uppercase tracking-widest text-theme-secondary opacity-40 px-1">Tags (separadas por vírgula)</label>
+                  <label className="text-[10px] font-black uppercase tracking-widest text-theme-secondary px-1">Tags (separadas por vírgula)</label>
                   <input 
                     value={editingTask.tags?.join(', ') || ''}
                     onChange={(e) => setEditingTask({ ...editingTask, tags: e.target.value.split(',').map(t => t.trim()) })}
@@ -1532,7 +1532,7 @@ export default function TaskBoard() {
                   </div>
 
                   <div className="space-y-2">
-                    <label className="text-[10px] font-black uppercase tracking-widest text-theme-secondary opacity-40 px-1">Prazo</label>
+                    <label className="text-[10px] font-black uppercase tracking-widest text-theme-secondary px-1">Prazo</label>
                     <input 
                       type="date"
                       value={editingTask.dueDate ? (editingTask.dueDate instanceof Timestamp ? editingTask.dueDate.toDate().toISOString().split('T')[0] : new Date(editingTask.dueDate).toISOString().split('T')[0]) : ''}
@@ -1544,7 +1544,7 @@ export default function TaskBoard() {
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div className="space-y-2">
-                    <label className="text-[10px] font-black uppercase tracking-widest text-theme-secondary opacity-40 px-1">Notificação (Lembrete)</label>
+                    <label className="text-[10px] font-black uppercase tracking-widest text-theme-secondary px-1">Notificação (Lembrete)</label>
                     <input 
                       type="datetime-local"
                       value={editingTask.reminderAt ? (editingTask.reminderAt instanceof Timestamp ? editingTask.reminderAt.toDate().toISOString().slice(0, 16) : new Date(editingTask.reminderAt).toISOString().slice(0, 16)) : ''}
@@ -1554,7 +1554,7 @@ export default function TaskBoard() {
                   </div>
 
                   <div className="space-y-2">
-                    <label className="text-[10px] font-black uppercase tracking-widest text-theme-secondary opacity-40 px-1">Imagem em Anexo</label>
+                    <label className="text-[10px] font-black uppercase tracking-widest text-theme-secondary px-1">Imagem em Anexo</label>
                     <label className="cursor-pointer block">
                       <div className="w-full bg-theme-glass border border-theme-glass rounded-xl px-4 py-2 text-xs text-theme-secondary opacity-60 hover:border-theme-blue/50 transition-all flex items-center justify-between">
                         <span className="truncate">{editingTask.image ? 'Imagem selecionada' : 'Anexar imagem'}</span>
@@ -1589,7 +1589,7 @@ export default function TaskBoard() {
 
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                     <div className="space-y-2">
-                      <label className="text-[10px] font-black uppercase tracking-widest text-theme-secondary opacity-40 px-1">Atribuído a</label>
+                      <label className="text-[10px] font-black uppercase tracking-widest text-theme-secondary px-1">Atribuído a</label>
                       <div className="relative">
                         <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-theme-secondary opacity-30" />
                         <input 
@@ -1602,7 +1602,7 @@ export default function TaskBoard() {
                     </div>
 
                     <div className="space-y-2">
-                      <label className="text-[10px] font-black uppercase tracking-widest text-theme-secondary opacity-40 px-1">Status</label>
+                      <label className="text-[10px] font-black uppercase tracking-widest text-theme-secondary px-1">Status</label>
                       <div className="flex gap-1 bg-theme-glass p-1 rounded-xl border border-theme-glass">
                         {STATUS_COLUMNS.map((col) => (
                           <button

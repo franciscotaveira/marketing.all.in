@@ -52,6 +52,9 @@ export interface Company {
   website?: string;
   industry?: string;
   targetAudience?: string;
+  toneOfVoice?: string;
+  brandValues?: string[];
+  primaryGoals?: string[];
   createdAt?: any;
 }
 
