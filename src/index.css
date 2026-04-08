@@ -95,7 +95,7 @@
 
   /* Professional Button Hierarchy */
   .btn-primary {
-    @apply flex items-center justify-center gap-2 px-5 py-2.5 rounded-[10px] font-bold text-xs tracking-wide uppercase transition-all active:scale-95;
+    @apply flex items-center justify-center gap-2.5 px-6 py-3 rounded-[12px] font-black text-[11px] tracking-[0.15em] uppercase transition-all active:scale-95 leading-none;
     background: #ffffff;
     color: #000000;
     border: 1px solid #ffffff;
@@ -108,7 +108,7 @@
   }
 
   .btn-orange {
-    @apply flex items-center justify-center gap-2 px-5 py-2.5 rounded-[10px] font-bold text-xs tracking-wide uppercase transition-all active:scale-95;
+    @apply flex items-center justify-center gap-2.5 px-6 py-3 rounded-[12px] font-black text-[11px] tracking-[0.15em] uppercase transition-all active:scale-95 leading-none;
     background: #f97316;
     color: #ffffff;
     border: 1px solid rgba(255, 255, 255, 0.1);
@@ -121,7 +121,7 @@
   }
 
   .btn-rose {
-    @apply flex items-center justify-center gap-2 px-5 py-2.5 rounded-[10px] font-bold text-xs tracking-wide uppercase transition-all active:scale-95;
+    @apply flex items-center justify-center gap-2.5 px-6 py-3 rounded-[12px] font-black text-[11px] tracking-[0.15em] uppercase transition-all active:scale-95 leading-none;
     background: #f43f5e;
     color: #ffffff;
     border: 1px solid rgba(255, 255, 255, 0.1);
@@ -134,7 +134,7 @@
   }
 
   .btn-secondary {
-    @apply flex items-center justify-center gap-2 px-5 py-2.5 rounded-[10px] font-bold text-xs tracking-wide uppercase transition-all active:scale-95 border;
+    @apply flex items-center justify-center gap-2.5 px-6 py-3 rounded-[12px] font-black text-[11px] tracking-[0.15em] uppercase transition-all active:scale-95 border leading-none;
     background: #27272a;
     border-color: #52525b;
     color: #ffffff;
@@ -148,7 +148,7 @@
   }
 
   .btn-ghost {
-    @apply flex items-center justify-center gap-2 px-4 py-2 rounded-[10px] font-bold text-xs tracking-wide uppercase transition-all active:scale-95;
+    @apply flex items-center justify-center gap-2.5 px-5 py-2.5 rounded-[12px] font-black text-[11px] tracking-[0.15em] uppercase transition-all active:scale-95 leading-none;
     background: transparent;
     border: none;
     color: var(--text-secondary);
@@ -160,7 +160,7 @@
 
   /* Interactive Chips for Filters */
   .chip {
-    @apply flex items-center gap-2 px-3 py-1.5 rounded-full font-bold text-[11px] uppercase tracking-wider transition-all border active:scale-95 shadow-sm;
+    @apply flex items-center gap-2 px-4 py-2 rounded-full font-black text-[10px] uppercase tracking-[0.2em] transition-all border active:scale-95 shadow-sm leading-none;
     background: var(--bg-surface);
     border-color: var(--glass-border);
     color: var(--text-secondary);

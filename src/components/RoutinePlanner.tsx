@@ -197,11 +197,11 @@ export default function RoutinePlanner() {
       {/* Header */}
       <div className="p-6 border-b border-theme-glass flex flex-col sm:flex-row sm:items-center justify-between gap-6 bg-theme-card/30">
         <div className="space-y-1">
-          <h2 className="text-xl font-bold tracking-tight text-theme-primary flex items-center gap-3">
+          <h2 className="text-xl font-black tracking-tighter text-theme-primary flex items-center gap-3 uppercase italic">
             <Target className="w-5 h-5 text-orange-500" />
             Planejamento de <span className="text-orange-500">Rotinas</span>
           </h2>
-          <p className="text-theme-secondary text-[11px] font-medium uppercase tracking-wider">Otimize seu tempo com blocos de foco.</p>
+          <p className="text-theme-secondary text-[10px] font-black uppercase tracking-[0.15em] opacity-40">Otimize seu tempo com blocos de foco.</p>
         </div>
         <button 
           onClick={() => setIsAddingRoutine(true)}

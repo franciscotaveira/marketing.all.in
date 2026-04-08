@@ -1212,113 +1212,125 @@ export default function App() {
 
           <div className="h-px bg-gradient-to-r from-transparent via-theme-glass to-transparent opacity-30" />
 
-          {/* Workflows & Frameworks Group */}
-          <div className="space-y-8 bg-theme-card/20 p-5 rounded-[32px] border border-theme-glass/40 shadow-sm relative overflow-hidden">
-            <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-amber-500/20 via-emerald-500/20 to-amber-500/20 opacity-30" />
+          {/* Workflows Section */}
+          <div className="space-y-4 bg-theme-card/30 p-5 rounded-[32px] border border-amber-500/10 shadow-sm relative overflow-hidden">
+            <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-amber-500/0 via-amber-500/40 to-amber-500/0" />
             
-            {/* Workflows Section */}
-            <div className="space-y-4">
-              <div className="flex items-center gap-2 px-2">
-                <div className="w-7 h-7 rounded-xl bg-amber-500/10 flex items-center justify-center border border-amber-500/20 shadow-sm">
-                  <Zap className="w-4 h-4 text-amber-500" />
-                </div>
-                <h2 className="text-[11px] uppercase tracking-widest font-black text-theme-primary">Workflows</h2>
+            <div className="flex items-center gap-2 px-2">
+              <div className="w-7 h-7 rounded-xl bg-amber-500/10 flex items-center justify-center border border-amber-500/20 shadow-sm">
+                <Zap className="w-4 h-4 text-amber-500" />
               </div>
-              <div className="space-y-6">
-                {Object.entries(
-                  WORKFLOWS.reduce((acc, wf) => {
-                    if (!acc[wf.category]) acc[wf.category] = [];
-                    acc[wf.category].push(wf);
-                    return acc;
-                  }, {} as Record<string, Workflow[]>)
-                ).map(([category, workflows]) => (
-                  <div key={category} className="space-y-3">
-                    <div className="flex items-center gap-2 px-2">
-                      <div className="h-px flex-1 bg-theme-glass/30" />
-                      <span className="text-[8px] font-black uppercase tracking-widest text-theme-secondary opacity-50 whitespace-nowrap">{category}</span>
-                      <div className="h-px flex-1 bg-theme-glass/30" />
-                    </div>
-                    <div className="grid grid-cols-1 gap-2.5">
-                      {workflows.map((workflow) => (
-                        <motion.button 
-                          whileHover={{ x: 4, scale: 1.01 }}
-                          whileTap={{ scale: 0.98 }}
-                          key={workflow.id}
-                          onClick={() => handleStartWorkflow(workflow)}
-                          className={cn(
-                            "p-4 rounded-2xl text-sm font-bold transition-all text-left flex items-center justify-between group border relative overflow-hidden shadow-md",
-                            activeWorkflow?.id === workflow.id
-                              ? cn(workflow.color, "border-white/30 text-white shadow-lg") 
-                              : "bg-theme-card border-theme-glass text-theme-secondary hover:bg-theme-glass hover:text-theme-primary hover:border-theme-secondary/40"
-                          )}
-                        >
-                          <div className="flex flex-col min-w-0 relative z-10">
-                            <span className="truncate">{workflow.name}</span>
-                            <span className={cn(
-                              "text-[10px] opacity-80 truncate font-medium mt-1 tracking-tight leading-tight",
-                              activeWorkflow?.id === workflow.id ? "text-white/90" : "text-theme-secondary"
-                            )}>{workflow.description}</span>
-                          </div>
-                          <div className="relative z-10 ml-3 shrink-0">
-                            {activeWorkflow?.id === workflow.id ? (
-                              <Check className="w-4 h-4" />
-                            ) : (
-                              <div className="w-7 h-7 rounded-lg bg-theme-glass/50 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                                <Play className="w-3.5 h-3.5" />
-                              </div>
-                            )}
-                          </div>
-                        </motion.button>
-                      ))}
-                    </div>
-                  </div>
-                ))}
-              </div>
+              <h2 className="text-[11px] uppercase tracking-widest font-black text-theme-primary">Workflows</h2>
             </div>
+            
+            <div className="space-y-6 relative">
+              {/* Vertical Connector Line */}
+              <div className="absolute left-[13px] top-2 bottom-2 w-px bg-gradient-to-b from-amber-500/40 via-amber-500/10 to-transparent" />
 
-            <div className="h-px bg-theme-glass/40 mx-2" />
-
-            {/* Framework Section */}
-            <div className="space-y-4">
-              <div className="flex items-center gap-2 px-2">
-                <div className="w-7 h-7 rounded-xl bg-emerald-500/10 flex items-center justify-center border border-emerald-500/20 shadow-sm">
-                  <BookOpen className="w-4 h-4 text-emerald-500" />
+              {Object.entries(
+                WORKFLOWS.reduce((acc, wf) => {
+                  if (!acc[wf.category]) acc[wf.category] = [];
+                  acc[wf.category].push(wf);
+                  return acc;
+                }, {} as Record<string, Workflow[]>)
+              ).map(([category, workflows]) => (
+                <div key={category} className="space-y-3 relative pl-6">
+                  <div className="absolute left-[-17px] top-1.5 w-2 h-2 rounded-full bg-amber-500 border-2 border-theme-main z-10 shadow-[0_0_10px_rgba(245,158,11,0.5)]" />
+                  
+                  <div className="flex items-center gap-2">
+                    <span className="text-[8px] font-black uppercase tracking-widest text-amber-500/60 whitespace-nowrap">{category}</span>
+                    <div className="h-px flex-1 bg-gradient-to-r from-amber-500/20 to-transparent" />
+                  </div>
+                  
+                  <div className="grid grid-cols-1 gap-2">
+                    {workflows.map((workflow) => (
+                      <motion.button 
+                        whileHover={{ x: 4, scale: 1.01 }}
+                        whileTap={{ scale: 0.98 }}
+                        key={workflow.id}
+                        onClick={() => handleStartWorkflow(workflow)}
+                        className={cn(
+                          "p-4 rounded-2xl text-sm font-bold transition-all text-left flex items-center justify-between group border relative overflow-hidden shadow-sm",
+                          activeWorkflow?.id === workflow.id
+                            ? cn(workflow.color, "border-white/30 text-white shadow-lg") 
+                            : "bg-theme-card/40 border-theme-glass text-theme-secondary hover:bg-theme-glass hover:text-theme-primary hover:border-amber-500/30"
+                        )}
+                      >
+                        <div className="flex flex-col min-w-0 relative z-10 justify-center">
+                          <span className="truncate font-black uppercase tracking-tighter text-xs leading-none">{workflow.name}</span>
+                          <span className={cn(
+                            "text-[9px] opacity-60 truncate font-bold mt-1.5 tracking-[0.15em] uppercase leading-none",
+                            activeWorkflow?.id === workflow.id ? "text-white/90" : "text-theme-secondary"
+                          )}>{workflow.description}</span>
+                        </div>
+                        <div className="relative z-10 ml-3 shrink-0">
+                          {activeWorkflow?.id === workflow.id ? (
+                            <Check className="w-4 h-4" />
+                          ) : (
+                            <div className="w-7 h-7 rounded-lg bg-theme-glass/50 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                              <Play className="w-3.5 h-3.5" />
+                            </div>
+                          )}
+                        </div>
+                      </motion.button>
+                    ))}
+                  </div>
                 </div>
-                <h2 className="text-[11px] uppercase tracking-widest font-black text-theme-primary">Frameworks</h2>
+              ))}
+            </div>
+          </div>
+
+          <div className="h-px bg-gradient-to-r from-transparent via-theme-glass to-transparent opacity-30" />
+
+          {/* Framework Section */}
+          <div className="space-y-4 bg-emerald-500/5 p-5 rounded-[32px] border border-emerald-500/10 shadow-sm relative overflow-hidden">
+            <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-emerald-500/0 via-emerald-500/40 to-emerald-500/0" />
+            
+            <div className="flex items-center gap-2 px-2">
+              <div className="w-7 h-7 rounded-xl bg-emerald-500/10 flex items-center justify-center border border-emerald-500/20 shadow-sm">
+                <BookOpen className="w-4 h-4 text-emerald-500" />
               </div>
-              <div className="grid grid-cols-1 gap-2.5">
-                {MARKETING_FRAMEWORKS.map((framework) => (
-                  <motion.button 
-                    whileHover={{ x: 4, scale: 1.01 }}
-                    whileTap={{ scale: 0.98 }}
-                    key={framework.id}
-                    onClick={() => setSelectedFramework(selectedFramework === framework.id ? null : framework.id)}
-                    className={cn(
-                      "p-4 rounded-2xl text-sm font-bold transition-all text-left flex items-center justify-between group border shadow-md",
-                      selectedFramework === framework.id 
-                        ? "bg-emerald-600 border-emerald-400 text-white shadow-lg" 
-                        : "bg-theme-card border-theme-glass text-theme-secondary hover:bg-theme-glass hover:text-theme-primary hover:border-theme-secondary/40"
-                    )}
-                  >
-                    <div className="flex flex-col min-w-0">
-                      <span className="truncate">{framework.name}</span>
-                      <span className={cn(
-                        "text-[10px] opacity-80 truncate font-medium mt-1 tracking-tight leading-tight",
-                        selectedFramework === framework.id ? "text-emerald-50" : "text-theme-secondary"
-                      )}>{framework.description}</span>
+              <h2 className="text-[11px] uppercase tracking-widest font-black text-theme-primary">Frameworks</h2>
+            </div>
+            
+            <div className="grid grid-cols-1 gap-2.5">
+              {MARKETING_FRAMEWORKS.map((framework) => (
+                <motion.button 
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                  key={framework.id}
+                  onClick={() => setSelectedFramework(selectedFramework === framework.id ? null : framework.id)}
+                  className={cn(
+                    "p-4 rounded-2xl text-sm font-bold transition-all text-left flex items-center justify-between group border shadow-sm",
+                    selectedFramework === framework.id 
+                      ? "bg-emerald-600 border-emerald-400 text-white shadow-lg" 
+                      : "bg-theme-card/60 border-theme-glass text-theme-secondary hover:bg-emerald-500/10 hover:text-emerald-400 hover:border-emerald-500/30"
+                  )}
+                >
+                  <div className="flex flex-col min-w-0 justify-center">
+                    <span className="truncate font-black uppercase tracking-tighter text-xs leading-none">{framework.name}</span>
+                    <span className={cn(
+                      "text-[9px] opacity-60 truncate font-bold mt-1.5 tracking-[0.15em] uppercase leading-none",
+                      selectedFramework === framework.id ? "text-emerald-50" : "text-theme-secondary"
+                    )}>{framework.description}</span>
+                  </div>
+                  {selectedFramework === framework.id ? (
+                    <Check className="w-4 h-4 ml-3 shrink-0" />
+                  ) : (
+                    <div className="w-7 h-7 rounded-lg bg-emerald-500/10 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                      <Plus className="w-3.5 h-3.5 text-emerald-500" />
                     </div>
-                    {selectedFramework === framework.id && <Check className="w-4 h-4 ml-3 shrink-0" />}
-                  </motion.button>
-                ))}
-              </div>
+                  )}
+                </motion.button>
+              ))}
             </div>
           </div>
 
           <div className="h-px bg-gradient-to-r from-transparent via-theme-glass to-transparent opacity-30" />
 
           {/* Specialist Agents Group */}
-          <div className="space-y-4 bg-theme-card/20 p-5 rounded-[32px] border border-theme-glass/40 shadow-sm relative overflow-hidden">
-            <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-purple-500/20 via-blue-500/20 to-purple-500/20 opacity-30" />
+          <div className="space-y-4 bg-purple-500/5 p-5 rounded-[32px] border border-purple-500/10 shadow-sm relative overflow-hidden">
+            <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-purple-500/0 via-purple-500/40 to-purple-500/0" />
             
             <div className="flex items-center justify-between px-2">
               <div className="flex items-center gap-2">
@@ -1329,10 +1341,10 @@ export default function App() {
               </div>
               <button 
                 onClick={() => setIsCustomAgentModalOpen(true)}
-                className="btn-secondary p-2 rounded-xl shadow-sm"
+                className="w-8 h-8 flex items-center justify-center bg-theme-glass border border-theme-glass hover:border-purple-500/40 rounded-xl shadow-sm transition-all active:scale-95"
                 title="Criar Agente Personalizado"
               >
-                <Plus className="w-4 h-4" />
+                <Plus className="w-4 h-4 text-purple-400" />
               </button>
             </div>
             
@@ -1351,7 +1363,7 @@ export default function App() {
                       whileTap={{ scale: 0.98 }}
                       onClick={() => setExpandedCategory(isExpanded ? null : category)}
                       className={cn(
-                        "w-full flex items-center justify-between px-4 py-3.5 rounded-2xl text-sm font-black transition-all border shadow-md",
+                        "w-full flex items-center justify-between px-4 py-3.5 rounded-2xl text-[11px] font-black uppercase tracking-widest transition-all border shadow-md leading-none",
                         isExpanded 
                           ? "bg-theme-glass border-theme-secondary/40 text-theme-primary shadow-lg" 
                           : "bg-theme-card border-theme-glass text-theme-secondary hover:text-theme-primary hover:bg-theme-glass hover:border-theme-secondary/30"
@@ -1365,7 +1377,7 @@ export default function App() {
                         )}>
                           {getCategoryIcon(category)}
                         </div>
-                        <span className="truncate tracking-tight">{category}</span>
+                        <span className="truncate">{category}</span>
                       </div>
                       <ChevronRight className={cn("w-4 h-4 transition-transform opacity-40", isExpanded ? "rotate-90" : "")} />
                     </motion.button>
@@ -1391,7 +1403,7 @@ export default function App() {
                                 if (window.innerWidth < 768) setIsSidebarOpen(false);
                               }}
                               className={cn(
-                                "w-full flex items-center gap-3 px-4 py-3.5 rounded-2xl transition-all group relative overflow-hidden text-xs font-black border shadow-sm",
+                                "w-full flex items-center gap-3 px-4 py-3.5 rounded-2xl transition-all group relative overflow-hidden text-[10px] font-black uppercase tracking-tighter border shadow-sm leading-none",
                                 selectedSkill?.id === skill.id 
                                   ? "bg-theme-glass border-theme-secondary/40 text-theme-primary shadow-md" 
                                   : "bg-theme-card/60 border-theme-glass text-theme-secondary hover:bg-theme-glass hover:text-theme-primary hover:border-theme-secondary/30"
@@ -1404,9 +1416,9 @@ export default function App() {
                               )}>
                                 <AgentIcon agent={skill} size="sm" className="w-full h-full" />
                               </div>
-                              <div className="flex flex-col items-start min-w-0 flex-1">
+                              <div className="flex flex-col items-start min-w-0 flex-1 justify-center">
                                 <div className="flex items-center gap-1.5 w-full">
-                                  <span className="truncate tracking-tight">{skill.name}</span>
+                                  <span className="truncate leading-none">{skill.name}</span>
                                   {skill.isGoogleAI && (
                                     <div className="px-1.5 py-0.5 rounded-md bg-blue-500/10 border border-blue-500/20 text-[7px] font-black text-blue-400 uppercase tracking-widest shrink-0 shadow-sm">
                                       AI
@@ -1480,7 +1492,8 @@ export default function App() {
       {/* Main Content */}
       <main className="flex-1 flex flex-col relative min-w-0">
         {/* Header */}
-        <header className="h-auto min-h-20 py-4 md:py-0 glass-panel z-30 flex flex-col md:flex-row items-center justify-between px-4 md:px-8 mb-4 shrink-0 transition-all duration-500 gap-4 md:gap-0">
+        <header className="h-auto min-h-20 py-4 md:py-0 glass-panel z-30 flex flex-col md:flex-row items-center justify-between px-4 md:px-8 mb-4 shrink-0 transition-all duration-500 gap-4 md:gap-0 relative overflow-hidden">
+          <div className="absolute bottom-0 left-0 w-full h-[1px] bg-gradient-to-r from-transparent via-theme-blue/30 to-transparent" />
           <div className="flex items-center justify-between w-full md:w-auto gap-4">
             <div className="flex items-center gap-4">
               {!isSidebarOpen && (
@@ -1674,29 +1687,30 @@ export default function App() {
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: -10 }}
                   transition={{ duration: 0.2 }}
-                  className="flex-1 flex flex-col min-h-0 glass-panel overflow-hidden relative p-6 bg-black font-mono text-emerald-500"
+                  className="flex-1 flex flex-col min-h-0 glass-panel overflow-hidden relative p-8 bg-[#050505] font-mono text-theme-emerald border border-theme-emerald/20 shadow-[inset_0_0_100px_rgba(16,185,129,0.05)]"
                 >
-                  <div className="flex items-center gap-2 mb-4 border-b border-emerald-500/20 pb-4">
-                    <Terminal className="w-5 h-5" />
-                    <span className="text-xs font-bold uppercase tracking-widest">Terminal de Execução do Enxame v2.2</span>
+                  <div className="absolute inset-0 pointer-events-none opacity-[0.03] bg-[linear-gradient(rgba(18,16,16,0)_50%,rgba(0,0,0,0.25)_50%),linear-gradient(90deg,rgba(255,0,0,0.06),rgba(0,255,0,0.02),rgba(0,0,255,0.06))] bg-[length:100%_2px,3px_100%]" />
+                  <div className="flex items-center gap-3 mb-6 border-b border-theme-emerald/20 pb-6 relative z-10">
+                    <Terminal className="w-6 h-6 shadow-[0_0_15px_rgba(16,185,129,0.5)]" />
+                    <span className="text-xs font-black uppercase tracking-[0.4em]">Terminal de Execução do Enxame v2.2</span>
                   </div>
-                  <div className="flex-1 overflow-y-auto custom-scrollbar space-y-2 text-[11px]">
-                    <div className="flex gap-2">
-                      <span className="opacity-40">[17:43:52]</span>
-                      <span className="text-blue-400">SYS:</span>
-                      <span>Orquestrador inicializado com sucesso.</span>
+                  <div className="flex-1 overflow-y-auto custom-scrollbar space-y-3 text-[11px] relative z-10">
+                    <div className="flex gap-3">
+                      <span className="opacity-30 font-bold">17:43:52</span>
+                      <span className="text-theme-blue font-black uppercase tracking-tighter">[SYS]</span>
+                      <span className="opacity-80">Orquestrador inicializado com sucesso.</span>
                     </div>
-                    <div className="flex gap-2">
-                      <span className="opacity-40">[17:43:53]</span>
-                      <span className="text-purple-400">SWARM:</span>
-                      <span>Aguardando diretrizes para processamento paralelo...</span>
+                    <div className="flex gap-3">
+                      <span className="opacity-30 font-bold">17:43:53</span>
+                      <span className="text-theme-purple font-black uppercase tracking-tighter">[SWARM]</span>
+                      <span className="opacity-80">Aguardando diretrizes para processamento paralelo...</span>
                     </div>
-                    <div className="flex gap-2">
-                      <span className="opacity-40">[17:43:55]</span>
-                      <span className="text-emerald-400">BRAIN:</span>
-                      <span>Sincronização de memória concluída (42 nós ativos).</span>
+                    <div className="flex gap-3">
+                      <span className="opacity-30 font-bold">17:43:55</span>
+                      <span className="text-theme-emerald font-black uppercase tracking-tighter">[BRAIN]</span>
+                      <span className="opacity-80">Sincronização de memória concluída (42 nós ativos).</span>
                     </div>
-                    <div className="animate-pulse">_</div>
+                    <div className="animate-pulse text-theme-emerald/60">_</div>
                   </div>
                 </motion.div>
               ) : activeTab === 'workspace' ? (
@@ -1708,14 +1722,14 @@ export default function App() {
                   transition={{ duration: 0.2 }}
                   className="flex-1 flex flex-col min-h-0 glass-panel overflow-hidden relative"
                 >
-                  <div className="h-20 border-b border-theme-glass flex items-center justify-between px-8 shrink-0 bg-theme-glass/20">
+                  <div className="h-20 border-b border-theme-glass flex items-center justify-between px-8 shrink-0 bg-theme-main/40 backdrop-blur-xl">
                     <div className="flex items-center gap-4">
-                      <div className="w-10 h-10 bg-theme-blue rounded-xl flex items-center justify-center shadow-lg shadow-blue-500/20">
-                        <LayoutDashboard className="w-5 h-5 text-white" />
+                      <div className="w-12 h-12 bg-theme-blue rounded-2xl flex items-center justify-center shadow-[0_10px_25px_rgba(59,130,246,0.3)] border border-white/20">
+                        <LayoutDashboard className="w-6 h-6 text-white" />
                       </div>
                       <div>
-                        <h3 className="font-black tracking-tighter uppercase text-sm text-theme-primary">Estúdio de Artefatos</h3>
-                        <p className="text-[10px] font-black text-theme-blue uppercase tracking-widest">Workspace de Produção</p>
+                        <h3 className="font-black tracking-tighter uppercase text-base text-theme-primary italic">Estúdio de Artefatos</h3>
+                        <p className="text-[9px] font-black text-theme-blue uppercase tracking-[0.3em] opacity-60">Workspace de Produção v2.2</p>
                       </div>
                     </div>
                   </div>
@@ -1850,21 +1864,21 @@ export default function App() {
                   </AnimatePresence>
                   {messages.length === 0 ? (
                   <div className="flex-1 flex flex-col items-center justify-center text-center p-8">
-                    <div className="w-24 h-24 bg-gradient-to-br from-blue-500 to-purple-600 rounded-[2rem] flex items-center justify-center mb-8 shadow-2xl shadow-blue-500/20 animate-float">
+                    <div className="w-24 h-24 bg-gradient-to-br from-theme-blue to-theme-purple rounded-[2.5rem] flex items-center justify-center mb-10 shadow-[0_20px_50px_rgba(59,130,246,0.3)] animate-float border border-white/20">
                       <Sparkles className="w-12 h-12 text-white" />
                     </div>
-                    <h2 className="text-4xl font-black tracking-tighter mb-4 uppercase italic text-theme-primary">
-                      Pronto para <span className="text-blue-400">Escalar?</span>
+                    <h2 className="text-5xl font-black tracking-tighter mb-6 uppercase italic text-theme-primary drop-shadow-[0_0_15px_rgba(255,255,255,0.2)]">
+                      Pronto para <span className="text-theme-blue">Escalar?</span>
                     </h2>
-                    <p className="max-w-md text-theme-secondary text-sm font-medium leading-relaxed mb-12 uppercase tracking-widest">
+                    <p className="max-w-md text-theme-secondary text-[10px] font-black leading-relaxed mb-14 uppercase tracking-[0.4em] opacity-60">
                       Selecione um agente especialista na barra lateral ou comece um novo workflow para ver a mágica acontecer.
                     </p>
-                    <div className="flex flex-wrap justify-center gap-3">
+                    <div className="flex flex-wrap justify-center gap-4">
                       {["Como aumentar meu ROI?", "Crie um Design System", "Analise meu anúncio", "Funil de Vendas SaaS"].map((q) => (
                         <button 
                           key={q}
                           onClick={() => setInput(q)}
-                          className="px-6 py-3 glass-card text-[10px] font-black uppercase tracking-widest hover:bg-white/10 transition-all active:scale-95"
+                          className="px-8 py-4 bg-theme-card border border-theme-glass text-[10px] font-black uppercase tracking-widest hover:bg-theme-blue hover:text-white hover:border-theme-blue transition-all active:scale-95 shadow-xl rounded-2xl"
                         >
                           {q}
                         </button>

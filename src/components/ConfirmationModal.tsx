@@ -47,7 +47,7 @@ export const ConfirmationModal: React.FC<ConfirmationModalProps> = ({
                 )}>
                   <AlertTriangle className="w-5 h-5" />
                 </div>
-                <h2 className="text-xl font-bold text-white tracking-tight">{title}</h2>
+                <h2 className="text-lg font-black text-white tracking-tighter uppercase italic">{title}</h2>
               </div>
               <button 
                 onClick={onClose}
@@ -57,14 +57,14 @@ export const ConfirmationModal: React.FC<ConfirmationModalProps> = ({
               </button>
             </div>
 
-            <p className="text-white/60 text-sm leading-relaxed mb-8">
+            <p className="text-white/60 text-[13px] leading-relaxed mb-8 font-medium">
               {message}
             </p>
 
             <div className="flex items-center justify-end gap-3">
               <button
                 onClick={onClose}
-                className="px-4 py-2 rounded-xl text-sm font-bold text-white/40 hover:text-white hover:bg-white/5 transition-all"
+                className="px-5 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-[0.2em] text-white/40 hover:text-white hover:bg-white/5 transition-all leading-none"
               >
                 {cancelText}
               </button>
@@ -74,7 +74,7 @@ export const ConfirmationModal: React.FC<ConfirmationModalProps> = ({
                   onClose();
                 }}
                 className={cn(
-                  "px-6 py-2 rounded-xl text-sm font-bold text-white transition-all shadow-lg active:scale-95",
+                  "px-6 py-3 rounded-xl text-[11px] font-black uppercase tracking-[0.15em] text-white transition-all shadow-lg active:scale-95 leading-none",
                   variant === 'danger' ? "bg-red-600 hover:bg-red-500 shadow-red-900/20" : 
                   variant === 'warning' ? "bg-amber-600 hover:bg-amber-500 shadow-amber-900/20" : 
                   "bg-blue-600 hover:bg-blue-500 shadow-blue-900/20"

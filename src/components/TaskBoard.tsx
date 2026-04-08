@@ -567,11 +567,11 @@ export default function TaskBoard() {
       {/* Header */}
       <div className="p-6 border-b border-theme-glass flex flex-col md:flex-row md:items-center justify-between gap-4 bg-theme-card/30">
         <div className="space-y-1">
-          <h2 className="text-xl font-bold tracking-tight text-theme-primary flex items-center gap-3">
+          <h2 className="text-xl font-black tracking-tighter text-theme-primary flex items-center gap-3 uppercase italic">
             <LayoutGrid className="w-5 h-5 text-blue-500" />
             Gestão de <span className="text-blue-500">Operações</span>
           </h2>
-          <p className="text-theme-secondary text-[11px] font-medium uppercase tracking-wider">Centralize suas tarefas e rotinas estratégicas.</p>
+          <p className="text-theme-secondary text-[10px] font-black uppercase tracking-[0.15em] opacity-40">Centralize suas tarefas e rotinas estratégicas.</p>
         </div>
 
         <div className="flex flex-wrap items-center justify-start md:justify-end gap-3 w-full md:w-auto">

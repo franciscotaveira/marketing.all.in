@@ -36,18 +36,18 @@ export function SidebarChatHistory({
       <div className="flex items-center justify-between px-2">
         <button 
           onClick={() => setIsExpanded(!isExpanded)}
-          className="flex items-center gap-2 text-[11px] uppercase tracking-wider font-bold text-theme-secondary hover:text-theme-primary transition-colors"
+          className="flex items-center gap-2 text-[10px] uppercase tracking-[0.2em] font-black text-theme-secondary hover:text-theme-primary transition-colors leading-none"
         >
-          <div className="w-1 h-1 rounded-full bg-blue-500/50" />
+          <div className="w-1 h-1 rounded-full bg-theme-blue shadow-[0_0_10px_rgba(59,130,246,0.5)]" />
           Histórico
         </button>
         <div className="flex items-center gap-2">
           <button 
             onClick={onNewChat}
-            className="btn-secondary p-1.5"
+            className="w-7 h-7 flex items-center justify-center bg-theme-glass border border-theme-glass hover:border-theme-secondary/40 rounded-lg shadow-sm transition-all active:scale-95"
             title="Novo Chat"
           >
-            <Plus className="w-3.5 h-3.5" />
+            <Plus className="w-3.5 h-3.5 text-theme-primary" />
           </button>
           {sessions.length > 0 && (
             <span className="text-[10px] font-bold text-blue-500 bg-blue-500/10 px-1.5 py-0.5 rounded-full">
@@ -122,16 +122,16 @@ export function SidebarChatHistory({
                         )}>
                           <MessageSquare className="w-4 h-4" />
                         </div>
-                        <div className="flex flex-col min-w-0">
+                        <div className="flex flex-col min-w-0 justify-center">
                           <span className={cn(
-                            "text-sm font-semibold truncate leading-tight tracking-tight",
-                            currentChatId === session.id ? "text-blue-500" : "text-theme-primary"
+                            "text-xs font-black uppercase tracking-tighter truncate leading-none",
+                            currentChatId === session.id ? "text-theme-blue" : "text-theme-primary"
                           )}>
                             {session.title || "Nova Conversa"}
                           </span>
-                          <div className="flex items-center gap-1.5 mt-0.5">
-                            <Clock className="w-3 h-3 text-blue-500" />
-                            <span className="text-[11px] font-medium tracking-tight text-theme-secondary">
+                          <div className="flex items-center gap-1.5 mt-1.5">
+                            <Clock className="w-3 h-3 text-theme-blue opacity-40" />
+                            <span className="text-[10px] font-black uppercase tracking-[0.1em] text-theme-secondary opacity-40 leading-none">
                               {new Date(session.updatedAt || session.createdAt).toLocaleDateString()}
                             </span>
                           </div>

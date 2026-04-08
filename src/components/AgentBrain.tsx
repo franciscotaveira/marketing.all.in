@@ -321,11 +321,11 @@ ${selectedMemory.content}`;
               />
             </div>
             <div>
-              <h2 className="text-2xl font-black tracking-tight text-theme-primary flex items-center gap-2 italic uppercase">
+              <h2 className="text-2xl font-black tracking-tighter text-theme-primary flex items-center gap-2 italic uppercase">
                 Cérebro <span className="text-theme-blue">Sináptico</span>
                 {isSyncing && <Activity className="w-5 h-5 text-theme-blue animate-pulse" />}
               </h2>
-              <p className="text-[10px] uppercase tracking-[0.4em] text-theme-secondary font-black">
+              <p className="text-[9px] uppercase tracking-[0.4em] text-theme-secondary font-black opacity-60">
                 {agent?.name || "Global"} • Sincronizado v2.2
               </p>
             </div>
@@ -423,16 +423,16 @@ ${selectedMemory.content}`;
                     : "bg-theme-glass border-theme-glass hover:border-theme-glass/80 hover:bg-theme-glass/20 shadow-inner"
                 )}
               >
-                <h3 className="text-sm font-black text-theme-primary truncate group-hover:text-theme-blue transition-all uppercase tracking-tight">{memory.title}</h3>
+                <h3 className="text-sm font-black text-theme-primary truncate group-hover:text-theme-blue transition-all uppercase tracking-tight italic">{memory.title}</h3>
                 <div className="flex flex-wrap gap-1.5 mt-4">
                   {memory.tags.map(tag => (
-                    <span key={tag} className="text-[8px] px-2.5 py-1 bg-theme-blue/10 rounded-full text-theme-blue font-black uppercase tracking-wider border border-theme-blue/20">
+                    <span key={tag} className="text-[8px] px-2.5 py-1 bg-theme-blue/10 rounded-full text-theme-blue font-black uppercase tracking-wider border border-theme-blue/20 shadow-[0_2px_10px_rgba(59,130,246,0.1)]">
                       #{tag}
                     </span>
                   ))}
                 </div>
                 <div className="flex items-center justify-between mt-4">
-                  <p className="text-[9px] text-theme-secondary font-black uppercase tracking-widest">
+                  <p className="text-[9px] text-theme-secondary font-black uppercase tracking-widest opacity-40">
                     {new Date(memory.createdAt).toLocaleDateString()}
                   </p>
                   <ChevronRight className={cn("w-3 h-3 transition-all", selectedMemory?.id === memory.id ? "text-theme-blue translate-x-0" : "text-theme-secondary opacity-10 -translate-x-2 group-hover:translate-x-0 group-hover:text-theme-secondary/40")} />
@@ -461,7 +461,7 @@ ${selectedMemory.content}`;
                   if (mem) setSelectedMemory(mem);
                 }}
               />
-              <div className="absolute bottom-8 right-8 p-6 bg-theme-glass backdrop-blur-2xl border border-theme-glass rounded-3xl flex flex-col gap-6 shadow-2xl">
+              <div className="absolute bottom-8 right-8 p-6 bg-theme-card/80 backdrop-blur-2xl border border-theme-glass rounded-3xl flex flex-col gap-6 shadow-2xl">
                 <button 
                   onClick={analyzePatterns}
                   className="btn-primary"
@@ -470,13 +470,13 @@ ${selectedMemory.content}`;
                 </button>
                 <div className="flex items-center gap-6 text-[9px] uppercase font-black tracking-[0.25em] text-theme-secondary">
                   <div className="flex items-center gap-3">
-                    <div className="w-2.5 h-2.5 rounded-full bg-blue-500 shadow-[0_0_10px_rgba(59,130,246,0.8)]" /> Agente
+                    <div className="w-2.5 h-2.5 rounded-full bg-theme-blue shadow-[0_0_15px_rgba(59,130,246,0.8)]" /> Agente
                   </div>
                   <div className="flex items-center gap-3">
-                    <div className="w-2.5 h-2.5 rounded-full bg-orange-500 shadow-[0_0_10px_rgba(249,115,22,0.8)]" /> Insight
+                    <div className="w-2.5 h-2.5 rounded-full bg-theme-orange shadow-[0_0_15px_rgba(249,115,22,0.8)]" /> Insight
                   </div>
                   <div className="flex items-center gap-3">
-                    <div className="w-2.5 h-2.5 rounded-full bg-emerald-500 shadow-[0_0_10px_rgba(16,185,129,0.8)]" /> Métrica
+                    <div className="w-2.5 h-2.5 rounded-full bg-theme-emerald shadow-[0_0_15px_rgba(16,185,129,0.8)]" /> Métrica
                   </div>
                 </div>
               </div>
@@ -499,7 +499,7 @@ ${selectedMemory.content}`;
                     </button>
                   )}
                 </div>
-                <div className="flex items-center gap-4 bg-theme-glass p-4 rounded-2xl border border-theme-glass shadow-[inset_0_2px_4px_rgba(0,0,0,0.3)]">
+                <div className="flex items-center gap-4 bg-theme-main p-4 rounded-2xl border border-theme-glass shadow-[inset_0_2px_10px_rgba(0,0,0,0.5)]">
                   <Search className="w-5 h-5 text-theme-secondary opacity-40" />
                   <input 
                     type="text"
@@ -509,7 +509,7 @@ ${selectedMemory.content}`;
                     onChange={e => setVaultFilter(e.target.value)}
                   />
                   <select 
-                    className="bg-theme-glass px-4 py-2 rounded-xl text-[10px] text-theme-primary uppercase font-black tracking-widest focus:outline-none border border-theme-glass cursor-pointer hover:bg-theme-glass/80 transition-all"
+                    className="bg-theme-glass px-4 py-2 rounded-xl text-[10px] text-theme-primary uppercase font-black tracking-widest focus:outline-none border border-theme-glass cursor-pointer hover:bg-theme-glass/80 transition-all shadow-lg"
                     value={vaultSort}
                     onChange={e => setVaultSort(e.target.value as "date" | "roi")}
                   >
@@ -617,13 +617,13 @@ ${selectedMemory.content}`;
                       />
                     </div>
                     <div className="space-y-3">
-                      <p className="text-[11px] uppercase tracking-[0.5em] font-black text-theme-blue">Carga de Processamento</p>
-                      <p className="text-7xl font-black text-theme-primary font-mono tracking-tighter drop-shadow-[0_0_20px_rgba(255,255,255,0.4)]">{neuralPulse}%</p>
+                      <p className="text-[11px] uppercase tracking-[0.5em] font-black text-theme-blue drop-shadow-[0_0_10px_rgba(59,130,246,0.5)]">Carga de Processamento</p>
+                      <p className="text-7xl font-black text-theme-primary font-mono tracking-tighter drop-shadow-[0_0_30px_rgba(255,255,255,0.3)]">{neuralPulse}%</p>
                     </div>
-                    <div className="w-64 h-4 bg-theme-glass rounded-full overflow-hidden mx-auto border border-theme-glass shadow-[inset_0_2px_8px_rgba(0,0,0,0.6)]">
+                    <div className="w-64 h-3 bg-theme-main rounded-full overflow-hidden mx-auto border border-theme-glass shadow-[inset_0_2px_10px_rgba(0,0,0,0.8)]">
                       <motion.div 
                         animate={{ width: `${neuralPulse}%` }}
-                        className="h-full bg-gradient-to-r from-theme-blue via-blue-400 to-theme-blue shadow-[0_0_25px_#3b82f6] relative"
+                        className="h-full bg-gradient-to-r from-theme-blue via-blue-400 to-theme-blue shadow-[0_0_30px_#3b82f6] relative"
                       >
                         <div className="absolute inset-0 bg-gradient-to-b from-white/30 to-transparent" />
                       </motion.div>
