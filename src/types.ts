@@ -118,6 +118,14 @@ export interface Artifact {
     groundingMetadata?: any;
     grids?: { label: string; value: string }[];
     imagePrompt?: string;
+    assets?: {
+      id: string;
+      type: 'image' | 'video' | 'document';
+      url: string;
+      thumbnail?: string;
+      title: string;
+      description?: string;
+    }[];
   };
 }
 

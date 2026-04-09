@@ -937,12 +937,15 @@ export default function TaskBoard() {
 
                           <div className="flex items-center gap-2">
                             <Bell className="w-3.5 h-3.5 text-theme-secondary" />
-                            <input 
-                              type="datetime-local"
-                              value={newTask.reminderAt}
-                              onChange={(e) => setNewTask({ ...newTask, reminderAt: e.target.value })}
-                              className="bg-theme-glass border border-theme-glass rounded-lg px-2 py-1 text-[10px] text-theme-secondary focus:outline-none focus:border-blue-500/50 font-mono"
-                            />
+                            <div className="flex-1 flex items-center bg-theme-glass border border-theme-glass rounded-lg px-2 overflow-hidden focus-within:border-blue-500/50">
+                              <span className="text-[10px] font-black uppercase tracking-widest text-theme-secondary opacity-60 mr-2">Lembrete:</span>
+                              <input 
+                                type="datetime-local"
+                                value={newTask.reminderAt}
+                                onChange={(e) => setNewTask({ ...newTask, reminderAt: e.target.value })}
+                                className="bg-transparent py-1 text-[10px] text-theme-primary focus:outline-none font-mono flex-1"
+                              />
+                            </div>
                           </div>
 
                           <div className="flex items-center gap-2">
@@ -1209,13 +1212,15 @@ export default function TaskBoard() {
                                     "flex items-center gap-1 text-[10px] font-black uppercase tracking-widest font-mono transition-all",
                                     task.reminderAt 
                                       ? "text-theme-blue bg-theme-blue/10 px-1.5 py-0.5 rounded border border-theme-blue/20" 
-                                      : "text-theme-secondary opacity-0 group-hover:opacity-40 hover:opacity-100 hover:text-theme-blue"
+                                      : "text-theme-secondary opacity-40 hover:opacity-100 hover:text-theme-blue"
                                   )}
                                   title={task.reminderAt ? "Editar Lembrete" : "Definir Lembrete"}
                                 >
                                   <Bell className="w-3 h-3" />
-                                  {task.reminderAt && (
+                                  {task.reminderAt ? (
                                     task.reminderAt instanceof Timestamp ? task.reminderAt.toDate().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : new Date(task.reminderAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+                                  ) : (
+                                    "Lembrete"
                                   )}
                                 </button>
                               )}
@@ -1406,13 +1411,15 @@ export default function TaskBoard() {
                         "flex items-center gap-1 text-[10px] font-black uppercase tracking-widest font-mono transition-all",
                         task.reminderAt 
                           ? "text-theme-blue bg-theme-blue/10 px-1.5 py-0.5 rounded border border-theme-blue/20" 
-                          : "text-theme-secondary opacity-0 group-hover:opacity-40 hover:opacity-100 hover:text-theme-blue"
+                          : "text-theme-secondary opacity-40 hover:opacity-100 hover:text-theme-blue"
                       )}
                       title={task.reminderAt ? "Editar Lembrete" : "Definir Lembrete"}
                     >
                       <Bell className="w-3 h-3" />
-                      {task.reminderAt && (
+                      {task.reminderAt ? (
                         task.reminderAt instanceof Timestamp ? task.reminderAt.toDate().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : new Date(task.reminderAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+                      ) : (
+                        "Lembrete"
                       )}
                     </button>
                   )}
@@ -1544,13 +1551,16 @@ export default function TaskBoard() {
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div className="space-y-2">
-                    <label className="text-[10px] font-black uppercase tracking-widest text-theme-secondary px-1">Notificação (Lembrete)</label>
-                    <input 
-                      type="datetime-local"
-                      value={editingTask.reminderAt ? (editingTask.reminderAt instanceof Timestamp ? editingTask.reminderAt.toDate().toISOString().slice(0, 16) : new Date(editingTask.reminderAt).toISOString().slice(0, 16)) : ''}
-                      onChange={(e) => setEditingTask({ ...editingTask, reminderAt: e.target.value })}
-                      className="w-full bg-theme-glass border border-theme-glass rounded-xl px-4 py-2 text-sm text-theme-primary focus:outline-none focus:border-theme-blue/50 font-mono"
-                    />
+                    <label className="text-[10px] font-black uppercase tracking-widest text-theme-secondary px-1 block">Notificação (Lembrete)</label>
+                    <div className="flex items-center gap-2 bg-theme-glass border border-theme-glass rounded-xl px-4 overflow-hidden focus-within:border-theme-blue/50">
+                      <Bell className="w-4 h-4 text-theme-secondary opacity-60" />
+                      <input 
+                        type="datetime-local"
+                        value={editingTask.reminderAt ? (editingTask.reminderAt instanceof Timestamp ? editingTask.reminderAt.toDate().toISOString().slice(0, 16) : new Date(editingTask.reminderAt).toISOString().slice(0, 16)) : ''}
+                        onChange={(e) => setEditingTask({ ...editingTask, reminderAt: e.target.value })}
+                        className="w-full bg-transparent py-2 text-sm text-theme-primary focus:outline-none font-mono"
+                      />
+                    </div>
                   </div>
 
                   <div className="space-y-2">

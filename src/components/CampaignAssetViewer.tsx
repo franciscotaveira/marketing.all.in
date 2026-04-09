@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { motion } from 'motion/react';
+import { motion, AnimatePresence } from 'motion/react';
 import { 
   Palette, 
   Type, 
@@ -12,7 +12,11 @@ import {
   Download,
   Share2,
   Loader2,
-  Check
+  Check,
+  Play,
+  FileText,
+  X,
+  Video
 } from 'lucide-react';
 import { Artifact } from '../types';
 import { cn } from '../lib/utils';
@@ -22,10 +26,20 @@ interface CampaignAssetViewerProps {
   artifact: Artifact;
 }
 
+interface Asset {
+  id: string;
+  type: 'image' | 'video' | 'document';
+  url: string;
+  thumbnail?: string;
+  title: string;
+  description?: string;
+}
+
 export function CampaignAssetViewer({ artifact }: CampaignAssetViewerProps) {
   const { metadata } = artifact;
   const [isGenerating, setIsGenerating] = useState(false);
   const [isGenerated, setIsGenerated] = useState(false);
+  const [selectedAsset, setSelectedAsset] = useState<Asset | null>(null);
 
   const handleGenerate = () => {
     setIsGenerating(true);
@@ -34,6 +48,46 @@ export function CampaignAssetViewer({ artifact }: CampaignAssetViewerProps) {
       setIsGenerated(true);
     }, 3000);
   };
+
+  // Mock assets for the gallery if none are provided in metadata
+  const assets: Asset[] = metadata?.assets || [
+    {
+      id: '1',
+      type: 'image',
+      url: metadata?.imageUrl || `https://picsum.photos/seed/${encodeURIComponent(artifact.title + '1')}/1000/600`,
+      title: 'Hero Banner Principal',
+      description: metadata?.imagePrompt || 'Cinematic photography of a mother and child in a warm, sunlit room, soft focus, high-end skincare aesthetic, pastel colors, 8k resolution.'
+    },
+    {
+      id: '2',
+      type: 'image',
+      url: `https://picsum.photos/seed/${encodeURIComponent(artifact.title + '2')}/800/800`,
+      title: 'Post Social Media (1:1)',
+      description: 'Design para Instagram focando no produto principal com iluminação dramática e tipografia em negrito.'
+    },
+    {
+      id: '3',
+      type: 'video',
+      url: 'https://test-videos.co.uk/vids/bigbuckbunny/mp4/h264/720/Big_Buck_Bunny_720_10s_1MB.mp4',
+      thumbnail: `https://picsum.photos/seed/${encodeURIComponent(artifact.title + '3')}/800/450`,
+      title: 'Bumper Ad (6s)',
+      description: 'Vídeo curto para YouTube Ads com foco em conversão rápida e chamada para ação clara.'
+    },
+    {
+      id: '4',
+      type: 'document',
+      url: '#',
+      title: 'Brandbook Completo.pdf',
+      description: 'Diretrizes completas de marca, tom de voz, aplicações visuais e regras de uso de logotipo.'
+    },
+    {
+      id: '5',
+      type: 'image',
+      url: `https://picsum.photos/seed/${encodeURIComponent(artifact.title + '5')}/600/900`,
+      title: 'Stories Promocional (9:16)',
+      description: 'Layout vertical otimizado para conversão em Stories e Reels com espaço para interações nativas.'
+    }
+  ];
 
   return (
     <div className="space-y-12">
@@ -73,6 +127,69 @@ export function CampaignAssetViewer({ artifact }: CampaignAssetViewerProps) {
         <div className="absolute -right-20 -bottom-20 w-80 h-80 bg-blue-500/10 rounded-full blur-[100px]" />
         <div className="absolute right-20 top-20 w-40 h-40 bg-purple-500/5 rounded-full blur-[60px]" />
       </div>
+
+      {/* Assets Gallery */}
+      <motion.div 
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.1 }}
+        className="bg-theme-surface border border-theme-glass rounded-[2rem] p-10 shadow-xl"
+      >
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
+          <div className="flex items-center gap-3">
+            <ImageIcon className="w-5 h-5 text-theme-blue" />
+            <h3 className="font-black uppercase tracking-widest text-sm text-theme-primary">Galeria de Ativos</h3>
+          </div>
+          <div className="flex items-center gap-2">
+            <div className="px-3 py-1.5 bg-theme-glass rounded-xl text-[10px] font-bold text-theme-secondary uppercase tracking-wider">
+              {assets.length} Itens
+            </div>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+          {assets.map((asset) => (
+            <div 
+              key={asset.id}
+              onClick={() => setSelectedAsset(asset)}
+              className="group cursor-pointer rounded-2xl border border-theme-glass bg-theme-card overflow-hidden relative aspect-square shadow-sm hover:shadow-xl transition-all duration-500"
+            >
+              {asset.type === 'image' && (
+                <img src={asset.url} alt={asset.title} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" referrerPolicy="no-referrer" />
+              )}
+              {asset.type === 'video' && (
+                <>
+                  <img src={asset.thumbnail} alt={asset.title} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" referrerPolicy="no-referrer" />
+                  <div className="absolute inset-0 flex items-center justify-center">
+                    <div className="w-12 h-12 rounded-full bg-black/50 backdrop-blur-md flex items-center justify-center border border-white/20 group-hover:scale-110 transition-transform">
+                      <Play className="w-5 h-5 text-white ml-1" />
+                    </div>
+                  </div>
+                </>
+              )}
+              {asset.type === 'document' && (
+                <div className="w-full h-full flex flex-col items-center justify-center bg-theme-glass/10 transition-transform duration-700 group-hover:scale-110">
+                  <FileText className="w-12 h-12 text-theme-secondary opacity-50 mb-3" />
+                  <span className="text-[10px] font-black text-theme-secondary uppercase tracking-widest">Documento</span>
+                </div>
+              )}
+              
+              <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/30 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex flex-col justify-end p-5">
+                <div className="flex items-center gap-2 mb-2">
+                  {asset.type === 'image' && <ImageIcon className="w-3 h-3 text-blue-400" />}
+                  {asset.type === 'video' && <Video className="w-3 h-3 text-purple-400" />}
+                  {asset.type === 'document' && <FileText className="w-3 h-3 text-emerald-400" />}
+                  <span className="text-[8px] font-black uppercase tracking-widest text-white/70">
+                    {asset.type}
+                  </span>
+                </div>
+                <p className="text-sm text-white font-black uppercase tracking-tighter truncate leading-none mb-1">{asset.title}</p>
+                <p className="text-[10px] text-white/60 font-medium line-clamp-2 leading-relaxed">{asset.description}</p>
+              </div>
+            </div>
+          ))}
+        </div>
+      </motion.div>
 
       {/* Visual Identity Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
@@ -204,27 +321,14 @@ export function CampaignAssetViewer({ artifact }: CampaignAssetViewerProps) {
           <motion.div 
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.4 }}
+            transition={{ delay: 0.6 }}
             className="bg-theme-surface border border-theme-glass rounded-[2rem] p-8 shadow-xl bg-gradient-to-br from-theme-surface to-blue-500/5"
           >
             <div className="flex items-center gap-3 mb-6">
               <Sparkles className="w-5 h-5 text-theme-blue" />
-              <h3 className="font-black uppercase tracking-widest text-xs text-theme-primary">AI Assets (Imagen 3)</h3>
+              <h3 className="font-black uppercase tracking-widest text-xs text-theme-primary">Geração de Ativos</h3>
             </div>
             <div className="space-y-4">
-              {(metadata?.imageUrl || metadata?.imagePrompt) && (
-                <div className="rounded-2xl overflow-hidden border border-theme-glass mb-4 bg-black/40 aspect-video relative group">
-                  <img 
-                    src={metadata?.imageUrl || `https://picsum.photos/seed/${encodeURIComponent(metadata?.imagePrompt || artifact.title)}/1000/600`} 
-                    alt="Asset Preview" 
-                    className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
-                    referrerPolicy="no-referrer"
-                  />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex items-end p-4">
-                    <p className="text-[8px] text-white font-black uppercase tracking-widest">Visualização Gerada via IA</p>
-                  </div>
-                </div>
-              )}
               <div className="p-4 rounded-2xl bg-black/20 border border-theme-glass relative group cursor-pointer">
                 <div className="absolute inset-0 bg-blue-500/10 opacity-0 group-hover:opacity-100 transition-opacity rounded-2xl" />
                 <p className="text-[9px] text-theme-secondary opacity-60 leading-relaxed line-clamp-3 italic">
@@ -248,15 +352,15 @@ export function CampaignAssetViewer({ artifact }: CampaignAssetViewerProps) {
                 {isGenerating ? (
                   <>
                     <Loader2 className="w-3 h-3 animate-spin" />
-                    Processando...
+                    Processando Lote...
                   </>
                 ) : isGenerated ? (
                   <>
                     <Check className="w-3 h-3" />
-                    Ativos Prontos
+                    Lote Concluído
                   </>
                 ) : (
-                  "Gerar Ativos Finais"
+                  "Gerar Lote de Ativos"
                 )}
               </button>
             </div>
@@ -309,6 +413,91 @@ export function CampaignAssetViewer({ artifact }: CampaignAssetViewerProps) {
           ))}
         </div>
       </motion.div>
+
+      {/* Lightbox Modal */}
+      <AnimatePresence>
+        {selectedAsset && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-8 bg-black/90 backdrop-blur-xl"
+            onClick={() => setSelectedAsset(null)}
+          >
+            <button 
+              className="absolute top-6 right-6 p-3 rounded-full bg-white/10 hover:bg-white/20 text-white transition-colors z-10"
+              onClick={() => setSelectedAsset(null)}
+            >
+              <X className="w-6 h-6" />
+            </button>
+
+            <motion.div
+              initial={{ scale: 0.95, opacity: 0, y: 20 }}
+              animate={{ scale: 1, opacity: 1, y: 0 }}
+              exit={{ scale: 0.95, opacity: 0, y: 20 }}
+              onClick={(e) => e.stopPropagation()}
+              className="w-full max-w-6xl bg-theme-surface border border-theme-glass rounded-[2rem] overflow-hidden shadow-2xl flex flex-col md:flex-row max-h-[90vh]"
+            >
+              {/* Media Area */}
+              <div className="flex-1 bg-black/60 relative flex items-center justify-center min-h-[300px] md:min-h-[500px] p-8">
+                {selectedAsset.type === 'image' && (
+                  <img src={selectedAsset.url} alt={selectedAsset.title} className="max-w-full max-h-full object-contain rounded-xl shadow-2xl" referrerPolicy="no-referrer" />
+                )}
+                {selectedAsset.type === 'video' && (
+                  <video src={selectedAsset.url} controls autoPlay className="max-w-full max-h-full rounded-xl shadow-2xl" />
+                )}
+                {selectedAsset.type === 'document' && (
+                  <div className="text-center">
+                    <div className="w-32 h-32 rounded-3xl bg-theme-glass/20 flex items-center justify-center mx-auto mb-6 border border-theme-glass">
+                      <FileText className="w-16 h-16 text-theme-secondary opacity-50" />
+                    </div>
+                    <button className="btn-primary px-8 py-4 rounded-xl text-[11px] tracking-widest uppercase font-black">
+                      <Download className="w-4 h-4 mr-2" />
+                      Baixar Documento
+                    </button>
+                  </div>
+                )}
+              </div>
+
+              {/* Details Area */}
+              <div className="w-full md:w-96 p-8 flex flex-col bg-theme-surface border-l border-theme-glass overflow-y-auto">
+                <div className="flex items-center gap-2 mb-6">
+                  <div className={cn(
+                    "px-3 py-1.5 border rounded-full text-[9px] font-black uppercase tracking-widest flex items-center gap-1.5",
+                    selectedAsset.type === 'image' ? "bg-blue-500/10 border-blue-500/20 text-blue-400" :
+                    selectedAsset.type === 'video' ? "bg-purple-500/10 border-purple-500/20 text-purple-400" :
+                    "bg-emerald-500/10 border-emerald-500/20 text-emerald-400"
+                  )}>
+                    {selectedAsset.type === 'image' && <ImageIcon className="w-3 h-3" />}
+                    {selectedAsset.type === 'video' && <Video className="w-3 h-3" />}
+                    {selectedAsset.type === 'document' && <FileText className="w-3 h-3" />}
+                    {selectedAsset.type === 'image' ? 'Imagem' : selectedAsset.type === 'video' ? 'Vídeo' : 'Documento'}
+                  </div>
+                </div>
+                
+                <h2 className="text-2xl font-black text-theme-primary uppercase tracking-tighter italic mb-4 leading-tight">
+                  {selectedAsset.title}
+                </h2>
+                
+                <p className="text-sm text-theme-secondary leading-relaxed mb-8 font-medium">
+                  {selectedAsset.description}
+                </p>
+
+                <div className="mt-auto space-y-3 pt-8 border-t border-theme-glass/30">
+                  <button className="w-full btn-primary py-4 rounded-xl text-[10px] tracking-[0.2em] font-black uppercase flex items-center justify-center gap-2">
+                    <Download className="w-4 h-4" />
+                    Download Original
+                  </button>
+                  <button className="w-full btn-secondary py-4 rounded-xl text-[10px] tracking-[0.2em] font-black uppercase flex items-center justify-center gap-2">
+                    <Share2 className="w-4 h-4" />
+                    Compartilhar Link
+                  </button>
+                </div>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

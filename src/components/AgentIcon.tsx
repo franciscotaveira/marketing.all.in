@@ -86,6 +86,57 @@ export function AgentIcon({ agent, size = 'md', className }: AgentIconProps) {
 
   const IconComponent = getLucideIcon(agent.id, agent.category);
 
+  if (agent.id === 'orchestrator' && !iconUrl) {
+    return (
+      <div className={cn(
+        dimensions[size],
+        "flex items-center justify-center rounded-lg border border-indigo-500/30 bg-indigo-500/10 shadow-[0_0_15px_rgba(99,102,241,0.15)] overflow-hidden relative group",
+        className
+      )}>
+        <div className="absolute inset-0 bg-gradient-to-br from-indigo-500/20 to-purple-500/20 opacity-50 group-hover:opacity-100 transition-opacity" />
+        
+        <svg viewBox="0 0 24 24" className="w-[65%] h-[65%] text-indigo-400 relative z-10 group-hover:scale-110 transition-transform duration-500" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+          {/* Central Core */}
+          <polygon points="12 6 17.196 9 17.196 15 12 18 6.804 15 6.804 9" className="fill-indigo-500/20 animate-pulse" strokeWidth="1.5" />
+          <circle cx="12" cy="12" r="1.5" className="fill-indigo-300" />
+          
+          {/* Orbiting Swarm Nodes */}
+          <circle cx="12" cy="2.5" r="1.5" className="fill-indigo-400" />
+          <circle cx="21.5" cy="12" r="1.5" className="fill-indigo-400" />
+          <circle cx="12" cy="21.5" r="1.5" className="fill-indigo-400" />
+          <circle cx="2.5" cy="12" r="1.5" className="fill-indigo-400" />
+          
+          {/* Connection Lines */}
+          <line x1="12" y1="6" x2="12" y2="2.5" className="opacity-50" strokeDasharray="1 2" />
+          <line x1="17.196" y1="12" x2="21.5" y2="12" className="opacity-50" strokeDasharray="1 2" />
+          <line x1="12" y1="18" x2="12" y2="21.5" className="opacity-50" strokeDasharray="1 2" />
+          <line x1="6.804" y1="12" x2="2.5" y2="12" className="opacity-50" strokeDasharray="1 2" />
+          
+          {/* Diagonal Nodes */}
+          <circle cx="18.5" cy="5.5" r="1" className="fill-indigo-400 opacity-80" />
+          <circle cx="18.5" cy="18.5" r="1" className="fill-indigo-400 opacity-80" />
+          <circle cx="5.5" cy="18.5" r="1" className="fill-indigo-400 opacity-80" />
+          <circle cx="5.5" cy="5.5" r="1" className="fill-indigo-400 opacity-80" />
+          
+          <line x1="15" y1="9" x2="18.5" y2="5.5" className="opacity-30" />
+          <line x1="15" y1="15" x2="18.5" y2="18.5" className="opacity-30" />
+          <line x1="9" y1="15" x2="5.5" y2="18.5" className="opacity-30" />
+          <line x1="9" y1="9" x2="5.5" y2="5.5" className="opacity-30" />
+        </svg>
+
+        {/* Tech pattern background */}
+        <div className="absolute inset-0 opacity-[0.05] pointer-events-none">
+          <svg width="100%" height="100%">
+            <pattern id="hex" width="8" height="8" patternUnits="userSpaceOnUse" patternTransform="scale(0.5)">
+              <path d="M4 0L8 2L8 6L4 8L0 6L0 2L4 0Z" fill="none" stroke="currentColor" strokeWidth="0.5"/>
+            </pattern>
+            <rect width="100%" height="100%" fill="url(#hex)" />
+          </svg>
+        </div>
+      </div>
+    );
+  }
+
   if (!iconUrl) {
     return (
       <div className={cn(
