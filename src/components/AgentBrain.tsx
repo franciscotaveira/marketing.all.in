@@ -47,6 +47,7 @@ export function AgentBrain({ agent, onClose, isDarkMode = true, isIntegrated }: 
   const [neuralPulse, setNeuralPulse] = useState(0);
 
   // New states
+  const [editingMemoryId, setEditingMemoryId] = useState<string | null>(null);
   const [vaultFilter, setVaultFilter] = useState("");
   const [vaultSort, setVaultSort] = useState<"date" | "roi">("date");
   const [enabledSkills, setEnabledSkills] = useState<Record<string, boolean>>({});
@@ -260,20 +261,50 @@ export function AgentBrain({ agent, onClose, isDarkMode = true, isIntegrated }: 
     setGraphData({ nodes, links });
   };
 
+  const handleEditNote = (memory: BrainMemory) => {
+    setNewNote({
+      title: memory.title,
+      content: memory.content,
+      tags: memory.tags.join(", "),
+      roi: memory.roi?.toString() || ""
+    });
+    setEditingMemoryId(memory.id);
+    setIsNewNoteOpen(true);
+  };
+
+  const handleDeleteNote = async (id: string) => {
+    if(!window.confirm("Você tem certeza que deseja excluir esta memória?")) return;
+    try {
+      // Optimistic visual update
+      setMemories(prev => prev.filter(m => m.id !== id));
+      setSelectedMemory(null);
+      await firebaseService.deleteMemory(id);
+    } catch (e) {
+      console.error(e);
+    }
+  };
+
   const handleSaveNote = async () => {
     if (!newNote.title || !newNote.content) return;
     
-    const memory: Omit<BrainMemory, 'id' | 'createdAt'> = {
+    const parsedRoi = newNote.roi ? parseFloat(newNote.roi) : undefined;
+    const memory = {
       agentId: agent?.id || "general",
       title: newNote.title,
       content: newNote.content,
       tags: newNote.tags.split(",").map(t => t.trim()).filter(t => t),
-      roi: newNote.roi ? parseFloat(newNote.roi) : undefined
+      ...(parsedRoi && !isNaN(parsedRoi) ? { roi: parsedRoi } : {})
     };
 
-    await firebaseService.saveMemory(memory);
+    if (editingMemoryId) {
+      await firebaseService.updateMemory(editingMemoryId, memory);
+    } else {
+      await firebaseService.saveMemory(memory);
+    }
+
     setNewNote({ title: "", content: "", tags: "", roi: "" });
     setIsNewNoteOpen(false);
+    setEditingMemoryId(null);
     loadMemories();
   };
 
@@ -577,7 +608,21 @@ ${selectedMemory.content}`;
                     )}>
                       <ReactMarkdown>{selectedMemory.content}</ReactMarkdown>
                     </div>
-                    <div className="flex justify-end pt-6 border-t border-theme-glass">
+                    <div className="flex justify-between items-center pt-6 border-t border-theme-glass">
+                      <div className="flex items-center gap-2">
+                        <button 
+                          onClick={() => handleEditNote(selectedMemory)}
+                          className="btn-secondary"
+                        >
+                          Editar
+                        </button>
+                        <button 
+                          onClick={() => handleDeleteNote(selectedMemory.id)}
+                          className="px-4 py-2 text-xs font-bold uppercase tracking-widest text-red-400 hover:bg-red-500/10 rounded-xl transition-all"
+                        >
+                          Excluir
+                        </button>
+                      </div>
                       <button 
                         onClick={handleObsidianSync}
                         className="btn-secondary"
@@ -775,9 +820,14 @@ ${selectedMemory.content}`;
                 >
                   <div className="flex items-center justify-between">
                     <h3 className="text-2xl font-black text-theme-primary flex items-center gap-4 italic uppercase">
-                      <Plus className="w-8 h-8 text-theme-blue" /> Nova Memória <span className="text-theme-blue">Sináptica</span>
+                      {editingMemoryId ? <FileText className="w-8 h-8 text-theme-blue" /> : <Plus className="w-8 h-8 text-theme-blue" />}
+                      {editingMemoryId ? 'Editar Memória' : 'Nova Memória'} <span className="text-theme-blue">Sináptica</span>
                     </h3>
-                    <button onClick={() => setIsNewNoteOpen(false)} className="p-3 hover:bg-theme-glass rounded-full text-theme-secondary opacity-30 hover:opacity-100 transition-all">
+                    <button onClick={() => {
+                        setIsNewNoteOpen(false);
+                        setEditingMemoryId(null);
+                        setNewNote({ title: "", content: "", tags: "", roi: "" });
+                      }} className="p-3 hover:bg-theme-glass rounded-full text-theme-secondary opacity-30 hover:opacity-100 transition-all">
                       <X className="w-7 h-7" />
                     </button>
                   </div>

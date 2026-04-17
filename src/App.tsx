@@ -1391,7 +1391,7 @@ export default function App() {
                           className="space-y-2 overflow-hidden pl-3 pr-1 py-1"
                         >
                           {categorySkills.map((skill) => (
-                            <motion.button
+                            <motion.div
                               whileHover={{ x: 4 }}
                               whileTap={{ scale: 0.98 }}
                               key={skill.id}
@@ -1403,7 +1403,7 @@ export default function App() {
                                 if (window.innerWidth < 768) setIsSidebarOpen(false);
                               }}
                               className={cn(
-                                "w-full flex items-center gap-3 px-4 py-3.5 rounded-2xl transition-all group relative overflow-hidden text-[10px] font-black uppercase tracking-tighter border shadow-sm leading-none",
+                                "w-full flex items-center gap-3 px-4 py-3.5 rounded-2xl transition-all group relative overflow-hidden text-[10px] font-black uppercase tracking-tighter border shadow-sm leading-none cursor-pointer",
                                 selectedSkill?.id === skill.id 
                                   ? "bg-theme-glass border-theme-secondary/40 text-theme-primary shadow-md" 
                                   : "bg-theme-card/60 border-theme-glass text-theme-secondary hover:bg-theme-glass hover:text-theme-primary hover:border-theme-secondary/30"
@@ -1426,30 +1426,50 @@ export default function App() {
                                   )}
                                 </div>
                               </div>
-                              {customSkills.some(s => s.id === skill.id) && (
-                                <div className="flex items-center gap-1.5 opacity-0 group-hover:opacity-100 transition-opacity">
-                                  <button 
-                                    onClick={(e) => {
-                                      e.stopPropagation();
-                                      setEditingCustomAgent(skill);
-                                      setIsCustomAgentModalOpen(true);
-                                    }}
-                                    className="p-1.5 hover:bg-theme-glass/80 rounded-lg text-theme-secondary hover:text-theme-primary transition-all shadow-sm"
-                                  >
-                                    <PenTool className="w-3 h-3" />
-                                  </button>
-                                  <button 
-                                    onClick={(e) => {
-                                      e.stopPropagation();
-                                      handleDeleteCustomAgent(skill.id);
-                                    }}
-                                    className="p-1.5 hover:bg-red-500/10 rounded-lg text-theme-secondary hover:text-red-500 transition-all shadow-sm"
-                                  >
-                                    <Trash2 className="w-3 h-3" />
-                                  </button>
-                                </div>
-                              )}
-                            </motion.button>
+                              <div className="flex items-center gap-1.5 opacity-0 group-hover:opacity-100 transition-opacity">
+                                <button 
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    const blob = new Blob([JSON.stringify(skill, null, 2)], { type: 'application/json' });
+                                    const url = URL.createObjectURL(blob);
+                                    const a = document.createElement('a');
+                                    a.href = url;
+                                    a.download = `agente-${skill.name.toLowerCase().replace(/\s+/g, '-')}.json`;
+                                    document.body.appendChild(a);
+                                    a.click();
+                                    document.body.removeChild(a);
+                                    URL.revokeObjectURL(url);
+                                  }}
+                                  className="p-1.5 hover:bg-theme-glass/80 rounded-lg text-theme-secondary hover:text-theme-primary transition-all shadow-sm"
+                                  title="Exportar Agente"
+                                >
+                                  <Download className="w-3 h-3" />
+                                </button>
+                                {customSkills.some(s => s.id === skill.id) && (
+                                  <>
+                                    <button 
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        setEditingCustomAgent(skill);
+                                        setIsCustomAgentModalOpen(true);
+                                      }}
+                                      className="p-1.5 hover:bg-theme-glass/80 rounded-lg text-theme-secondary hover:text-theme-primary transition-all shadow-sm"
+                                    >
+                                      <PenTool className="w-3 h-3" />
+                                    </button>
+                                    <button 
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        handleDeleteCustomAgent(skill.id);
+                                      }}
+                                      className="p-1.5 hover:bg-red-500/10 rounded-lg text-theme-secondary hover:text-red-500 transition-all shadow-sm"
+                                    >
+                                      <Trash2 className="w-3 h-3" />
+                                    </button>
+                                  </>
+                                )}
+                              </div>
+                            </motion.div>
                           ))}
                         </motion.div>
                       )}

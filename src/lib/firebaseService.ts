@@ -10,7 +10,11 @@ import {
   setDoc, 
   getDoc,
   onSnapshot,
-  Timestamp
+  Timestamp,
+  updateDoc,
+  deleteDoc,
+  limit,
+  startAfter
 } from 'firebase/firestore';
 import { db, auth, handleFirestoreError, OperationType } from '../firebase';
 import { BrainMemory, Message, KnowledgeItem, ChatSession, MarketingSkill } from '../types';
@@ -36,6 +40,37 @@ export const firebaseService = {
     } catch (error) {
       handleFirestoreError(error, OperationType.WRITE, path);
       return { data: null, error };
+    }
+  },
+
+  async updateMemory(id: string, memory: Partial<Omit<BrainMemory, 'id' | 'createdAt' | 'embedding'>>) {
+    if (!auth.currentUser) return { error: 'User not authenticated' };
+    const path = `users/${auth.currentUser.uid}/brainMemories/${id}`;
+    
+    try {
+      const dataToUpdate: any = { ...memory };
+      
+      if (memory.content) {
+        dataToUpdate.embedding = await generateEmbedding(memory.content);
+      }
+      
+      await updateDoc(doc(db, path), dataToUpdate);
+      return { error: null };
+    } catch (error) {
+      handleFirestoreError(error, OperationType.UPDATE, path);
+      return { error };
+    }
+  },
+
+  async deleteMemory(id: string) {
+    if (!auth.currentUser) return { error: 'User not authenticated' };
+    const path = `users/${auth.currentUser.uid}/brainMemories/${id}`;
+    try {
+      await deleteDoc(doc(db, path));
+      return { error: null };
+    } catch (error) {
+      handleFirestoreError(error, OperationType.DELETE, path);
+      return { error };
     }
   },
 
@@ -149,7 +184,6 @@ export const firebaseService = {
     if (!auth.currentUser) return { error: 'User not authenticated' };
     const path = `users/${auth.currentUser.uid}/chats/${chatId}`;
     try {
-      const { deleteDoc } = await import('firebase/firestore');
       await deleteDoc(doc(db, path));
       return { error: null };
     } catch (error) {
@@ -181,7 +215,6 @@ export const firebaseService = {
     if (!auth.currentUser) return { data: [], lastVisible: null, error: 'User not authenticated' };
     const path = `users/${auth.currentUser.uid}/chats/${chatId}/messages`;
     try {
-      const { limit, startAfter, getDocs } = await import('firebase/firestore');
       let q = query(collection(db, path), orderBy('createdAt', 'desc'), limit(limitCount));
       
       if (lastVisible) {
@@ -208,7 +241,6 @@ export const firebaseService = {
     if (!auth.currentUser) return { error: 'User not authenticated' };
     const path = `users/${auth.currentUser.uid}/chats`;
     try {
-      const { getDocs, deleteDoc, doc } = await import('firebase/firestore');
       const snapshot = await getDocs(collection(db, path));
       const deletePromises = snapshot.docs.map(d => deleteDoc(doc(db, path, d.id)));
       await Promise.all(deletePromises);
@@ -309,7 +341,6 @@ export const firebaseService = {
     if (!auth.currentUser) return { error: 'User not authenticated' };
     const path = `users/${auth.currentUser.uid}/customAgents/${agentId}`;
     try {
-      const { deleteDoc } = await import('firebase/firestore');
       await deleteDoc(doc(db, path));
       return { error: null };
     } catch (error) {

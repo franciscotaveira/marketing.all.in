@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import { motion } from 'motion/react';
-import { X, Bot, Save, Brain, FileText, Target, Loader2 } from 'lucide-react';
+import { X, Bot, Save, Brain, FileText, Target, Loader2, Sparkles, Download } from 'lucide-react';
 import { MarketingSkill, SkillCategory, SkillTier } from '../types';
+import { gemini, MODELS } from '../services/gemini';
 
 interface CustomAgentModalProps {
   onClose: () => void;
@@ -16,6 +17,63 @@ export const CustomAgentModal: React.FC<CustomAgentModalProps> = ({ onClose, onS
   const [description, setDescription] = useState(initialAgent?.description || '');
   const [prompt, setPrompt] = useState(initialAgent?.prompt || '');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isGeneratingProxy, setIsGeneratingPrompt] = useState(false);
+  const [tools, setTools] = useState<string[]>(initialAgent?.tools || []);
+
+  const AVAILABLE_TOOLS = [
+    { id: 'analyze_website', name: 'Scrape / Ler Websites', icon: 'Globe' },
+    { id: 'search_trends', name: 'Google Trends & Search', icon: 'Search' },
+    { id: 'read_database', name: 'Acesso FireStore / BigQuery', icon: 'Database' },
+    { id: 'n8n_webhook', name: 'Disparar Fluxo n8n', icon: 'Zap' },
+    { id: 'generate_image', name: 'Imagen 3 / Veo (Mídia Gráfica)', icon: 'Image' },
+    { id: 'query_analytics', name: 'Ler GA4 e ROI', icon: 'Activity' },
+  ];
+
+  const handleGeneratePrompt = async () => {
+    if (!name || !description) return;
+    setIsGeneratingPrompt(true);
+    try {
+      const aiPrompt = `Atue como um Engenheiro de Prompts Especialista em IA para CRM e Vendas.
+Crie um *System Prompt* detalhado para um agente IA com as seguintes características:
+- Nome: ${name}
+- Categoria: ${category}
+- Persona/Estilo: ${persona || 'Profissional e persuasivo'}
+- Descrição da Função: ${description}
+
+O System Prompt gerado deve guiar o modelo a atuar perfeitamente nessa função, definindo tom de voz, regras invioláveis (ex: nunca prometer descontos impossíveis, focar na qualificação da venda), e formato de resposta esperado. Retorne apenas o System Prompt, sem mais nada.`;
+
+      const response = await gemini.generateText(aiPrompt, MODELS.GENERAL);
+      const text = response.text || '';
+      setPrompt(text);
+    } catch (error) {
+      console.error('Failed to generate prompt', error);
+    } finally {
+      setIsGeneratingPrompt(false);
+    }
+  };
+
+  const handleExport = () => {
+    const agentData: MarketingSkill = {
+      id: initialAgent?.id || `custom-${Date.now()}`,
+      name,
+      category,
+      tier: initialAgent?.tier || SkillTier.CREATIVE,
+      persona,
+      description,
+      prompt,
+      tools: tools.length > 0 ? tools : undefined,
+    };
+    
+    const blob = new Blob([JSON.stringify(agentData, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `agente-${name.toLowerCase().replace(/\s+/g, '-')}.json`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  };
 
   const handleSave = async () => {
     if (!name || !persona || !description || !prompt || isSubmitting) return;
@@ -32,6 +90,7 @@ export const CustomAgentModal: React.FC<CustomAgentModalProps> = ({ onClose, onS
       persona,
       description,
       prompt,
+      tools: tools.length > 0 ? tools : undefined,
     };
     
     onSave(agentData);
@@ -125,10 +184,20 @@ export const CustomAgentModal: React.FC<CustomAgentModalProps> = ({ onClose, onS
         </div>
 
         <div className="space-y-2">
-          <label className="text-[10px] font-black uppercase tracking-widest text-theme-secondary opacity-40 flex items-center gap-2">
-            <Brain className="w-3 h-3" />
-            System Prompt (Instruções do Agente)
-          </label>
+          <div className="flex items-center justify-between">
+            <label className="text-[10px] font-black uppercase tracking-widest text-theme-secondary opacity-40 flex items-center gap-2">
+              <Brain className="w-3 h-3" />
+              System Prompt (Instruções do Agente)
+            </label>
+            <button
+              onClick={handleGeneratePrompt}
+              disabled={isGeneratingProxy || !name || !description}
+              className="text-[10px] font-black uppercase tracking-widest text-blue-500 hover:text-blue-400 flex items-center gap-1.5 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {isGeneratingProxy ? <Loader2 className="w-3 h-3 animate-spin" /> : <Sparkles className="w-3 h-3" />}
+              Gerar com IA
+            </button>
+          </div>
           <textarea
             value={prompt}
             onChange={(e) => setPrompt(e.target.value)}
@@ -136,23 +205,64 @@ export const CustomAgentModal: React.FC<CustomAgentModalProps> = ({ onClose, onS
             className="w-full h-40 bg-theme-glass/40 backdrop-blur-md border border-theme-glass/60 rounded-xl px-4 py-3 text-sm text-theme-primary placeholder:text-theme-secondary/30 focus:outline-none focus:border-blue-500/50 focus:ring-1 focus:ring-blue-500/20 transition-all resize-none custom-scrollbar shadow-inner"
           />
         </div>
+
+        <div className="space-y-3 pt-2">
+          <label className="text-[10px] font-black uppercase tracking-widest text-theme-secondary opacity-40 flex items-center gap-2">
+            <Sparkles className="w-3 h-3" />
+            Skills e Integrações (Tools)
+          </label>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            {AVAILABLE_TOOLS.map((tool) => (
+              <label 
+                key={tool.id}
+                className={`flex items-center gap-3 p-3 rounded-xl border cursor-pointer transition-all ${tools.includes(tool.id) ? 'bg-blue-500/10 border-blue-500/30' : 'bg-theme-glass/20 border-theme-glass/40 hover:bg-theme-glass/40'}`}
+              >
+                <div className={`w-4 h-4 rounded border flex items-center justify-center transition-all ${tools.includes(tool.id) ? 'bg-blue-500 border-blue-500' : 'border-theme-secondary/40'}`}>
+                  {tools.includes(tool.id) && <X className="w-3 h-3 text-white" style={{ clipPath: 'polygon(14% 44%, 0 65%, 50% 100%, 100% 16%, 80% 0%, 43% 62%)' }} />}
+                </div>
+                <input 
+                  type="checkbox" 
+                  className="hidden"
+                  checked={tools.includes(tool.id)}
+                  onChange={(e) => {
+                    if (e.target.checked) setTools([...tools, tool.id]);
+                    else setTools(tools.filter(t => t !== tool.id));
+                  }}
+                />
+                <span className={`text-[11px] font-bold tracking-wide uppercase ${tools.includes(tool.id) ? 'text-blue-400' : 'text-theme-secondary'}`}>{tool.name}</span>
+              </label>
+            ))}
+          </div>
+        </div>
       </div>
 
-      <div className="p-6 border-t border-theme-glass bg-theme-glass/20 flex flex-col sm:flex-row justify-end gap-3 sm:gap-4">
-        <button
-          onClick={onClose}
-          className="btn-secondary w-full sm:w-auto"
-        >
-          Cancelar
-        </button>
-        <button
-          onClick={handleSave}
-          disabled={!name || !persona || !description || !prompt || isSubmitting}
-          className="btn-primary w-full sm:w-auto px-8"
-        >
-          {isSubmitting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
-          Salvar Agente
-        </button>
+      <div className="p-6 border-t border-theme-glass bg-theme-glass/20 flex flex-col sm:flex-row justify-between gap-3 sm:gap-4 items-center">
+        <div>
+          <button
+            onClick={handleExport}
+            className="text-[10px] font-black uppercase tracking-widest text-theme-secondary hover:text-theme-primary flex items-center gap-2 transition-colors disabled:opacity-50"
+            disabled={!name}
+          >
+            <Download className="w-4 h-4" />
+            Exportar Agente
+          </button>
+        </div>
+        <div className="flex gap-3 w-full sm:w-auto">
+          <button
+            onClick={onClose}
+            className="btn-secondary w-full sm:w-auto"
+          >
+            Cancelar
+          </button>
+          <button
+            onClick={handleSave}
+            disabled={!name || !persona || !description || !prompt || isSubmitting}
+            className="btn-primary w-full sm:w-auto px-8"
+          >
+            {isSubmitting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
+            Salvar Agente
+          </button>
+        </div>
       </div>
     </div>
   );

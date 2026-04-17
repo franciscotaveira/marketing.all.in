@@ -147,8 +147,24 @@ export async function sendMessageToAgent(
 
     contents.push({ role: 'user', parts: currentParts });
 
+    const cotDirective = `
+
+CHAIN OF THOUGHT E FEW-SHOT LEARNING:
+Antes de responder, você deve OBRIGATORIAMENTE criar um bloco <thought_process> e raciocinar passo-a-passo e metodicamente sobre o contexto, a persona, restrições da sua skill e o modelo da solução pedida. Isso garante ausência de alucinações e foco no output perfeito. Depois do bloco, comece sua resposta final.
+
+Exemplo de formato esperado:
+<thought_process>
+1. O usuário pediu X.
+2. A persona é Y, então o tom deve ser Z.
+3. Precisarei das informações A e B. Vou focar em gerar uma solução prática para o contexto W.
+</thought_process>
+
+Olá! Aqui está a estratégia detalhada para o que você pediu...
+[resto da resposta do agente]`;
+    const enhancedSystemInstruction = systemInstruction ? systemInstruction + cotDirective : cotDirective;
+
     const config: any = {
-      systemInstruction,
+      systemInstruction: enhancedSystemInstruction,
       tools: tools || [],
     };
 
@@ -163,7 +179,7 @@ export async function sendMessageToAgent(
       model: model || "gemini-3-flash-preview",
       contents,
       config: {
-        systemInstruction,
+        systemInstruction: enhancedSystemInstruction,
         tools: config.tools,
         responseMimeType: responseMimeType as any,
       }

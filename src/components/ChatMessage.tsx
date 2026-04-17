@@ -1,7 +1,8 @@
 import React, { memo } from 'react';
 import { motion } from 'motion/react';
-import { Bot, User, FileText, Copy, Check, Download } from 'lucide-react';
+import { Bot, User, FileText, Copy, Check, Download, FileJson, Image as ImageIcon, Video, Code2 } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
+import rehypeRaw from 'rehype-raw';
 import { cn } from '../lib/utils';
 import { Message, Artifact } from '../types';
 
@@ -73,7 +74,95 @@ export const ChatMessage = memo(function ChatMessage({
             "prose-ol:text-theme-primary prose-ul:text-theme-primary",
             "dark:prose-invert"
           )}>
-            <ReactMarkdown>{msg.content}</ReactMarkdown>
+            <ReactMarkdown
+              rehypePlugins={[rehypeRaw]}
+              components={{
+                code(props) {
+                  const { children, className, node, ...rest } = props;
+                  const match = /language-(\w+)/.exec(className || '');
+                  const language = match ? match[1] : '';
+                  const isInline = !match;
+                  
+                  if (!isInline && match) {
+                    const content = String(children).replace(/\n$/, '');
+                    const isImage = ['image', 'png', 'jpg', 'jpeg', 'gif', 'webp'].includes(language.toLowerCase());
+                    const isVideo = ['video', 'mp4', 'webm', 'ogg'].includes(language.toLowerCase());
+
+                    if (isImage) {
+                      return (
+                        <div className="relative group/code-img my-4 rounded-xl overflow-hidden border border-theme-glass shadow-sm">
+                          <img src={content} alt="Artefato Visual" className="w-full h-auto object-cover max-h-[400px]" referrerPolicy="no-referrer" />
+                          <div className="absolute top-2 right-2 opacity-0 group-hover/code-img:opacity-100 transition-opacity flex gap-2">
+                            <button onClick={() => {
+                              const a = document.createElement('a');
+                              a.href = content;
+                              a.download = `artefato-${Date.now()}.${language === 'image' ? 'png' : language}`;
+                              a.target = "_blank";
+                              a.rel = "noreferrer";
+                              document.body.appendChild(a);
+                              a.click();
+                              document.body.removeChild(a);
+                            }} className="flex items-center gap-2 btn-secondary bg-black/60 p-2 shadow-sm border border-white/20 hover:bg-black/90 text-white backdrop-blur-md rounded-lg">
+                              <Download className="w-4 h-4 text-white" />
+                              <span className="text-[10px] font-bold uppercase tracking-wider pr-1">Baixar</span>
+                            </button>
+                          </div>
+                        </div>
+                      );
+                    }
+
+                    if (isVideo) {
+                      return (
+                        <div className="relative group/code-vid my-4 rounded-xl overflow-hidden border border-theme-glass shadow-sm bg-black/40">
+                          <video src={content} controls className="w-full max-h-[400px] object-cover" />
+                        </div>
+                      );
+                    }
+
+                    const getFileIcon = () => {
+                      if (language === 'json') return <FileJson className="w-4 h-4 text-emerald-400" />;
+                      if (language === 'txt' || language === 'md' || language === 'markdown') return <FileText className="w-4 h-4 text-blue-400" />;
+                      if (language === 'html' || language === 'jsx' || language === 'tsx') return <Code2 className="w-4 h-4 text-purple-400" />;
+                      return <Code2 className="w-4 h-4 text-theme-secondary" />;
+                    };
+
+                    return (
+                      <div className="relative group/code-block rounded-xl overflow-hidden border border-theme-glass my-4 shadow-sm bg-black/20">
+                        <div className="flex items-center justify-between px-4 py-2 border-b border-theme-glass font-mono text-[10px] text-theme-secondary uppercase tracking-wider font-bold bg-theme-surface/40">
+                          <div className="flex items-center gap-2">
+                            {getFileIcon()}
+                            <span>{language || 'código'}</span>
+                          </div>
+                          <button 
+                            onClick={() => {
+                              const blob = new Blob([content], { type: 'text/plain' });
+                              const url = URL.createObjectURL(blob);
+                              const a = document.createElement('a');
+                              a.href = url;
+                              a.download = `artefato-${Date.now()}.${language || 'txt'}`;
+                              document.body.appendChild(a);
+                              a.click();
+                              document.body.removeChild(a);
+                              URL.revokeObjectURL(url);
+                            }}
+                            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg hover:bg-theme-glass hover:text-theme-primary transition-all active:scale-95 text-theme-secondary border border-transparent hover:border-theme-glass/50"
+                          >
+                            <Download className="w-3.5 h-3.5" />
+                            <span className="hidden sm:inline">Baixar .{language || 'txt'}</span>
+                          </button>
+                        </div>
+                        <pre className="p-4 overflow-x-auto text-[11px] leading-relaxed !bg-transparent !m-0">
+                          <code className={className} {...rest}>{children}</code>
+                        </pre>
+                      </div>
+                    );
+                  }
+                  return <code className={cn("bg-theme-glass/30 px-1.5 py-0.5 rounded text-blue-400 px-1", className)} {...rest}>{children}</code>;
+                }
+              }}
+            >
+              {msg.content.replace(/<thought_process>([\s\S]*?)<\/thought_process>/g, '<details className="my-4 bg-theme-glass/20 border border-theme-glass rounded-xl overflow-hidden group/thought shadow-inner"><summary className="cursor-pointer px-4 py-3 bg-theme-glass/40 text-xs font-bold uppercase tracking-widest text-theme-secondary hover:text-theme-blue transition-colors flex items-center gap-2 select-none"><span className="w-4 h-4 flex items-center justify-center rounded-full bg-theme-blue/20 text-theme-blue">🧠</span> Processo de Raciocínio (AI)</summary><div className="p-4 text-xs font-mono text-theme-secondary opacity-70 whitespace-pre-wrap leading-relaxed border-t border-theme-glass/50 bg-black/20">$1</div></details>')}
+            </ReactMarkdown>
           </div>
           
           {msg.artifacts && msg.artifacts.length > 0 && (
