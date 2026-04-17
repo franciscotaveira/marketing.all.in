@@ -1511,7 +1511,7 @@ export default function App() {
                   <span className="text-blue-400/80">{activeTab === 'chat' ? "Chat Intelligence" : "Operations"}</span>
                 </div>
                 <h1 className="text-sm font-bold tracking-tight flex items-center gap-2.5 text-theme-primary">
-                  {activeTab === 'chat' ? (selectedSkill ? (selectedSkill.id === 'orchestrator' ? "Orquestrador de Enxame" : selectedSkill.name) : "Marketing Intelligence") : "Gestão de Operações"}
+                  {activeTab === 'chat' ? (selectedSkill ? (selectedSkill.id === 'orchestrator' ? "Orquestrador de Enxame" : selectedSkill.name) : "Marketing Intelligence") : "CRM & Pipelines"}
                   {selectedSkill?.id === 'orchestrator' && (
                     <div className="flex items-center gap-1.5 ml-1">
                       <div className="px-1.5 py-0.5 rounded bg-blue-500/10 border border-blue-500/20 text-[9px] font-bold text-blue-400 uppercase tracking-tighter">Swarm Active</div>
@@ -1570,7 +1570,7 @@ export default function App() {
                   activeTab === 'operations' && "chip-active"
                 )}
               >
-                Gestão de Operações
+                CRM & Pipelines
               </motion.button>
               <motion.button 
                 whileHover={{ scale: 1.02 }}
@@ -1661,7 +1661,7 @@ export default function App() {
                       </p>
                     </div>
                   </motion.div>
-                  <TaskBoard />
+                  <TaskBoard allSkills={[...MARKETING_SKILLS, ...customSkills]} />
                   <RoutinePlanner />
                 </motion.div>
               ) : activeTab === 'brain' ? (

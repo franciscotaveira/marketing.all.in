@@ -2,6 +2,34 @@ import { SkillCategory, MarketingSkill, SkillTier, Workflow } from "./types";
 
 export const WORKFLOWS: Workflow[] = [
   {
+    id: "wf_sdr_setup",
+    name: "Setup de Cliente SDR (WhatsApp)",
+    category: "Operações",
+    color: "bg-emerald-600",
+    description: "Análise de Nicho -> Prompt do Robô WhatsApp -> Arquitetura n8n",
+    initialPrompt: "Qual é o nicho do seu novo cliente, qual produto ele vende e qual é a principal dor do público dele?",
+    steps: [
+      {
+        id: "step_1",
+        name: "Análise e Objeções",
+        agentId: "strategist",
+        instruction: "Analise o cliente para a agência. Defina o tom de voz ideal para o atendimento via WhatsApp, liste as 3 principais objeções de venda e crie respostas padrão para quebrar essas objeções."
+      },
+      {
+        id: "step_2",
+        name: "Geração do System Prompt (SDR)",
+        agentId: "copywriter",
+        instruction: "Escreva o System Prompt mestre (comportamento, regras de restrição, saudação, gatilhos de agendamento) que será inserido na IA (OpenAI/Gemini). Foque em alta conversão e em soar humano (remover 'cheiro de IA')."
+      },
+      {
+        id: "step_3",
+        name: "Mockup n8n (Arquitetura)",
+        agentId: "automation-engineer",
+        instruction: "Desenhe o fluxo do n8n integrando Evolution API (WhatsApp) -> IA -> CRM. Descreva os nós (nodes) necessários. GERE UM ARTEFATO do tipo 'code' contendo um esqueleto/mockup em JSON do fluxo n8n para deploy rápido."
+      }
+    ]
+  },
+  {
     id: "wf_organic_growth",
     name: "Máquina de Crescimento Orgânico",
     category: "Crescimento",
@@ -572,6 +600,16 @@ export const MARKETING_SKILLS: MarketingSkill[] = [
     persona: "Auditor de Performance",
     description: "Mapeia jornada e atribui valor.",
     prompt: "Atue como Analista de ROI. Defina modelo de atribuição ideal e calcule CAC vs LTV para cada canal.",
+    model: "gemini-3-flash-preview",
+  },
+  {
+    id: "whatsapp-analyst",
+    name: "Analista de Conversões WhatsApp (SDR)",
+    category: SkillCategory.MEASUREMENT,
+    tier: SkillTier.OPERATIONS,
+    persona: "Cirurgião de Atendimentos Chat",
+    description: "Analisa logs de SDRs do WhatsApp e identifica gargalos na conversão.",
+    prompt: "Você é um Analista de Conversões via WhatsApp para operações SDR de IA. Analise transcrições de chat e identifique objeções ou loops onde o robô travou. Proponha frases ou instruções exatas para você colar no 'System Prompt' do robô para evitar o erro no futuro.",
     model: "gemini-3-flash-preview",
   },
   {

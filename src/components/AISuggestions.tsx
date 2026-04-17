@@ -25,7 +25,7 @@ export const AISuggestions: React.FC = () => {
     if (!auth.currentUser) return;
     const q = query(
       collection(db, 'users', auth.currentUser.uid, 'tasks'),
-      where('status', '!=', 'done'),
+      where('status', 'in', ['prospect', 'setup', 'todo', 'in-progress']),
       limit(10)
     );
     const unsubscribe = onSnapshot(q, (snapshot) => {
@@ -40,10 +40,10 @@ export const AISuggestions: React.FC = () => {
 
     try {
       const prompt = `
-        Analise estas tarefas pendentes do usuário e sugira 3 otimizações ou ações prioritárias:
-        ${tasks.map(t => `- [${t.priority}] ${t.title}: ${t.description || ''}`).join('\n')}
+        Analise a lista atual do Pipeline de Clientes de uma agência de Automação/SDR e sugira 3 ações estratégicas para fechar negócios ou entregar os bots mais rápido:
+        ${tasks.map(t => `- [${t.priority}] ${t.title} (Status: ${t.status}): ${t.description || ''}`).join('\n')}
         
-        Responda APENAS um JSON no formato:
+        Responda APENAS um JSON estrito no formato:
         Array<{ title: string, description: string, type: 'optimization' | 'insight' | 'action', impact: 'high' | 'medium' | 'low' }>
       `;
 
@@ -78,16 +78,17 @@ export const AISuggestions: React.FC = () => {
             <Bot className="w-4 h-4" />
           </div>
           <div>
-            <h3 className="text-sm font-bold uppercase tracking-wider text-theme-primary">Sugestões de IA</h3>
-            <p className="text-[10px] font-bold text-theme-secondary uppercase tracking-wider">Otimização em Tempo Real</p>
+            <h3 className="text-sm font-bold uppercase tracking-wider text-theme-primary">Inteligência de Venda</h3>
+            <p className="text-[10px] font-bold text-theme-secondary uppercase tracking-wider">Insights sobre Clientes</p>
           </div>
         </div>
         <button 
           onClick={generateSuggestions}
           disabled={isLoading}
-          className="btn-secondary p-2.5 disabled:opacity-50 shadow-sm"
+          className="btn-secondary p-2.5 disabled:opacity-50 shadow-sm text-[10px] font-bold uppercase"
         >
-          {isLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <RefreshCw className="w-4 h-4" />}
+          {isLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <RefreshCw className="w-4 h-4 mr-2" />}
+          {isLoading ? '' : 'Analisar Pipeline'}
         </button>
       </div>
 
@@ -137,7 +138,7 @@ export const AISuggestions: React.FC = () => {
               <Lightbulb className="w-7 h-7 text-theme-secondary opacity-30" />
             </div>
             <p className="text-[10px] font-bold text-theme-secondary uppercase tracking-widest leading-relaxed max-w-[200px]">
-              Clique no ícone de atualizar para gerar sugestões baseadas nas suas tarefas atuais.
+              Gere insights de conversão baseados nos clientes do seu pipeline atual.
             </p>
           </div>
         )}
@@ -149,8 +150,8 @@ export const AISuggestions: React.FC = () => {
             <TrendingUp className="w-5 h-5 text-white" />
           </div>
           <div className="flex flex-col">
-            <span className="text-[10px] font-black uppercase tracking-widest text-blue-500">Produtividade</span>
-            <span className="text-sm font-bold text-theme-primary">+24% esta semana</span>
+            <span className="text-[10px] font-black uppercase tracking-widest text-blue-500">Oportunidades</span>
+            <span className="text-sm font-bold text-theme-primary">+3 Leads esta semana</span>
           </div>
         </div>
       </div>

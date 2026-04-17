@@ -164,11 +164,18 @@ export interface BrainMemory {
   embedding?: number[]; // Adicionado para RAG
 }
 
+export interface InteractionLog {
+  id: string;
+  role: 'bot' | 'lead' | 'human';
+  message: string;
+  timestamp: any;
+}
+
 export interface Task {
   id: string;
   title: string;
   description?: string;
-  status: "todo" | "in-progress" | "done";
+  status: "prospect" | "setup" | "active" | "paused" | "todo" | "in-progress" | "done";
   priority: "low" | "medium" | "high";
   tags?: string[];
   image?: string;
@@ -178,6 +185,7 @@ export interface Task {
   createdAt: any;
   updatedAt?: any;
   routineId?: string; // ID da rotina vinculada
+  interactions?: InteractionLog[]; // Log de conversas com o Lead
 }
 
 export interface Routine {

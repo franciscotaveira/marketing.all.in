@@ -67,8 +67,8 @@ export default function NotificationCenter() {
       const notifsRef = collection(db, 'users', auth.currentUser!.uid, 'notifications');
       
       try {
-        // Fetch tasks that are not done (todo or in-progress)
-        const tasksQuery = query(tasksRef, where('status', '!=', 'done'));
+        // Fetch tasks that are not fully done or paused
+        const tasksQuery = query(tasksRef, where('status', 'in', ['prospect', 'setup', 'todo', 'in-progress']));
         const tasksSnapshot = await getDocs(tasksQuery);
         
         // Fetch recent notifications to avoid duplicates
@@ -79,33 +79,34 @@ export default function NotificationCenter() {
 
         for (const docSnap of tasksSnapshot.docs) {
           const task = docSnap.data();
-          if (!task.dueDate) continue;
 
-          const dueDate = task.dueDate instanceof Timestamp ? task.dueDate.toDate() : new Date(task.dueDate);
-          
-          // Overdue Check
-          if (dueDate < now) {
-            const alreadyNotified = existingNotifs.some(n => 
-              n.metadata?.taskId === docSnap.id && 
-              n.metadata?.notifType === 'overdue' &&
-              n.metadata?.dueDate === dueDate.toISOString()
-            );
+          if (task.dueDate) {
+            const dueDate = task.dueDate instanceof Timestamp ? task.dueDate.toDate() : new Date(task.dueDate);
+            
+            // Overdue Check
+            if (dueDate < now) {
+              const alreadyNotified = existingNotifs.some(n => 
+                n.metadata?.taskId === docSnap.id && 
+                n.metadata?.notifType === 'overdue' &&
+                n.metadata?.dueDate === dueDate.toISOString()
+              );
 
-            if (!alreadyNotified) {
-              await addDoc(notifsRef, {
-                title: '🚨 Tarefa Atrasada',
-                message: `A tarefa "${task.title}" ultrapassou o prazo de vencimento!`,
-                type: 'warning',
-                read: false,
-                createdAt: serverTimestamp(),
-                metadata: { 
-                  taskId: docSnap.id,
-                  notifType: 'overdue',
-                  dueDate: dueDate.toISOString()
-                }
-              });
-            }
-          } 
+              if (!alreadyNotified) {
+                await addDoc(notifsRef, {
+                  title: '🚨 Operação Atrasada',
+                  message: `A operação/cliente "${task.title}" passou do prazo de setup marcado!`,
+                  type: 'warning',
+                  read: false,
+                  createdAt: serverTimestamp(),
+                  metadata: { 
+                    taskId: docSnap.id,
+                    notifType: 'overdue',
+                    dueDate: dueDate.toISOString()
+                  }
+                });
+              }
+            } 
+          }
           
           // Reminder Check
           if (task.reminderAt) {
