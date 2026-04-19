@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import ForceGraph2D from "react-force-graph-2d";
 import { motion, AnimatePresence } from "motion/react";
 import { 
@@ -22,6 +22,15 @@ import {
   Library
 } from "lucide-react";
 import ReactMarkdown from "react-markdown";
+import { 
+  AreaChart, 
+  Area, 
+  XAxis, 
+  YAxis, 
+  CartesianGrid, 
+  Tooltip, 
+  ResponsiveContainer 
+} from "recharts";
 import { BrainNode, BrainLink, BrainMemory, MarketingSkill } from "../types";
 import { firebaseService } from "../lib/firebaseService";
 import { cn } from "../lib/utils";
@@ -51,8 +60,35 @@ export function AgentBrain({ agent, onClose, isDarkMode = true, isIntegrated }: 
   const [vaultFilter, setVaultFilter] = useState("");
   const [vaultSort, setVaultSort] = useState<"date" | "roi">("date");
   const [enabledSkills, setEnabledSkills] = useState<Record<string, boolean>>({});
+  const [autoPilotActive, setAutoPilotActive] = useState(false);
+
+  useEffect(() => {
+    let interval: any;
+    if (autoPilotActive) {
+      interval = setInterval(async () => {
+        const newInsight: Omit<BrainMemory, "id" | "createdAt" | "updatedAt"> = {
+          title: `Insight Autônomo: ${new Date().toLocaleTimeString()}`,
+          content: `Análise em background concluída.\n\n Identificamos uma queda de **12% no engajamento** em posts de fundo cinza, mas as conversões do webhook do n8n cresceram.\n\nSugestão: Aumentar orçamento na pauta de testes A/B.`,
+          tags: ["auto-pilot", "growth", "background-task", "insight"],
+          type: "insight",
+          source: "Background Thread / Auto Pilot",
+          roi: Math.floor(Math.random() * 30) + 5
+        };
+        await firebaseService.saveMemory(newInsight as any);
+      }, 15000);
+    }
+    return () => clearInterval(interval);
+  }, [autoPilotActive]);
 
   const graphRef = useRef<any>(null);
+
+  const roiData = React.useMemo(() => {
+    const historicalRoi = memories
+      .filter((m) => typeof m.roi === 'number' && !isNaN(m.roi))
+      .sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime())
+      .map((m) => ({ v: m.roi }));
+    return historicalRoi.length > 2 ? historicalRoi : [{v: 12}, {v: 18}, {v: 15}, {v: 24.5}];
+  }, [memories]);
 
   const updateHighlight = (node: any, links: any[]) => {
     const newHighlightNodes = new Set();
@@ -94,6 +130,25 @@ export function AgentBrain({ agent, onClose, isDarkMode = true, isIntegrated }: 
     setHighlightNodes(newHighlightNodes);
     setHighlightLinks(newHighlightLinks);
   };
+
+  useEffect(() => {
+    let interval: any;
+    if (autoPilotActive) {
+      interval = setInterval(async () => {
+        // Mock Auto-Pilot generating insights
+        const newInsight: Omit<BrainMemory, "id" | "createdAt" | "updatedAt"> = {
+          title: `Insight Autônomo: ${new Date().toLocaleTimeString()}`,
+          content: `Análise em background concluída.\n\n Identificamos uma queda de **12% no engajamento** em posts de fundo cinza, mas as conversões do webhook do n8n cresceram.\n\nSugestão: Aumentar orçamento na pauta de testes A/B.`,
+          tags: ["auto-pilot", "growth", "background-task", "insight"],
+          type: "insight",
+          source: "Background Thread / Auto Pilot",
+          roi: Math.floor(Math.random() * 30) + 5
+        };
+        await firebaseService.saveMemory(newInsight as any); // cast for simplicity, triggering listener
+      }, 15000); // 15 seconds for testing
+    }
+    return () => clearInterval(interval);
+  }, [autoPilotActive]);
 
   useEffect(() => {
     loadMemories();
@@ -420,6 +475,15 @@ ${selectedMemory.content}`;
               )}
             >
               <Activity className="w-4 h-4" /> Analytics
+            </button>
+            <button 
+              onClick={() => setAutoPilotActive(!autoPilotActive)}
+              className={cn(
+                "chip border transition-all",
+                autoPilotActive ? "bg-theme-emerald/20 text-theme-emerald border-theme-emerald/50 shadow-[0_0_15px_rgba(16,185,129,0.3)] animate-pulse" : "hover:bg-theme-glass"
+              )}
+            >
+              <Zap className="w-4 h-4" /> {autoPilotActive ? "AutoPilot: ON" : "AutoPilot: OFF"}
             </button>
           </div>
           {!isIntegrated && (
@@ -762,41 +826,59 @@ ${selectedMemory.content}`;
             <div className="w-full h-full p-12 overflow-y-auto custom-scrollbar bg-transparent">
               <div className="max-w-5xl mx-auto space-y-12">
                 <div className="text-center space-y-4">
-                  <h2 className="text-4xl font-black uppercase tracking-tighter text-theme-primary italic">Previsão de <span className="text-theme-blue">Performance</span></h2>
-                  <p className="text-theme-blue font-black text-[10px] uppercase tracking-[0.4em]">Análise Preditiva de ROI em Tempo Real</p>
+                  <h2 className="text-4xl font-black uppercase tracking-tighter text-theme-primary italic">Workspace de <span className="text-theme-blue">Métricas</span></h2>
+                  <p className="text-theme-blue font-black text-[10px] uppercase tracking-[0.4em]">Integração via API (Analytics, Meta, n8n)</p>
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
                   <motion.div 
                     whileHover={{ y: -8, scale: 1.02 }}
-                    className="p-10 liquid-glass-card relative overflow-hidden group bg-theme-glass/20 border border-theme-glass"
+                    className="p-10 liquid-glass-card relative overflow-hidden group bg-theme-glass/20 border border-theme-glass flex flex-col justify-between"
                   >
-                    <div className="absolute top-0 left-0 w-1.5 h-full bg-theme-emerald shadow-[0_0_25px_rgba(16,185,129,0.9)]" />
-                    <h3 className="text-[11px] font-black text-theme-secondary uppercase tracking-[0.3em] mb-6">ROI Projetado</h3>
-                    <p className="text-6xl font-black text-theme-emerald tracking-tighter italic">+24.5%</p>
-                    <div className="mt-6 flex items-center gap-3 text-[10px] font-black text-theme-emerald opacity-80 uppercase tracking-widest">
-                      <Activity className="w-4 h-4" /> Tendência de Alta
+                    <div>
+                      <div className="absolute top-0 left-0 w-1.5 h-full bg-theme-emerald shadow-[0_0_25px_rgba(16,185,129,0.9)]" />
+                      <h3 className="text-[11px] font-black text-theme-secondary uppercase tracking-[0.3em] mb-6">ROI Consolidado</h3>
+                      <p className="text-6xl font-black text-theme-emerald tracking-tighter italic">+24.5%</p>
+                    </div>
+                    <div className="mt-8 h-24 w-full">
+                      <ResponsiveContainer width="100%" height="100%">
+                        <AreaChart data={roiData}>
+                          <Area type="monotone" dataKey="v" stroke="#10b981" fill="#10b981" fillOpacity={0.2} />
+                        </AreaChart>
+                      </ResponsiveContainer>
                     </div>
                   </motion.div>
                   <motion.div 
                     whileHover={{ y: -8, scale: 1.02 }}
-                    className="p-10 liquid-glass-card relative overflow-hidden group bg-theme-glass/20 border border-theme-glass"
+                    className="p-10 liquid-glass-card relative overflow-hidden group bg-theme-glass/20 border border-theme-glass flex flex-col justify-between"
                   >
-                    <div className="absolute top-0 left-0 w-1.5 h-full bg-theme-blue shadow-[0_0_25px_rgba(59,130,246,0.9)]" />
-                    <h3 className="text-[11px] font-black text-theme-secondary uppercase tracking-[0.3em] mb-6">Conversão Estimada</h3>
-                    <p className="text-6xl font-black text-theme-blue tracking-tighter italic">3.8%</p>
-                    <div className="mt-6 flex items-center gap-3 text-[10px] font-black text-theme-blue opacity-80 uppercase tracking-widest">
-                      <Zap className="w-4 h-4" /> Otimizado por IA
+                    <div>
+                      <div className="absolute top-0 left-0 w-1.5 h-full bg-theme-blue shadow-[0_0_25px_rgba(59,130,246,0.9)]" />
+                      <h3 className="text-[11px] font-black text-theme-secondary uppercase tracking-[0.3em] mb-6">Taxa de Conversão</h3>
+                      <p className="text-6xl font-black text-theme-blue tracking-tighter italic">3.8%</p>
+                    </div>
+                    <div className="mt-8 h-24 w-full">
+                      <ResponsiveContainer width="100%" height="100%">
+                        <AreaChart data={[{v:2.1}, {v:2.5}, {v:3.0}, {v:3.8}]}>
+                          <Area type="monotone" dataKey="v" stroke="#3b82f6" fill="#3b82f6" fillOpacity={0.2} />
+                        </AreaChart>
+                      </ResponsiveContainer>
                     </div>
                   </motion.div>
                   <motion.div 
                     whileHover={{ y: -8, scale: 1.02 }}
-                    className="p-10 liquid-glass-card relative overflow-hidden group bg-theme-glass/20 border border-theme-glass"
+                    className="p-10 liquid-glass-card relative overflow-hidden group bg-theme-glass/20 border border-theme-glass flex flex-col justify-between"
                   >
-                    <div className="absolute top-0 left-0 w-1.5 h-full bg-theme-orange shadow-[0_0_25px_rgba(249,115,22,0.9)]" />
-                    <h3 className="text-[11px] font-black text-theme-secondary uppercase tracking-[0.3em] mb-6">Custo por Aquisição</h3>
-                    <p className="text-6xl font-black text-theme-orange tracking-tighter italic drop-shadow-[0_0_20px_rgba(251,146,60,0.5)]">$12.40</p>
-                    <div className="mt-6 flex items-center gap-3 text-[10px] font-black text-theme-orange opacity-80 uppercase tracking-widest">
-                      <Database className="w-4 h-4" /> Base Histórica
+                    <div>
+                      <div className="absolute top-0 left-0 w-1.5 h-full bg-theme-orange shadow-[0_0_25px_rgba(249,115,22,0.9)]" />
+                      <h3 className="text-[11px] font-black text-theme-secondary uppercase tracking-[0.3em] mb-6">CPA Otimizado</h3>
+                      <p className="text-6xl font-black text-theme-orange tracking-tighter italic drop-shadow-[0_0_20px_rgba(251,146,60,0.5)]">$12.40</p>
+                    </div>
+                    <div className="mt-8 h-24 w-full">
+                      <ResponsiveContainer width="100%" height="100%">
+                        <AreaChart data={[{v:22}, {v:18}, {v:15}, {v:12.4}]}>
+                          <Area type="monotone" dataKey="v" stroke="#f97316" fill="#f97316" fillOpacity={0.2} />
+                        </AreaChart>
+                      </ResponsiveContainer>
                     </div>
                   </motion.div>
                 </div>

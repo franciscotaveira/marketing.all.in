@@ -88,12 +88,12 @@ export function AgentControls({
             <button
               onClick={() => setIsBrandContextModalOpen(true)}
               className={cn(
-                "btn-secondary gap-2 px-4 py-2",
+                "btn-secondary gap-1.5 px-3 py-1.5 rounded-full text-[9px]",
                 activeCompanyId && "bg-blue-500/10 text-blue-500 border-blue-500/20"
               )}
             >
-            <Building2 className="w-4 h-4" />
-            <span className="hidden sm:inline">
+            <Building2 className="w-3.5 h-3.5" />
+            <span className="hidden sm:inline pt-[2px]">
               {activeCompanyId ? companies.find(c => c.id === activeCompanyId)?.name || "Empresa Ativa" : "Selecionar Empresa"}
             </span>
           </button>
@@ -102,43 +102,30 @@ export function AgentControls({
         <div className="flex flex-wrap items-center gap-1.5 justify-center md:justify-end">
           <div className="relative">
             <div className={cn(
-              "chip overflow-hidden p-0",
+              "chip overflow-hidden",
               useSwarmMode && "chip-active"
             )}>
               <button 
                 onClick={() => setUseSwarmMode(!useSwarmMode)}
-                className="flex items-center gap-2 pl-4 pr-2 py-2"
+                className="flex items-center gap-1.5 pl-2.5 pr-1.5 py-1.5 transition-all text-[#64748b] hover:text-[#0f172a] dark:text-[#94a3b8] dark:hover:text-[#f8fafc]"
               >
-                <Users className={cn("w-4 h-4", useSwarmMode && "animate-pulse")} />
-                <span className="hidden sm:inline">Swarm</span>
+                <Users className={cn("w-3.5 h-3.5", useSwarmMode && "animate-pulse")} />
+                <span className="hidden sm:inline pt-[2px]">Swarm</span>
               </button>
-              <button
-                onClick={(e) => { 
-                  e.stopPropagation(); 
-                  if (useSwarmMode) {
+              {useSwarmMode && (
+                <button
+                  onClick={(e) => { 
+                    e.stopPropagation(); 
                     setIsSwarmSettingsOpen(!isSwarmSettingsOpen);
-                    setActiveTooltip(null);
-                  } else {
-                    setActiveTooltip(activeTooltip === 'swarm' ? null : 'swarm'); 
-                  }
-                }}
-                className="pr-3 pl-1 py-2 opacity-60 hover:opacity-100 transition-opacity"
-              >
-                {useSwarmMode ? <Settings className="w-4 h-4" /> : <HelpCircle className="w-4 h-4" />}
-              </button>
+                  }}
+                  className="pr-2.5 pl-1 py-1.5 opacity-60 hover:opacity-100 transition-opacity"
+                  title="Configurações do Swarm"
+                >
+                  <Settings className="w-3.5 h-3.5" />
+                </button>
+              )}
             </div>
             <AnimatePresence>
-              {activeTooltip === 'swarm' && (
-                <motion.div 
-                  initial={{ opacity: 0, y: 10, scale: 0.9 }}
-                  animate={{ opacity: 1, y: 0, scale: 1 }}
-                  exit={{ opacity: 0, y: 10, scale: 0.9 }}
-                  className="absolute top-full mt-3 right-0 w-64 p-4 liquid-glass-panel text-xs text-theme-secondary z-50 shadow-2xl border border-theme-glass"
-                >
-                  <div className="font-black uppercase tracking-widest text-theme-blue mb-2 text-[10px]">Modo Swarm</div>
-                  Ativa múltiplos agentes especialistas para trabalhar em paralelo no seu objetivo.
-                </motion.div>
-              )}
               {isSwarmSettingsOpen && useSwarmMode && (
                 <SwarmSettingsPanel
                   allSkills={allSkills}
@@ -152,78 +139,35 @@ export function AgentControls({
         </div>
 
         <div className="flex items-center gap-1.5">
-          <div className="relative">
-            <div className={cn(
-              "chip overflow-hidden p-0",
-              googleTokens && "chip-active"
-            )}>
-              <button 
-                onClick={connectGoogleDrive}
-                className="flex items-center gap-2 pl-4 pr-2 py-2"
-              >
-                <Globe className={cn("w-4 h-4", googleTokens && "text-emerald-500")} />
-                <span className="hidden sm:inline">{googleTokens ? "Drive Ativo" : "Drive"}</span>
-              </button>
-              <button
-                onClick={(e) => { 
-                  e.stopPropagation(); 
-                  setActiveTooltip(activeTooltip === 'drive' ? null : 'drive'); 
-                }}
-                className="pr-3 pl-1 py-2 opacity-60 hover:opacity-100 transition-opacity"
-              >
-                <HelpCircle className="w-4 h-4" />
-              </button>
+          <button 
+            onClick={connectGoogleDrive}
+            className={cn(
+              "chip overflow-hidden pl-2.5 pr-2.5 py-1.5 transition-all text-[#64748b] hover:text-[#0f172a] dark:text-[#94a3b8] dark:hover:text-[#f8fafc]",
+              googleTokens && "chip-active text-emerald-600 dark:text-emerald-400"
+            )}
+            title="Conectar Google Drive"
+          >
+            <div className="flex items-center gap-1.5">
+              <Globe className={cn("w-3.5 h-3.5", googleTokens && "text-emerald-500")} />
+              <span className="hidden sm:inline pt-[2px]">{googleTokens ? "Drive Ativo" : "Drive"}</span>
             </div>
-            <AnimatePresence>
-              {activeTooltip === 'drive' && (
-                <motion.div 
-                  initial={{ opacity: 0, y: 10, scale: 0.9 }}
-                  animate={{ opacity: 1, y: 0, scale: 1 }}
-                  exit={{ opacity: 0, y: 10, scale: 0.9 }}
-                  className="absolute top-full mt-3 right-0 w-64 p-4 liquid-glass-panel text-xs text-theme-secondary z-50 shadow-2xl border border-theme-glass"
-                >
-                  <div className="font-black uppercase tracking-widest text-theme-blue mb-2 text-[10px]">Google Drive</div>
-                  Conecte sua conta para que os agentes possam ler documentos e pastas diretamente.
-                </motion.div>
-              )}
-            </AnimatePresence>
-          </div>
+          </button>
         </div>
 
         <div className="flex items-center gap-1.5">
-          <div className="relative">
-            <div className={cn(
-              "chip overflow-hidden p-0",
+          <button 
+            onClick={() => setUseGrounding(!useGrounding)}
+            className={cn(
+              "chip overflow-hidden pl-2.5 pr-2.5 py-1.5 transition-all text-[#64748b] hover:text-[#0f172a] dark:text-[#94a3b8] dark:hover:text-[#f8fafc]",
               useGrounding && "chip-active"
-            )}>
-              <button 
-                onClick={() => setUseGrounding(!useGrounding)}
-                className="flex items-center gap-2 pl-4 pr-2 py-2"
-              >
-                <Globe className={cn("w-4 h-4", useGrounding && "animate-spin-slow")} />
-                <span className="hidden sm:inline">Pesquisa</span>
-              </button>
-              <button
-                onClick={(e) => { e.stopPropagation(); setActiveTooltip(activeTooltip === 'pesquisa' ? null : 'pesquisa'); }}
-                className="pr-3 pl-1 py-2 opacity-60 hover:opacity-100 transition-opacity"
-              >
-                <HelpCircle className="w-4 h-4" />
-              </button>
+            )}
+            title="Habilitar Pesquisa na Web"
+          >
+            <div className="flex items-center gap-1.5">
+              <Globe className={cn("w-3.5 h-3.5", useGrounding && "animate-spin-slow")} />
+              <span className="hidden sm:inline pt-[2px]">Pesquisa</span>
             </div>
-            <AnimatePresence>
-              {activeTooltip === 'pesquisa' && (
-                <motion.div 
-                  initial={{ opacity: 0, y: 10, scale: 0.9 }}
-                  animate={{ opacity: 1, y: 0, scale: 1 }}
-                  exit={{ opacity: 0, y: 10, scale: 0.9 }}
-                  className="absolute top-full mt-3 right-0 w-64 p-4 liquid-glass-panel text-xs text-theme-secondary z-50 shadow-2xl border border-theme-glass"
-                >
-                  <div className="font-black uppercase tracking-widest text-theme-blue mb-2 text-[10px]">Pesquisa em Tempo Real</div>
-                  Conecta a IA à internet para buscar dados e referências atualizadas.
-                </motion.div>
-              )}
-            </AnimatePresence>
-          </div>
+          </button>
         </div>
       </div>
     </div>

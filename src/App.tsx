@@ -1187,12 +1187,12 @@ export default function App() {
           <BrandSummary company={companies.find(c => c.id === activeCompanyId) || null} />
 
           {/* Chat History Section */}
-          <div className="space-y-4">
+          <div className="space-y-3">
             <div className="flex items-center gap-2 px-2">
-              <div className="w-6 h-6 rounded-lg bg-blue-500/10 flex items-center justify-center">
+              <div className="w-6 h-6 rounded-lg bg-blue-500/10 flex items-center justify-center border border-blue-500/20 shadow-sm">
                 <History className="w-3.5 h-3.5 text-blue-500" />
               </div>
-              <h2 className="text-[11px] uppercase tracking-wider font-bold text-theme-primary/80">Histórico de Inteligência</h2>
+              <h2 className="text-[11px] uppercase tracking-widest font-black text-theme-primary">Histórico</h2>
             </div>
             <SidebarChatHistory 
               currentChatId={currentChatId}
@@ -1250,16 +1250,16 @@ export default function App() {
                         key={workflow.id}
                         onClick={() => handleStartWorkflow(workflow)}
                         className={cn(
-                          "p-4 rounded-2xl text-sm font-bold transition-all text-left flex items-center justify-between group border relative overflow-hidden shadow-sm",
+                          "p-3 rounded-2xl text-sm font-bold transition-all text-left flex items-center justify-between group border relative overflow-hidden shadow-sm",
                           activeWorkflow?.id === workflow.id
-                            ? cn(workflow.color, "border-white/30 text-white shadow-lg") 
+                            ? cn(workflow.color, "border-white/30 text-white shadow-md") 
                             : "bg-theme-card/40 border-theme-glass text-theme-secondary hover:bg-theme-glass hover:text-theme-primary hover:border-amber-500/30"
                         )}
                       >
                         <div className="flex flex-col min-w-0 relative z-10 justify-center">
-                          <span className="truncate font-black uppercase tracking-tighter text-xs leading-none">{workflow.name}</span>
+                          <span className="truncate font-black uppercase tracking-tighter text-[11px] leading-none">{workflow.name}</span>
                           <span className={cn(
-                            "text-[9px] opacity-60 truncate font-bold mt-1.5 tracking-[0.15em] uppercase leading-none",
+                            "text-[8px] opacity-60 truncate font-bold mt-1 tracking-[0.15em] uppercase leading-none",
                             activeWorkflow?.id === workflow.id ? "text-white/90" : "text-theme-secondary"
                           )}>{workflow.description}</span>
                         </div>
@@ -1293,7 +1293,7 @@ export default function App() {
               <h2 className="text-[11px] uppercase tracking-widest font-black text-theme-primary">Frameworks</h2>
             </div>
             
-            <div className="grid grid-cols-1 gap-2.5">
+            <div className="grid grid-cols-1 gap-2">
               {MARKETING_FRAMEWORKS.map((framework) => (
                 <motion.button 
                   whileHover={{ scale: 1.02 }}
@@ -1301,16 +1301,16 @@ export default function App() {
                   key={framework.id}
                   onClick={() => setSelectedFramework(selectedFramework === framework.id ? null : framework.id)}
                   className={cn(
-                    "p-4 rounded-2xl text-sm font-bold transition-all text-left flex items-center justify-between group border shadow-sm",
+                    "p-3 rounded-2xl text-sm font-bold transition-all text-left flex items-center justify-between group border shadow-sm",
                     selectedFramework === framework.id 
-                      ? "bg-emerald-600 border-emerald-400 text-white shadow-lg" 
+                      ? "bg-emerald-600 border-emerald-400 text-white shadow-md" 
                       : "bg-theme-card/60 border-theme-glass text-theme-secondary hover:bg-emerald-500/10 hover:text-emerald-400 hover:border-emerald-500/30"
                   )}
                 >
                   <div className="flex flex-col min-w-0 justify-center">
-                    <span className="truncate font-black uppercase tracking-tighter text-xs leading-none">{framework.name}</span>
+                    <span className="truncate font-black uppercase tracking-tighter text-[11px] leading-none">{framework.name}</span>
                     <span className={cn(
-                      "text-[9px] opacity-60 truncate font-bold mt-1.5 tracking-[0.15em] uppercase leading-none",
+                      "text-[8px] opacity-60 truncate font-bold mt-1 tracking-[0.15em] uppercase leading-none",
                       selectedFramework === framework.id ? "text-emerald-50" : "text-theme-secondary"
                     )}>{framework.description}</span>
                   </div>
@@ -1363,23 +1363,23 @@ export default function App() {
                       whileTap={{ scale: 0.98 }}
                       onClick={() => setExpandedCategory(isExpanded ? null : category)}
                       className={cn(
-                        "w-full flex items-center justify-between px-4 py-3.5 rounded-2xl text-[11px] font-black uppercase tracking-widest transition-all border shadow-md leading-none",
+                        "w-full flex items-center justify-between px-2.5 py-2 rounded-[10px] text-[9px] font-black uppercase tracking-widest transition-all border shadow-sm leading-none",
                         isExpanded 
-                          ? "bg-theme-glass border-theme-secondary/40 text-theme-primary shadow-lg" 
+                          ? "bg-theme-glass border-theme-secondary/40 text-theme-primary shadow-md" 
                           : "bg-theme-card border-theme-glass text-theme-secondary hover:text-theme-primary hover:bg-theme-glass hover:border-theme-secondary/30"
                       )}
                     >
-                      <div className="flex items-center gap-3">
+                      <div className="flex items-center gap-2">
                         <div className={cn(
-                          "w-7 h-7 rounded-xl flex items-center justify-center transition-all shadow-sm border border-theme-glass/20", 
+                          "w-5 h-5 rounded flex items-center justify-center transition-all shadow-sm border border-theme-glass/20", 
                           isExpanded ? CATEGORY_BG_LIGHT_COLORS[category] : "bg-theme-glass",
                           CATEGORY_TEXT_COLORS[category]
                         )}>
-                          {getCategoryIcon(category)}
+                          {React.cloneElement(getCategoryIcon(category), { className: "w-3 h-3" })}
                         </div>
                         <span className="truncate">{category}</span>
                       </div>
-                      <ChevronRight className={cn("w-4 h-4 transition-transform opacity-40", isExpanded ? "rotate-90" : "")} />
+                      <ChevronRight className={cn("w-3 h-3 transition-transform opacity-40", isExpanded ? "rotate-90" : "")} />
                     </motion.button>
                     
                     <AnimatePresence>
@@ -1388,7 +1388,7 @@ export default function App() {
                           initial={{ height: 0, opacity: 0 }}
                           animate={{ height: 'auto', opacity: 1 }}
                           exit={{ height: 0, opacity: 0 }}
-                          className="space-y-2 overflow-hidden pl-3 pr-1 py-1"
+                          className="space-y-1.5 overflow-hidden pl-2 pr-0.5 py-1"
                         >
                           {categorySkills.map((skill) => (
                             <motion.div
@@ -1403,7 +1403,7 @@ export default function App() {
                                 if (window.innerWidth < 768) setIsSidebarOpen(false);
                               }}
                               className={cn(
-                                "w-full flex items-center gap-3 px-4 py-3.5 rounded-2xl transition-all group relative overflow-hidden text-[10px] font-black uppercase tracking-tighter border shadow-sm leading-none cursor-pointer",
+                                "w-full flex items-center gap-2.5 px-3 py-2 rounded-xl transition-all group relative overflow-hidden text-[9px] font-black uppercase tracking-tighter border shadow-sm leading-none cursor-pointer",
                                 selectedSkill?.id === skill.id 
                                   ? "bg-theme-glass border-theme-secondary/40 text-theme-primary shadow-md" 
                                   : "bg-theme-card/60 border-theme-glass text-theme-secondary hover:bg-theme-glass hover:text-theme-primary hover:border-theme-secondary/30"
@@ -1512,29 +1512,29 @@ export default function App() {
       {/* Main Content */}
       <main className="flex-1 flex flex-col relative min-w-0">
         {/* Header */}
-        <header className="h-auto min-h-20 py-4 md:py-0 glass-panel z-30 flex flex-col md:flex-row items-center justify-between px-4 md:px-8 mb-4 shrink-0 transition-all duration-500 gap-4 md:gap-0 relative overflow-hidden">
+        <header className="h-auto min-h-16 py-3 md:py-0 glass-panel z-30 flex flex-col md:flex-row items-center justify-between px-4 md:px-6 mb-3 shrink-0 transition-all duration-500 gap-3 md:gap-0 relative overflow-hidden">
           <div className="absolute bottom-0 left-0 w-full h-[1px] bg-gradient-to-r from-transparent via-theme-blue/30 to-transparent" />
-          <div className="flex items-center justify-between w-full md:w-auto gap-4">
-            <div className="flex items-center gap-4">
+          <div className="flex items-center justify-between w-full md:w-auto gap-3">
+            <div className="flex items-center gap-3">
               {!isSidebarOpen && (
                 <button 
                   onClick={() => setIsSidebarOpen(true)}
-                  className="btn-secondary p-3 group"
+                  className="btn-secondary p-2 group"
                 >
-                  <Menu className="w-5 h-5 text-theme-secondary group-hover:text-theme-primary" />
+                  <Menu className="w-4 h-4 text-theme-secondary group-hover:text-theme-primary" />
                 </button>
               )}
               <div className="flex flex-col">
-                <div className="flex items-center gap-2 text-[10px] font-medium uppercase tracking-wider text-theme-secondary mb-0.5">
+                <div className="flex items-center gap-1.5 text-[9px] font-medium uppercase tracking-wider text-theme-secondary mb-0.5">
                   <span className="hover:text-theme-primary transition-colors cursor-pointer">Dashboard</span>
-                  <ChevronRight className="w-2.5 h-2.5 opacity-50" />
+                  <ChevronRight className="w-2 h-2 opacity-50" />
                   <span className="text-blue-400/80">{activeTab === 'chat' ? "Chat Intelligence" : "Operations"}</span>
                 </div>
-                <h1 className="text-sm font-bold tracking-tight flex items-center gap-2.5 text-theme-primary">
+                <h1 className="text-xs font-bold tracking-tight flex items-center gap-2 text-theme-primary">
                   {activeTab === 'chat' ? (selectedSkill ? (selectedSkill.id === 'orchestrator' ? "Orquestrador de Enxame" : selectedSkill.name) : "Marketing Intelligence") : "CRM & Pipelines"}
                   {selectedSkill?.id === 'orchestrator' && (
-                    <div className="flex items-center gap-1.5 ml-1">
-                      <div className="px-1.5 py-0.5 rounded bg-blue-500/10 border border-blue-500/20 text-[9px] font-bold text-blue-400 uppercase tracking-tighter">Swarm Active</div>
+                    <div className="flex items-center gap-1 ml-1">
+                      <div className="px-1.5 py-0.5 rounded bg-blue-500/10 border border-blue-500/20 text-[8px] font-bold text-blue-400 uppercase tracking-tighter">Swarm Active</div>
                     </div>
                   )}
                   <div className="w-1.5 h-1.5 bg-blue-500 rounded-full animate-pulse shadow-[0_0_8px_rgba(59,130,246,0.6)]" />
@@ -1542,13 +1542,13 @@ export default function App() {
               </div>
             </div>
             {/* Mobile Tab Switcher */}
-            <div className="flex md:hidden p-1 glass-card gap-1 border border-theme-glass/40 bg-theme-glass/30 shadow-lg">
+            <div className="flex md:hidden p-1 glass-card gap-1 border border-theme-glass/40 bg-theme-glass/30 shadow-lg rounded-2xl">
               <motion.button 
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
                 onClick={() => setActiveTab('chat')}
                 className={cn(
-                  "px-3 py-1.5 rounded-xl text-[10px] font-semibold tracking-tight transition-all border border-transparent",
+                  "px-3 py-1.5 rounded-xl text-[9px] font-bold uppercase tracking-widest transition-all border border-transparent",
                   activeTab === 'chat' ? "bg-theme-blue/15 text-theme-primary border-theme-blue/30 shadow-md" : "text-theme-secondary hover:text-theme-primary"
                 )}
               >
@@ -1559,7 +1559,7 @@ export default function App() {
                 whileTap={{ scale: 0.98 }}
                 onClick={() => setActiveTab('operations')}
                 className={cn(
-                  "px-3 py-1.5 rounded-xl text-[10px] font-semibold tracking-tight transition-all border border-transparent",
+                  "px-3 py-1.5 rounded-xl text-[9px] font-bold uppercase tracking-widest transition-all border border-transparent",
                   activeTab === 'operations' ? "bg-theme-blue/15 text-theme-primary border-theme-blue/30 shadow-md" : "text-theme-secondary hover:text-theme-primary"
                 )}
               >
@@ -1569,14 +1569,16 @@ export default function App() {
           </div>
 
           <div className="flex flex-wrap items-center gap-2 md:gap-4 w-full md:w-auto justify-center md:justify-end pb-2 md:pb-0">
-            <div className="hidden md:flex p-1 gap-2 shrink-0">
+            <div className="hidden md:flex p-1 gap-1 shrink-0">
               <motion.button 
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
                 onClick={() => setActiveTab('chat')}
                 className={cn(
-                  "chip",
-                  activeTab === 'chat' && "chip-active"
+                  "px-2.5 py-1 rounded-full text-[8.5px] font-bold uppercase tracking-widest transition-all border",
+                  activeTab === 'chat' 
+                    ? "bg-theme-blue text-white border-theme-blue shadow-md" 
+                    : "bg-theme-surface border-theme-glass text-theme-secondary hover:text-theme-primary hover:border-theme-secondary"
                 )}
               >
                 Chat
@@ -1586,30 +1588,36 @@ export default function App() {
                 whileTap={{ scale: 0.98 }}
                 onClick={() => setActiveTab('operations')}
                 className={cn(
-                  "chip",
-                  activeTab === 'operations' && "chip-active"
+                  "px-2.5 py-1 rounded-full text-[8.5px] font-bold uppercase tracking-widest transition-all border",
+                  activeTab === 'operations' 
+                    ? "bg-theme-blue text-white border-theme-blue shadow-md" 
+                    : "bg-theme-surface border-theme-glass text-theme-secondary hover:text-theme-primary hover:border-theme-secondary"
                 )}
               >
-                CRM & Pipelines
+                CRM
               </motion.button>
               <motion.button 
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
                 onClick={() => setActiveTab('brain')}
                 className={cn(
-                  "chip",
-                  activeTab === 'brain' && "chip-active"
+                  "px-2.5 py-1 rounded-full text-[8.5px] font-bold uppercase tracking-widest transition-all border",
+                  activeTab === 'brain' 
+                    ? "bg-theme-blue text-white border-theme-blue shadow-md" 
+                    : "bg-theme-surface border-theme-glass text-theme-secondary hover:text-theme-primary hover:border-theme-secondary"
                 )}
               >
-                Cérebro Sináptico
+                Cérebro
               </motion.button>
               <motion.button 
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
                 onClick={() => setActiveTab('terminal')}
                 className={cn(
-                  "chip",
-                  activeTab === 'terminal' && "chip-active"
+                  "px-2.5 py-1 rounded-full text-[8.5px] font-bold uppercase tracking-widest transition-all border",
+                  activeTab === 'terminal' 
+                    ? "bg-theme-blue text-white border-theme-blue shadow-md" 
+                    : "bg-theme-surface border-theme-glass text-theme-secondary hover:text-theme-primary hover:border-theme-secondary"
                 )}
               >
                 Terminal
@@ -1619,18 +1627,20 @@ export default function App() {
                 whileTap={{ scale: 0.98 }}
                 onClick={() => setActiveTab('workspace')}
                 className={cn(
-                  "chip",
-                  activeTab === 'workspace' && "chip-active"
+                  "px-2.5 py-1 rounded-full text-[8.5px] font-bold uppercase tracking-widest transition-all border",
+                  activeTab === 'workspace' 
+                    ? "bg-theme-blue text-white border-theme-blue shadow-md" 
+                    : "bg-theme-surface border-theme-glass text-theme-secondary hover:text-theme-primary hover:border-theme-secondary"
                 )}
               >
                 Workspace
               </motion.button>
             </div>
-            <div className="hidden md:block h-8 w-[1px] bg-theme-glass mx-2 shrink-0" />
+            <div className="hidden md:block h-6 w-[1px] bg-theme-glass mx-1 shrink-0" />
             <div className="shrink-0">
               <NotificationCenter />
             </div>
-            <div className="h-8 w-[1px] bg-theme-glass mx-2 shrink-0" />
+            <div className="h-6 w-[1px] bg-theme-glass mx-1 shrink-0" />
             <div className="shrink-0 flex items-center">
               <AgentControls
                 selectedSkill={selectedSkill}
@@ -1884,21 +1894,21 @@ export default function App() {
                   </AnimatePresence>
                   {messages.length === 0 ? (
                   <div className="flex-1 flex flex-col items-center justify-center text-center p-8">
-                    <div className="w-24 h-24 bg-gradient-to-br from-theme-blue to-theme-purple rounded-[2.5rem] flex items-center justify-center mb-10 shadow-[0_20px_50px_rgba(59,130,246,0.3)] animate-float border border-white/20">
-                      <Sparkles className="w-12 h-12 text-white" />
+                    <div className="w-16 h-16 bg-theme-blue/10 rounded-2xl flex items-center justify-center mb-6 border border-theme-blue/20">
+                      <Sparkles className="w-8 h-8 text-theme-blue" />
                     </div>
-                    <h2 className="text-5xl font-black tracking-tighter mb-6 uppercase italic text-theme-primary drop-shadow-[0_0_15px_rgba(255,255,255,0.2)]">
-                      Pronto para <span className="text-theme-blue">Escalar?</span>
+                    <h2 className="text-2xl font-black tracking-tight mb-3 text-theme-primary opacity-80">
+                      O que vamos conquistar hoje?
                     </h2>
-                    <p className="max-w-md text-theme-secondary text-[10px] font-black leading-relaxed mb-14 uppercase tracking-[0.4em] opacity-60">
-                      Selecione um agente especialista na barra lateral ou comece um novo workflow para ver a mágica acontecer.
+                    <p className="max-w-md text-theme-secondary text-[10px] font-semibold uppercase tracking-widest opacity-50 mb-8">
+                      O Enxame está conectado e aguardando comandos
                     </p>
-                    <div className="flex flex-wrap justify-center gap-4">
+                    <div className="flex flex-wrap justify-center gap-3">
                       {["Como aumentar meu ROI?", "Crie um Design System", "Analise meu anúncio", "Funil de Vendas SaaS"].map((q) => (
                         <button 
                           key={q}
                           onClick={() => setInput(q)}
-                          className="px-8 py-4 bg-theme-card border border-theme-glass text-[10px] font-black uppercase tracking-widest hover:bg-theme-blue hover:text-white hover:border-theme-blue transition-all active:scale-95 shadow-xl rounded-2xl"
+                          className="px-4 py-2 border border-theme-glass text-xs font-medium text-theme-secondary hover:bg-theme-glass hover:text-theme-primary transition-all rounded-lg"
                         >
                           {q}
                         </button>

@@ -55,7 +55,7 @@ export const ChatMessage = memo(function ChatMessage({
           </div>
         )}
         <div className={cn(
-          "p-6 rounded-2xl shadow-2xl relative transition-all group-hover:shadow-blue-500/5 overflow-hidden break-words border",
+          "p-4 md:p-5 rounded-2xl shadow-xl relative transition-all group-hover:shadow-blue-500/5 overflow-hidden break-words border",
           msg.role === "user" 
             ? "bg-theme-card text-theme-primary rounded-tr-none border-theme-glass/60" 
             : "bg-theme-surface border-theme-glass text-theme-primary rounded-tl-none shadow-[inset_0_2px_10px_rgba(0,0,0,0.5)]"
@@ -166,17 +166,17 @@ export const ChatMessage = memo(function ChatMessage({
           </div>
           
           {msg.artifacts && msg.artifacts.length > 0 && (
-            <div className="mt-6 pt-6 border-t border-theme-glass space-y-4">
-              <p className="text-[10px] font-black uppercase tracking-[0.3em] text-theme-secondary opacity-40">Artefatos Gerados</p>
-              <div className="flex flex-wrap gap-3">
+            <div className="mt-4 pt-4 border-t border-theme-glass space-y-3">
+              <p className="text-[9px] font-black uppercase tracking-[0.3em] text-theme-secondary opacity-40">Artefatos Gerados</p>
+              <div className="flex flex-wrap gap-2">
                 {msg.artifacts.map((art) => (
                   <button 
                     key={art.id}
                     onClick={() => onArtifactClick(art)}
-                    className="btn-primary px-5 py-2.5 text-[10px] group/art shadow-xl"
+                    className="flex items-center gap-2 px-3 py-1.5 bg-theme-blue/10 hover:bg-theme-blue text-theme-blue hover:text-white rounded-lg transition-all border border-theme-blue/20 shadow-sm group/art text-[10px] font-bold tracking-wide uppercase"
                   >
-                    <FileText className="w-4 h-4 group-hover/art:rotate-12 transition-transform" />
-                    {art.title}
+                    <FileText className="w-3.5 h-3.5 group-hover/art:rotate-12 transition-transform" />
+                    <span className="truncate max-w-[150px]">{art.title}</span>
                   </button>
                 ))}
               </div>

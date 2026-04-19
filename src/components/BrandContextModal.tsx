@@ -124,25 +124,25 @@ export const BrandContextModal: React.FC<BrandContextModalProps> = ({
             className="relative w-full max-w-2xl bg-theme-surface border border-theme-glass rounded-3xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh]"
           >
             {/* Header */}
-            <div className="p-8 border-b border-theme-glass flex items-center justify-between bg-theme-surface/50">
-              <div className="flex items-center gap-4">
-                <div className="w-12 h-12 bg-blue-500 rounded-2xl flex items-center justify-center shadow-sm">
-                  <Building2 className="w-6 h-6 text-white" />
+            <div className="p-4 md:p-6 border-b border-theme-glass flex items-center justify-between bg-theme-surface/50">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 bg-blue-500 rounded-[12px] flex items-center justify-center shadow-sm">
+                  <Building2 className="w-5 h-5 text-white" />
                 </div>
                 <div>
-                  <h2 className="text-xl font-bold tracking-tight text-theme-primary">Contexto de Marca</h2>
-                  <p className="text-[11px] text-blue-500 font-bold tracking-wider uppercase opacity-60">Gerencie suas empresas e personas</p>
+                  <h2 className="text-lg font-bold tracking-tight text-theme-primary leading-tight">Contexto de Marca</h2>
+                  <p className="text-[10px] text-blue-500 font-bold tracking-[0.15em] uppercase opacity-60 leading-none mt-1">Gerencie suas empresas e personas</p>
                 </div>
               </div>
               <button 
                 onClick={onClose}
-                className="btn-secondary p-2.5"
+                className="btn-secondary p-2"
               >
-                <X className="w-5 h-5 text-theme-secondary opacity-40 group-hover:text-theme-primary group-hover:opacity-100" />
+                <X className="w-4 h-4 text-theme-secondary opacity-40 group-hover:text-theme-primary group-hover:opacity-100" />
               </button>
             </div>
 
-            <div className="flex-1 overflow-y-auto p-8 custom-scrollbar">
+            <div className="flex-1 overflow-y-auto p-4 md:p-6 custom-scrollbar">
               {isAdding ? (
                 <div className="space-y-6">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">

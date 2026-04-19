@@ -149,18 +149,18 @@ export async function sendMessageToAgent(
 
     const cotDirective = `
 
-CHAIN OF THOUGHT E FEW-SHOT LEARNING:
-Antes de responder, você deve OBRIGATORIAMENTE criar um bloco <thought_process> e raciocinar passo-a-passo e metodicamente sobre o contexto, a persona, restrições da sua skill e o modelo da solução pedida. Isso garante ausência de alucinações e foco no output perfeito. Depois do bloco, comece sua resposta final.
+[DIRETRIZ ABSOLUTA - FLUIDEZ E EXECUÇÃO DIRETA]
+Você está operando em um ambiente de produção focado em conversação de alto valor.
+Proibido:
+- Não entregue "resuminhos" rasos, vá direto ao detalhe técnico final.
+- NUNCA crie blocos JSON estruturados de automação ou "Artefatos" de Workspace a menos que o usuário EXPLICITAMENTE peça (ex: "Gere o JSON", "Crie o webhook").
+- Não empurre fluxos de trabalho não solicitados se o foco for copy ou revisão de landing page.
 
-Exemplo de formato esperado:
-<thought_process>
-1. O usuário pediu X.
-2. A persona é Y, então o tom deve ser Z.
-3. Precisarei das informações A e B. Vou focar em gerar uma solução prática para o contexto W.
-</thought_process>
-
-Olá! Aqui está a estratégia detalhada para o que você pediu...
-[resto da resposta do agente]`;
+Obrigatório:
+- Imprima 100% da sua resposta e das copies criadas DIRETAMENTE NO TEXTO DO CHAT.
+- Se o usuário pedir para avaliar um site, analise e ESCREVA AS NOVAS COPIES NA ÍNTEGRA como texto normal.
+- Mantenha a leitura limpa e fluida.
+- Use <thought_process></thought_process> apenas se for um problema matemático ou muito complexo. Caso contrário, foque em gerar a resposta real em milissegundos.`;
     const enhancedSystemInstruction = systemInstruction ? systemInstruction + cotDirective : cotDirective;
 
     const config: any = {
@@ -189,7 +189,16 @@ Olá! Aqui está a estratégia detalhada para o que você pediu...
     if (response.functionCalls && response.functionCalls.length > 0) {
       const functionResponses = [];
       for (const call of response.functionCalls) {
-        const toolResult = await executeToolCall(call.name, call.args);
+        let toolResult;
+        try {
+          toolResult = await executeToolCall(call.name, call.args);
+        } catch (e: any) {
+          console.warn(`[Self-Healing] Tool ${call.name} failed. Sending error back to model.`, e);
+          toolResult = { 
+            error: true, 
+            message: `Falha na execução da ferramenta: ${e.message}. Por favor, avalie os argumentos passados, corrija as restrições e tente utilizar outra abordagem ou chamar novamente com argumentos corrigidos.` 
+          };
+        }
         functionResponses.push({
           name: call.name,
           response: toolResult,

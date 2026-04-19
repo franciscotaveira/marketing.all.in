@@ -57,9 +57,9 @@ export function InputBar({
   }, []);
 
   return (
-    <div className="p-4 md:p-6 bg-theme-main/40 border-t border-theme-glass relative z-20 backdrop-blur-md">
+    <div className="p-3 md:p-4 bg-theme-main/40 border-t border-theme-glass relative z-20 backdrop-blur-md">
       <div className="max-w-4xl mx-auto relative">
-        <div className="absolute -top-14 left-0 flex gap-2 overflow-x-auto pb-3 no-scrollbar max-w-full">
+        <div className="absolute -top-12 left-0 flex gap-2 overflow-x-auto pb-2 no-scrollbar max-w-full">
           {selectedSkill && (
             <motion.div 
               initial={{ opacity: 0, y: 10 }}
@@ -102,7 +102,7 @@ export function InputBar({
         </div>
         
           <div className={cn(
-            "group bg-theme-main/60 border border-theme-glass rounded-[2rem] p-3 transition-all focus-within:border-theme-blue/50 flex flex-col md:flex-row items-end gap-2 relative shadow-[0_10px_40px_rgba(0,0,0,0.5)]",
+            "group bg-theme-main/60 border border-theme-glass rounded-3xl p-2 transition-all focus-within:border-theme-blue/50 flex flex-col md:flex-row items-end gap-2 relative shadow-lg",
             isLoading && "animate-pulse border-theme-blue/30"
           )}>
           
@@ -148,9 +148,9 @@ export function InputBar({
             onPaste={handlePaste}
             onKeyDown={handleInputKeyDown}
             placeholder={selectedSkill ? `Pergunte sobre ${selectedSkill.name.toLowerCase()}...` : "Qual é o seu desafio de marketing hoje? (Digite '/' para comandos)"}
-            className="flex-1 w-full bg-transparent rounded-2xl p-4 focus:outline-none transition-all min-h-[60px] max-h-[300px] resize-none font-medium text-base md:text-sm text-theme-primary placeholder:text-theme-secondary/30"
+            className="flex-1 w-full bg-transparent rounded-2xl p-3 focus:outline-none transition-all min-h-[40px] max-h-[300px] resize-none font-medium text-sm md:text-xs text-theme-primary placeholder:text-theme-secondary/30 mt-1"
           />
-            <div className="flex gap-1.5 md:gap-3 pb-1 pr-1 w-full md:w-auto overflow-x-auto no-scrollbar justify-end items-center">
+            <div className="flex gap-1.5 pb-1 pr-1 w-full md:w-auto overflow-x-auto no-scrollbar justify-end items-center">
               <input 
                 type="file" 
                 ref={fileInputRef} 
@@ -160,68 +160,19 @@ export function InputBar({
                 accept="image/*" 
               />
               <div className="relative">
-                <div className="flex items-center btn-secondary p-0 overflow-hidden border-theme-rose/20 bg-theme-rose/5">
-                  <button
-                    onClick={() => setMessages([])}
-                    className="p-3 hover:bg-theme-rose/10 text-theme-rose transition-colors"
-                  >
-                    <Trash2 className="w-4 h-4" />
-                  </button>
-                  <button
-                    onClick={(e) => { e.stopPropagation(); setActiveTooltip(activeTooltip === 'limpar_chat' ? null : 'limpar_chat'); }}
-                    className="pr-2 pl-1 py-3 opacity-40 hover:opacity-100 hover:bg-theme-rose/10 text-theme-rose transition-colors"
-                  >
-                    <HelpCircle className="w-3.5 h-3.5" />
-                  </button>
-                </div>
-              <AnimatePresence>
-                {activeTooltip === 'limpar_chat' && (
-                  <motion.div 
-                    initial={{ opacity: 0, y: 5 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: 5 }}
-                    className="absolute bottom-full left-1/2 -translate-x-1/2 mb-3 w-48 p-4 bg-theme-card border border-theme-glass text-theme-primary text-[11px] rounded-2xl shadow-2xl z-50 leading-relaxed text-center font-black uppercase tracking-tighter"
-                  >
-                    <strong className="block text-theme-rose mb-1 font-black uppercase tracking-widest">Limpar Chat</strong>
-                    Apaga todo o histórico da conversa atual.
-                  </motion.div>
-                )}
-              </AnimatePresence>
-            </div>
-            
-              <div className="relative">
-                <div className="flex items-center btn-secondary p-0 overflow-hidden border-theme-glass bg-theme-glass/10">
+                <div className="flex items-center btn-secondary px-1 py-0.5 overflow-hidden border-theme-glass bg-theme-glass/10">
                   <button
                     onClick={() => fileInputRef.current?.click()}
-                    className="p-3 hover:bg-theme-glass/80 hover:text-theme-primary transition-colors"
+                    className="p-1.5 hover:bg-theme-glass/80 hover:text-theme-primary transition-colors"
                   >
-                    <Paperclip className="w-4 h-4" />
-                  </button>
-                  <button
-                    onClick={(e) => { e.stopPropagation(); setActiveTooltip(activeTooltip === 'anexar' ? null : 'anexar'); }}
-                    className="pr-2 pl-1 py-3 opacity-40 hover:opacity-100 hover:bg-theme-glass/80 hover:text-theme-primary transition-colors"
-                  >
-                    <HelpCircle className="w-3.5 h-3.5" />
+                    <Paperclip className="w-3.5 h-3.5" />
                   </button>
                 </div>
-              <AnimatePresence>
-                {activeTooltip === 'anexar' && (
-                  <motion.div 
-                    initial={{ opacity: 0, y: 5 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: 5 }}
-                    className="absolute bottom-full left-1/2 -translate-x-1/2 mb-3 w-48 p-4 bg-theme-card border border-theme-glass text-theme-primary text-[11px] rounded-2xl shadow-2xl z-50 leading-relaxed text-center font-black uppercase tracking-tighter"
-                  >
-                    <strong className="block text-theme-secondary mb-1 font-black uppercase tracking-widest">Anexar Imagem</strong>
-                    Adiciona uma imagem como contexto para a IA.
-                  </motion.div>
-                )}
-              </AnimatePresence>
-            </div>
+              </div>
             
             <div className="relative">
               <div className={cn(
-                "flex items-center p-0 overflow-hidden transition-all duration-500 rounded-xl border",
+                "flex items-center px-1 py-0.5 overflow-hidden transition-all duration-500 rounded-[12px] border",
                 useSwarmMode 
                   ? "bg-theme-purple border-white/20 shadow-[0_8px_25px_rgba(139,92,246,0.5)] text-white" 
                   : "btn-primary shadow-[0_8px_25px_rgba(255,255,255,0.1)]",
@@ -230,30 +181,11 @@ export function InputBar({
                 <button
                   onClick={handleSend}
                   disabled={(!input.trim() && selectedImages.length === 0) || isLoading}
-                  className="p-3 hover:brightness-110 transition-all disabled:opacity-50"
+                  className="p-1.5 px-3 hover:brightness-110 transition-all disabled:opacity-50"
                 >
-                  {isLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
-                </button>
-                <button
-                  onClick={(e) => { e.stopPropagation(); setActiveTooltip(activeTooltip === 'enviar' ? null : 'enviar'); }}
-                  className="pr-2 pl-1 py-3 opacity-40 hover:opacity-100 transition-opacity"
-                >
-                  <HelpCircle className="w-3.5 h-3.5" />
+                  {isLoading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Send className="w-3.5 h-3.5" />}
                 </button>
               </div>
-              <AnimatePresence>
-                {activeTooltip === 'enviar' && (
-                  <motion.div 
-                    initial={{ opacity: 0, y: 5 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: 5 }}
-                    className="absolute bottom-full left-1/2 -translate-x-1/2 mb-3 w-48 p-4 bg-theme-card border border-theme-glass text-theme-primary text-[11px] rounded-2xl shadow-2xl z-50 leading-relaxed text-center font-black uppercase tracking-tighter"
-                  >
-                    <strong className="block text-theme-blue mb-1 font-black uppercase tracking-widest">Enviar Mensagem</strong>
-                    Envia sua mensagem para o agente.
-                  </motion.div>
-                )}
-              </AnimatePresence>
             </div>
           </div>
         </div>

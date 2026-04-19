@@ -108,30 +108,30 @@ export function SidebarChatHistory({
                       initial={{ opacity: 0, x: -10 }}
                       animate={{ opacity: 1, x: 0 }}
                       className={cn(
-                        "group relative p-4 rounded-xl border transition-all cursor-pointer flex items-center justify-between gap-3 shadow-sm mb-2",
+                        "group relative p-2.5 rounded-[12px] border transition-all cursor-pointer flex items-center justify-between gap-3 shadow-sm mb-1.5",
                         currentChatId === session.id
                           ? "bg-blue-500/10 border-blue-500/50 text-blue-500 shadow-md"
                           : "bg-theme-card border-theme-glass text-theme-secondary hover:bg-theme-glass hover:text-theme-primary hover:border-theme-secondary/30"
                       )}
                       onClick={() => onSelectChat(session.id)}
                     >
-                      <div className="flex items-center gap-3 min-w-0 flex-1">
+                      <div className="flex items-center gap-2.5 min-w-0 flex-1">
                         <div className={cn(
-                          "w-8 h-8 rounded-lg flex items-center justify-center shrink-0 transition-colors",
+                          "w-6 h-6 rounded-md flex items-center justify-center shrink-0 transition-colors",
                           currentChatId === session.id ? "bg-blue-500 text-white" : "bg-theme-glass border border-theme-glass"
                         )}>
-                          <MessageSquare className="w-4 h-4" />
+                          <MessageSquare className="w-3 h-3" />
                         </div>
                         <div className="flex flex-col min-w-0 justify-center">
                           <span className={cn(
-                            "text-xs font-black uppercase tracking-tighter truncate leading-none",
+                            "text-[10px] font-black uppercase tracking-tighter truncate leading-none",
                             currentChatId === session.id ? "text-theme-blue" : "text-theme-primary"
                           )}>
                             {session.title || "Nova Conversa"}
                           </span>
-                          <div className="flex items-center gap-1.5 mt-1.5">
-                            <Clock className="w-3 h-3 text-theme-blue opacity-40" />
-                            <span className="text-[10px] font-black uppercase tracking-[0.1em] text-theme-secondary opacity-40 leading-none">
+                          <div className="flex items-center gap-1.5 mt-1">
+                            <Clock className="w-2.5 h-2.5 text-theme-blue opacity-40" />
+                            <span className="text-[9px] font-black uppercase tracking-[0.1em] text-theme-secondary opacity-40 leading-none">
                               {new Date(session.updatedAt || session.createdAt).toLocaleDateString()}
                             </span>
                           </div>
@@ -144,10 +144,10 @@ export function SidebarChatHistory({
                             e.stopPropagation();
                             onDeleteChat(session.id);
                           }}
-                          className="p-1.5 hover:bg-rose-500/10 rounded-lg text-theme-secondary hover:text-rose-500 transition-all"
+                          className="p-1 hover:bg-rose-500/10 rounded border border-transparent text-theme-secondary hover:text-rose-500 transition-all"
                           title="Excluir"
                         >
-                          <Trash2 className="w-3.5 h-3.5" />
+                          <Trash2 className="w-3 h-3" />
                         </button>
                         <ChevronRight className="w-3.5 h-3.5 opacity-20 hidden md:block" />
                       </div>
