@@ -1213,19 +1213,19 @@ export default function App() {
           <div className="h-px bg-gradient-to-r from-transparent via-theme-glass to-transparent opacity-30" />
 
           {/* Workflows Section */}
-          <div className="space-y-4 bg-theme-card/30 p-5 rounded-[32px] border border-amber-500/10 shadow-sm relative overflow-hidden">
+          <div className="space-y-4 bg-theme-card/30 p-4 rounded-3xl border border-amber-500/10 shadow-sm relative overflow-hidden">
             <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-amber-500/0 via-amber-500/40 to-amber-500/0" />
             
             <div className="flex items-center gap-2 px-2">
-              <div className="w-7 h-7 rounded-xl bg-amber-500/10 flex items-center justify-center border border-amber-500/20 shadow-sm">
-                <Zap className="w-4 h-4 text-amber-500" />
+              <div className="w-6 h-6 rounded-lg bg-amber-500/10 flex items-center justify-center border border-amber-500/20 shadow-sm">
+                <Zap className="w-3.5 h-3.5 text-amber-500" />
               </div>
-              <h2 className="text-[11px] uppercase tracking-widest font-black text-theme-primary">Workflows</h2>
+              <h2 className="text-[10px] uppercase tracking-widest font-black text-theme-primary">Workflows</h2>
             </div>
             
-            <div className="space-y-6 relative">
+            <div className="space-y-4 relative">
               {/* Vertical Connector Line */}
-              <div className="absolute left-[13px] top-2 bottom-2 w-px bg-gradient-to-b from-amber-500/40 via-amber-500/10 to-transparent" />
+              <div className="absolute left-[11px] top-2 bottom-2 w-px bg-gradient-to-b from-amber-500/40 via-amber-500/10 to-transparent" />
 
               {Object.entries(
                 WORKFLOWS.reduce((acc, wf) => {
@@ -1234,15 +1234,15 @@ export default function App() {
                   return acc;
                 }, {} as Record<string, Workflow[]>)
               ).map(([category, workflows]) => (
-                <div key={category} className="space-y-3 relative pl-6">
-                  <div className="absolute left-[-17px] top-1.5 w-2 h-2 rounded-full bg-amber-500 border-2 border-theme-main z-10 shadow-[0_0_10px_rgba(245,158,11,0.5)]" />
+                <div key={category} className="space-y-2 relative pl-5">
+                  <div className="absolute left-[-13px] top-1.5 w-1.5 h-1.5 rounded-full bg-amber-500 border border-theme-main z-10 shadow-[0_0_10px_rgba(245,158,11,0.5)]" />
                   
                   <div className="flex items-center gap-2">
-                    <span className="text-[8px] font-black uppercase tracking-widest text-amber-500/60 whitespace-nowrap">{category}</span>
+                    <span className="text-[7px] font-black uppercase tracking-widest text-amber-500/60 whitespace-nowrap">{category}</span>
                     <div className="h-px flex-1 bg-gradient-to-r from-amber-500/20 to-transparent" />
                   </div>
                   
-                  <div className="grid grid-cols-1 gap-2">
+                  <div className="grid grid-cols-1 gap-1.5">
                     {workflows.map((workflow) => (
                       <motion.button 
                         whileHover={{ x: 4, scale: 1.01 }}
@@ -1250,25 +1250,25 @@ export default function App() {
                         key={workflow.id}
                         onClick={() => handleStartWorkflow(workflow)}
                         className={cn(
-                          "p-3 rounded-2xl text-sm font-bold transition-all text-left flex items-center justify-between group border relative overflow-hidden shadow-sm",
+                          "p-2 rounded-xl text-sm font-bold transition-all text-left flex items-center justify-between group border relative overflow-hidden shadow-sm",
                           activeWorkflow?.id === workflow.id
                             ? cn(workflow.color, "border-white/30 text-white shadow-md") 
                             : "bg-theme-card/40 border-theme-glass text-theme-secondary hover:bg-theme-glass hover:text-theme-primary hover:border-amber-500/30"
                         )}
                       >
                         <div className="flex flex-col min-w-0 relative z-10 justify-center">
-                          <span className="truncate font-black uppercase tracking-tighter text-[11px] leading-none">{workflow.name}</span>
+                          <span className="truncate font-black uppercase tracking-tighter text-[10px] leading-none">{workflow.name}</span>
                           <span className={cn(
-                            "text-[8px] opacity-60 truncate font-bold mt-1 tracking-[0.15em] uppercase leading-none",
-                            activeWorkflow?.id === workflow.id ? "text-white/90" : "text-theme-secondary"
+                            "text-[7px] opacity-70 truncate font-bold mt-1 tracking-[0.15em] uppercase leading-none",
+                            activeWorkflow?.id === workflow.id ? "text-white/90" : "text-theme-secondary/80"
                           )}>{workflow.description}</span>
                         </div>
-                        <div className="relative z-10 ml-3 shrink-0">
+                        <div className="relative z-10 ml-2 shrink-0">
                           {activeWorkflow?.id === workflow.id ? (
-                            <Check className="w-4 h-4" />
+                            <Check className="w-3.5 h-3.5" />
                           ) : (
-                            <div className="w-7 h-7 rounded-lg bg-theme-glass/50 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                              <Play className="w-3.5 h-3.5" />
+                            <div className="w-5 h-5 rounded-[6px] bg-theme-glass/50 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                              <Play className="w-2.5 h-2.5" />
                             </div>
                           )}
                         </div>
@@ -1283,48 +1283,55 @@ export default function App() {
           <div className="h-px bg-gradient-to-r from-transparent via-theme-glass to-transparent opacity-30" />
 
           {/* Framework Section */}
-          <div className="space-y-4 bg-emerald-500/5 p-5 rounded-[32px] border border-emerald-500/10 shadow-sm relative overflow-hidden">
-            <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-emerald-500/0 via-emerald-500/40 to-emerald-500/0" />
-            
-            <div className="flex items-center gap-2 px-2">
-              <div className="w-7 h-7 rounded-xl bg-emerald-500/10 flex items-center justify-center border border-emerald-500/20 shadow-sm">
-                <BookOpen className="w-4 h-4 text-emerald-500" />
+            <div className="space-y-4 bg-emerald-500/5 p-4 rounded-3xl border border-emerald-500/10 shadow-sm relative overflow-hidden">
+              <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-emerald-500/0 via-emerald-500/40 to-emerald-500/0" />
+              
+              <div className="flex items-center gap-2 px-2">
+                <div className="w-6 h-6 rounded-lg bg-emerald-500/10 flex items-center justify-center border border-emerald-500/20 shadow-sm">
+                  <BookOpen className="w-3.5 h-3.5 text-emerald-500" />
+                </div>
+                <h2 className="text-[10px] uppercase tracking-widest font-black text-theme-primary">Frameworks</h2>
               </div>
-              <h2 className="text-[11px] uppercase tracking-widest font-black text-theme-primary">Frameworks</h2>
-            </div>
-            
-            <div className="grid grid-cols-1 gap-2">
-              {MARKETING_FRAMEWORKS.map((framework) => (
-                <motion.button 
-                  whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.98 }}
-                  key={framework.id}
-                  onClick={() => setSelectedFramework(selectedFramework === framework.id ? null : framework.id)}
-                  className={cn(
-                    "p-3 rounded-2xl text-sm font-bold transition-all text-left flex items-center justify-between group border shadow-sm",
-                    selectedFramework === framework.id 
-                      ? "bg-emerald-600 border-emerald-400 text-white shadow-md" 
-                      : "bg-theme-card/60 border-theme-glass text-theme-secondary hover:bg-emerald-500/10 hover:text-emerald-400 hover:border-emerald-500/30"
-                  )}
-                >
-                  <div className="flex flex-col min-w-0 justify-center">
-                    <span className="truncate font-black uppercase tracking-tighter text-[11px] leading-none">{framework.name}</span>
-                    <span className={cn(
-                      "text-[8px] opacity-60 truncate font-bold mt-1 tracking-[0.15em] uppercase leading-none",
-                      selectedFramework === framework.id ? "text-emerald-50" : "text-theme-secondary"
-                    )}>{framework.description}</span>
-                  </div>
-                  {selectedFramework === framework.id ? (
-                    <Check className="w-4 h-4 ml-3 shrink-0" />
-                  ) : (
-                    <div className="w-7 h-7 rounded-lg bg-emerald-500/10 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                      <Plus className="w-3.5 h-3.5 text-emerald-500" />
+              
+              <div className="grid grid-cols-1 gap-1.5">
+                {MARKETING_FRAMEWORKS.map((framework) => (
+                  <motion.button 
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
+                    key={framework.id}
+                    onClick={() => setSelectedFramework(selectedFramework === framework.id ? null : framework.id)}
+                    className={cn(
+                      "p-2 rounded-xl text-sm font-bold transition-all text-left flex items-center justify-between group border shadow-sm",
+                      selectedFramework === framework.id 
+                        ? "bg-emerald-600 border-emerald-400 text-white shadow-md relative overflow-hidden" 
+                        : "bg-theme-card/60 border-theme-glass text-theme-secondary hover:bg-emerald-500/10 hover:text-emerald-400 hover:border-emerald-500/30"
+                    )}
+                  >
+                    {selectedFramework === framework.id && (
+                      <div className="absolute inset-0 bg-gradient-to-r from-emerald-400/20 to-transparent opacity-50" />
+                    )}
+                    <div className="flex flex-col min-w-0 justify-center relative z-10">
+                      <span className="truncate font-black uppercase tracking-tighter text-[10px] leading-none">{framework.name}</span>
+                      <span className={cn(
+                        "text-[7px] opacity-70 truncate font-bold mt-1 tracking-[0.15em] uppercase leading-none",
+                        selectedFramework === framework.id ? "text-emerald-50" : "text-theme-secondary/80"
+                      )}>{framework.description}</span>
                     </div>
-                  )}
-                </motion.button>
-              ))}
+                    <div className="relative z-10 ml-2 shrink-0">
+                      {selectedFramework === framework.id ? (
+                        <div className="w-5 h-5 rounded-[6px] bg-white text-emerald-600 flex items-center justify-center shadow-sm">
+                          <Check className="w-3 h-3" />
+                        </div>
+                      ) : (
+                        <div className="w-5 h-5 rounded-[6px] bg-emerald-500/10 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                          <Plus className="w-3 h-3 text-emerald-500" />
+                        </div>
+                      )}
+                    </div>
+                  </motion.button>
+                ))}
+              </div>
             </div>
-          </div>
 
           <div className="h-px bg-gradient-to-r from-transparent via-theme-glass to-transparent opacity-30" />
 
@@ -1357,29 +1364,29 @@ export default function App() {
                 if (categorySkills.length === 0) return null;
 
                 return (
-                  <div key={category} className="space-y-2">
+                  <div key={category} className="space-y-1.5">
                     <motion.button
                       whileHover={{ x: 4 }}
                       whileTap={{ scale: 0.98 }}
                       onClick={() => setExpandedCategory(isExpanded ? null : category)}
                       className={cn(
-                        "w-full flex items-center justify-between px-2.5 py-2 rounded-[10px] text-[9px] font-black uppercase tracking-widest transition-all border shadow-sm leading-none",
+                        "w-full flex items-center justify-between px-2 py-1.5 rounded-lg text-[8px] font-black uppercase tracking-widest transition-all border shadow-sm leading-none",
                         isExpanded 
-                          ? "bg-theme-glass border-theme-secondary/40 text-theme-primary shadow-md" 
+                          ? "bg-theme-glass border-theme-secondary/40 text-theme-primary shadow-sm" 
                           : "bg-theme-card border-theme-glass text-theme-secondary hover:text-theme-primary hover:bg-theme-glass hover:border-theme-secondary/30"
                       )}
                     >
                       <div className="flex items-center gap-2">
                         <div className={cn(
-                          "w-5 h-5 rounded flex items-center justify-center transition-all shadow-sm border border-theme-glass/20", 
+                          "w-4 h-4 rounded-[4px] flex items-center justify-center transition-all shadow-sm border border-theme-glass/20", 
                           isExpanded ? CATEGORY_BG_LIGHT_COLORS[category] : "bg-theme-glass",
                           CATEGORY_TEXT_COLORS[category]
                         )}>
-                          {React.cloneElement(getCategoryIcon(category), { className: "w-3 h-3" })}
+                          {React.cloneElement(getCategoryIcon(category), { className: "w-2.5 h-2.5" })}
                         </div>
                         <span className="truncate">{category}</span>
                       </div>
-                      <ChevronRight className={cn("w-3 h-3 transition-transform opacity-40", isExpanded ? "rotate-90" : "")} />
+                      <ChevronRight className={cn("w-2.5 h-2.5 transition-transform opacity-40", isExpanded ? "rotate-90" : "")} />
                     </motion.button>
                     
                     <AnimatePresence>
@@ -1388,7 +1395,7 @@ export default function App() {
                           initial={{ height: 0, opacity: 0 }}
                           animate={{ height: 'auto', opacity: 1 }}
                           exit={{ height: 0, opacity: 0 }}
-                          className="space-y-1.5 overflow-hidden pl-2 pr-0.5 py-1"
+                          className="space-y-1 overflow-hidden pl-1 pr-0.5 py-1"
                         >
                           {categorySkills.map((skill) => (
                             <motion.div
@@ -1403,30 +1410,30 @@ export default function App() {
                                 if (window.innerWidth < 768) setIsSidebarOpen(false);
                               }}
                               className={cn(
-                                "w-full flex items-center gap-2.5 px-3 py-2 rounded-xl transition-all group relative overflow-hidden text-[9px] font-black uppercase tracking-tighter border shadow-sm leading-none cursor-pointer",
+                                "w-full flex items-center gap-1.5 px-1.5 py-1 rounded-[6px] transition-all group relative overflow-hidden text-[8px] font-black uppercase tracking-tighter border shadow-sm leading-none cursor-pointer",
                                 selectedSkill?.id === skill.id 
-                                  ? "bg-theme-glass border-theme-secondary/40 text-theme-primary shadow-md" 
+                                  ? "bg-theme-glass border-theme-secondary/40 text-theme-primary shadow-sm" 
                                   : "bg-theme-card/60 border-theme-glass text-theme-secondary hover:bg-theme-glass hover:text-theme-primary hover:border-theme-secondary/30"
                               )}
                             >
                               <div className={cn(
-                                "w-7 h-7 rounded-lg flex items-center justify-center transition-all overflow-hidden shrink-0 shadow-sm border border-theme-glass/20",
+                                "w-4 h-4 rounded-[4px] flex items-center justify-center transition-all overflow-hidden shrink-0 shadow-sm border border-theme-glass/20",
                                 selectedSkill?.id === skill.id ? CATEGORY_BG_LIGHT_COLORS[category] : "bg-theme-glass",
                                 CATEGORY_TEXT_COLORS[category]
                               )}>
-                                <AgentIcon agent={skill} size="sm" className="w-full h-full" />
+                                <AgentIcon agent={skill} size="sm" className="w-full h-full p-0.5" />
                               </div>
                               <div className="flex flex-col items-start min-w-0 flex-1 justify-center">
-                                <div className="flex items-center gap-1.5 w-full">
-                                  <span className="truncate leading-none">{skill.name}</span>
+                                <div className="flex items-center gap-1 w-full">
+                                  <span className="truncate leading-none text-[8px]">{skill.name}</span>
                                   {skill.isGoogleAI && (
-                                    <div className="px-1.5 py-0.5 rounded-md bg-blue-500/10 border border-blue-500/20 text-[7px] font-black text-blue-400 uppercase tracking-widest shrink-0 shadow-sm">
+                                    <div className="px-1 py-0.5 rounded-[4px] bg-blue-500/10 border border-blue-500/20 text-[6px] font-black text-blue-400 uppercase tracking-widest shrink-0 shadow-sm">
                                       AI
                                     </div>
                                   )}
                                 </div>
                               </div>
-                              <div className="flex items-center gap-1.5 opacity-0 group-hover:opacity-100 transition-opacity">
+                              <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
                                 <button 
                                   onClick={(e) => {
                                     e.stopPropagation();
@@ -1440,10 +1447,10 @@ export default function App() {
                                     document.body.removeChild(a);
                                     URL.revokeObjectURL(url);
                                   }}
-                                  className="p-1.5 hover:bg-theme-glass/80 rounded-lg text-theme-secondary hover:text-theme-primary transition-all shadow-sm"
+                                  className="p-1 hover:bg-theme-glass/80 rounded-[4px] text-theme-secondary hover:text-theme-primary transition-all shadow-sm"
                                   title="Exportar Agente"
                                 >
-                                  <Download className="w-3 h-3" />
+                                  <Download className="w-2 h-2" />
                                 </button>
                                 {customSkills.some(s => s.id === skill.id) && (
                                   <>
@@ -1453,18 +1460,18 @@ export default function App() {
                                         setEditingCustomAgent(skill);
                                         setIsCustomAgentModalOpen(true);
                                       }}
-                                      className="p-1.5 hover:bg-theme-glass/80 rounded-lg text-theme-secondary hover:text-theme-primary transition-all shadow-sm"
+                                      className="p-1 hover:bg-theme-glass/80 rounded-[4px] text-theme-secondary hover:text-theme-primary transition-all shadow-sm"
                                     >
-                                      <PenTool className="w-3 h-3" />
+                                      <PenTool className="w-2 h-2" />
                                     </button>
                                     <button 
                                       onClick={(e) => {
                                         e.stopPropagation();
                                         handleDeleteCustomAgent(skill.id);
                                       }}
-                                      className="p-1.5 hover:bg-red-500/10 rounded-lg text-theme-secondary hover:text-red-500 transition-all shadow-sm"
+                                      className="p-1 hover:bg-red-500/10 rounded-[4px] text-theme-secondary hover:text-red-500 transition-all shadow-sm"
                                     >
-                                      <Trash2 className="w-3 h-3" />
+                                      <Trash2 className="w-2 h-2" />
                                     </button>
                                   </>
                                 )}
@@ -1481,29 +1488,29 @@ export default function App() {
           </div>
         </div>
 
-        <div className="p-4 border-t border-theme-glass space-y-4 bg-theme-surface/50">
-          <div className="flex items-center gap-3 p-3 bg-theme-glass rounded-2xl border border-theme-glass shadow-sm">
-            <div className="w-9 h-9 rounded-xl bg-blue-500 flex items-center justify-center font-bold text-white text-xs shadow-sm">
+        <div className="p-3 border-t border-theme-glass space-y-3 bg-theme-surface/50">
+          <div className="flex items-center gap-2 p-2 bg-theme-glass rounded-xl border border-theme-glass shadow-sm">
+            <div className="w-7 h-7 rounded-[8px] bg-blue-500 flex items-center justify-center font-bold text-white text-[10px] shadow-sm">
               {user?.displayName?.[0] || user?.email?.[0] || "U"}
             </div>
             <div className="flex flex-col overflow-hidden">
-              <span className="text-xs font-bold text-theme-primary truncate">{user?.displayName || "Usuário"}</span>
-              <span className="text-[10px] font-bold text-theme-secondary truncate">{user?.email}</span>
+              <span className="text-[10px] font-bold text-theme-primary truncate">{user?.displayName || "Usuário"}</span>
+              <span className="text-[9px] font-bold text-theme-secondary truncate opacity-80">{user?.email}</span>
             </div>
             <button 
               onClick={handleLogout}
-              className="btn-secondary p-2 ml-auto text-rose-500 border-rose-500/20 hover:border-rose-500/40 hover:bg-rose-500/5"
+              className="btn-secondary p-1.5 ml-auto text-rose-500 border-rose-500/20 hover:border-rose-500/40 hover:bg-rose-500/5 rounded-[6px]"
             >
-              <LogOut className="w-4 h-4" />
+              <LogOut className="w-3 h-3" />
             </button>
           </div>
 
-          <div className="flex items-center justify-between px-2">
-            <span className="text-[10px] font-bold text-theme-secondary uppercase tracking-wider">v2.1.0-PRO</span>
-            <div className="flex gap-1.5">
-              <div className="w-1 h-1 bg-emerald-500 rounded-full animate-pulse" />
-              <div className="w-1 h-1 bg-emerald-500 rounded-full animate-pulse delay-75" />
-              <div className="w-1 h-1 bg-emerald-500 rounded-full animate-pulse delay-150" />
+          <div className="flex items-center justify-between px-1">
+            <span className="text-[8px] font-black text-theme-secondary uppercase tracking-widest opacity-60">v2.1.0-PRO</span>
+            <div className="flex gap-1">
+              <div className="w-0.5 h-0.5 bg-emerald-500 rounded-full animate-pulse" />
+              <div className="w-0.5 h-0.5 bg-emerald-500 rounded-full animate-pulse delay-75" />
+              <div className="w-0.5 h-0.5 bg-emerald-500 rounded-full animate-pulse delay-150" />
             </div>
           </div>
         </div>
@@ -1512,44 +1519,44 @@ export default function App() {
       {/* Main Content */}
       <main className="flex-1 flex flex-col relative min-w-0">
         {/* Header */}
-        <header className="h-auto min-h-16 py-3 md:py-0 glass-panel z-30 flex flex-col md:flex-row items-center justify-between px-4 md:px-6 mb-3 shrink-0 transition-all duration-500 gap-3 md:gap-0 relative overflow-hidden">
+        <header className="h-auto min-h-12 py-2 md:py-0 glass-panel z-30 flex flex-col md:flex-row items-center justify-between px-3 md:px-4 mb-2 shrink-0 transition-all duration-500 gap-2 md:gap-0 relative overflow-hidden">
           <div className="absolute bottom-0 left-0 w-full h-[1px] bg-gradient-to-r from-transparent via-theme-blue/30 to-transparent" />
-          <div className="flex items-center justify-between w-full md:w-auto gap-3">
-            <div className="flex items-center gap-3">
+          <div className="flex items-center justify-between w-full md:w-auto gap-2">
+            <div className="flex items-center gap-2">
               {!isSidebarOpen && (
                 <button 
                   onClick={() => setIsSidebarOpen(true)}
-                  className="btn-secondary p-2 group"
+                  className="btn-secondary p-1.5 group"
                 >
-                  <Menu className="w-4 h-4 text-theme-secondary group-hover:text-theme-primary" />
+                  <Menu className="w-3.5 h-3.5 text-theme-secondary group-hover:text-theme-primary" />
                 </button>
               )}
               <div className="flex flex-col">
-                <div className="flex items-center gap-1.5 text-[9px] font-medium uppercase tracking-wider text-theme-secondary mb-0.5">
+                <div className="flex items-center gap-1 text-[8px] font-medium uppercase tracking-wider text-theme-secondary mb-0.5">
                   <span className="hover:text-theme-primary transition-colors cursor-pointer">Dashboard</span>
                   <ChevronRight className="w-2 h-2 opacity-50" />
                   <span className="text-blue-400/80">{activeTab === 'chat' ? "Chat Intelligence" : "Operations"}</span>
                 </div>
-                <h1 className="text-xs font-bold tracking-tight flex items-center gap-2 text-theme-primary">
+                <h1 className="text-[10px] font-bold tracking-tight flex items-center gap-1.5 text-theme-primary">
                   {activeTab === 'chat' ? (selectedSkill ? (selectedSkill.id === 'orchestrator' ? "Orquestrador de Enxame" : selectedSkill.name) : "Marketing Intelligence") : "CRM & Pipelines"}
                   {selectedSkill?.id === 'orchestrator' && (
                     <div className="flex items-center gap-1 ml-1">
-                      <div className="px-1.5 py-0.5 rounded bg-blue-500/10 border border-blue-500/20 text-[8px] font-bold text-blue-400 uppercase tracking-tighter">Swarm Active</div>
+                      <div className="px-1 py-0.5 rounded-[4px] bg-blue-500/10 border border-blue-500/20 text-[7px] font-bold text-blue-400 uppercase tracking-tighter">Swarm Active</div>
                     </div>
                   )}
-                  <div className="w-1.5 h-1.5 bg-blue-500 rounded-full animate-pulse shadow-[0_0_8px_rgba(59,130,246,0.6)]" />
+                  <div className="w-1 h-1 bg-blue-500 rounded-full animate-pulse shadow-[0_0_8px_rgba(59,130,246,0.6)]" />
                 </h1>
               </div>
             </div>
             {/* Mobile Tab Switcher */}
-            <div className="flex md:hidden p-1 glass-card gap-1 border border-theme-glass/40 bg-theme-glass/30 shadow-lg rounded-2xl">
+            <div className="flex md:hidden p-0.5 glass-card gap-0.5 border border-theme-glass/40 bg-theme-glass/30 shadow-sm rounded-[10px]">
               <motion.button 
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
                 onClick={() => setActiveTab('chat')}
                 className={cn(
-                  "px-3 py-1.5 rounded-xl text-[9px] font-bold uppercase tracking-widest transition-all border border-transparent",
-                  activeTab === 'chat' ? "bg-theme-blue/15 text-theme-primary border-theme-blue/30 shadow-md" : "text-theme-secondary hover:text-theme-primary"
+                  "px-2 py-0.5 rounded-[8px] text-[7px] font-black uppercase tracking-widest transition-all",
+                  activeTab === 'chat' ? "bg-theme-blue text-white shadow-sm" : "text-theme-secondary hover:text-theme-primary"
                 )}
               >
                 Chat
@@ -1559,8 +1566,8 @@ export default function App() {
                 whileTap={{ scale: 0.98 }}
                 onClick={() => setActiveTab('operations')}
                 className={cn(
-                  "px-3 py-1.5 rounded-xl text-[9px] font-bold uppercase tracking-widest transition-all border border-transparent",
-                  activeTab === 'operations' ? "bg-theme-blue/15 text-theme-primary border-theme-blue/30 shadow-md" : "text-theme-secondary hover:text-theme-primary"
+                  "px-2 py-0.5 rounded-[8px] text-[7px] font-black uppercase tracking-widest transition-all",
+                  activeTab === 'operations' ? "bg-theme-blue text-white shadow-sm" : "text-theme-secondary hover:text-theme-primary"
                 )}
               >
                 Ops
@@ -1568,17 +1575,17 @@ export default function App() {
             </div>
           </div>
 
-          <div className="flex flex-wrap items-center gap-2 md:gap-4 w-full md:w-auto justify-center md:justify-end pb-2 md:pb-0">
-            <div className="hidden md:flex p-1 gap-1 shrink-0">
+          <div className="flex flex-wrap items-center gap-1.5 md:gap-2 w-full md:w-auto justify-center md:justify-end pb-1.5 md:pb-0">
+            <div className="hidden md:flex p-0.5 gap-0.5 shrink-0 bg-theme-surface/50 border border-theme-glass rounded-[8px] shadow-sm">
               <motion.button 
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
                 onClick={() => setActiveTab('chat')}
                 className={cn(
-                  "px-2.5 py-1 rounded-full text-[8.5px] font-bold uppercase tracking-widest transition-all border",
+                  "px-1.5 py-0.5 rounded-[6px] text-[7px] font-black uppercase tracking-widest transition-all",
                   activeTab === 'chat' 
-                    ? "bg-theme-blue text-white border-theme-blue shadow-md" 
-                    : "bg-theme-surface border-theme-glass text-theme-secondary hover:text-theme-primary hover:border-theme-secondary"
+                    ? "bg-theme-blue text-white shadow-sm" 
+                    : "text-theme-secondary hover:text-theme-primary hover:bg-theme-glass"
                 )}
               >
                 Chat
@@ -1588,10 +1595,10 @@ export default function App() {
                 whileTap={{ scale: 0.98 }}
                 onClick={() => setActiveTab('operations')}
                 className={cn(
-                  "px-2.5 py-1 rounded-full text-[8.5px] font-bold uppercase tracking-widest transition-all border",
+                  "px-1.5 py-0.5 rounded-[6px] text-[7px] font-black uppercase tracking-widest transition-all",
                   activeTab === 'operations' 
-                    ? "bg-theme-blue text-white border-theme-blue shadow-md" 
-                    : "bg-theme-surface border-theme-glass text-theme-secondary hover:text-theme-primary hover:border-theme-secondary"
+                    ? "bg-theme-blue text-white shadow-sm" 
+                    : "text-theme-secondary hover:text-theme-primary hover:bg-theme-glass"
                 )}
               >
                 CRM
@@ -1601,10 +1608,10 @@ export default function App() {
                 whileTap={{ scale: 0.98 }}
                 onClick={() => setActiveTab('brain')}
                 className={cn(
-                  "px-2.5 py-1 rounded-full text-[8.5px] font-bold uppercase tracking-widest transition-all border",
+                  "px-1.5 py-0.5 rounded-[6px] text-[7px] font-black uppercase tracking-widest transition-all",
                   activeTab === 'brain' 
-                    ? "bg-theme-blue text-white border-theme-blue shadow-md" 
-                    : "bg-theme-surface border-theme-glass text-theme-secondary hover:text-theme-primary hover:border-theme-secondary"
+                    ? "bg-theme-blue text-white shadow-sm" 
+                    : "text-theme-secondary hover:text-theme-primary hover:bg-theme-glass"
                 )}
               >
                 Cérebro
@@ -1614,10 +1621,10 @@ export default function App() {
                 whileTap={{ scale: 0.98 }}
                 onClick={() => setActiveTab('terminal')}
                 className={cn(
-                  "px-2.5 py-1 rounded-full text-[8.5px] font-bold uppercase tracking-widest transition-all border",
+                  "px-1.5 py-0.5 rounded-[6px] text-[7px] font-black uppercase tracking-widest transition-all",
                   activeTab === 'terminal' 
-                    ? "bg-theme-blue text-white border-theme-blue shadow-md" 
-                    : "bg-theme-surface border-theme-glass text-theme-secondary hover:text-theme-primary hover:border-theme-secondary"
+                    ? "bg-theme-blue text-white shadow-sm" 
+                    : "text-theme-secondary hover:text-theme-primary hover:bg-theme-glass"
                 )}
               >
                 Terminal
@@ -1627,20 +1634,20 @@ export default function App() {
                 whileTap={{ scale: 0.98 }}
                 onClick={() => setActiveTab('workspace')}
                 className={cn(
-                  "px-2.5 py-1 rounded-full text-[8.5px] font-bold uppercase tracking-widest transition-all border",
+                  "px-1.5 py-0.5 rounded-[6px] text-[7px] font-black uppercase tracking-widest transition-all",
                   activeTab === 'workspace' 
-                    ? "bg-theme-blue text-white border-theme-blue shadow-md" 
-                    : "bg-theme-surface border-theme-glass text-theme-secondary hover:text-theme-primary hover:border-theme-secondary"
+                    ? "bg-theme-blue text-white shadow-sm" 
+                    : "text-theme-secondary hover:text-theme-primary hover:bg-theme-glass"
                 )}
               >
                 Workspace
               </motion.button>
             </div>
-            <div className="hidden md:block h-6 w-[1px] bg-theme-glass mx-1 shrink-0" />
+            <div className="hidden md:block h-4 w-[1px] bg-theme-glass mx-0.5 shrink-0" />
             <div className="shrink-0">
               <NotificationCenter />
             </div>
-            <div className="h-6 w-[1px] bg-theme-glass mx-1 shrink-0" />
+            <div className="h-4 w-[1px] bg-theme-glass mx-0.5 shrink-0" />
             <div className="shrink-0 flex items-center">
               <AgentControls
                 selectedSkill={selectedSkill}
@@ -1679,15 +1686,15 @@ export default function App() {
                   <motion.div 
                     initial={{ opacity: 0, y: -10 }}
                     animate={{ opacity: 1, y: 0 }}
-                    className="p-4 bg-theme-blue/5 border border-theme-blue/20 rounded-2xl flex items-center gap-4 mb-4"
+                    className="p-3 bg-theme-blue/5 border border-theme-blue/20 rounded-[12px] flex items-center gap-3 mb-4"
                   >
-                    <div className="w-10 h-10 rounded-xl bg-theme-blue/10 flex items-center justify-center shrink-0">
-                      <Info className="w-5 h-5 text-theme-blue" />
+                    <div className="w-8 h-8 rounded-lg bg-theme-blue/10 flex items-center justify-center shrink-0">
+                      <Info className="w-4 h-4 text-theme-blue" />
                     </div>
                     <div className="flex-1 min-w-0">
-                      <h4 className="text-xs font-black uppercase tracking-widest text-theme-blue mb-1">Dica de Operações</h4>
-                      <p className="text-[11px] text-theme-secondary leading-relaxed">
-                        Transforme suas tarefas em rotinas arrastando-as para os blocos de tempo. Isso ajuda a automatizar seu foco e garantir que nada seja esquecido.
+                      <h4 className="text-[10px] font-black uppercase tracking-widest text-theme-blue mb-0.5">Dica de Operações</h4>
+                      <p className="text-[9px] text-theme-secondary leading-relaxed">
+                        Transforme suas tarefas em rotinas arrastando-as para os blocos de tempo.
                       </p>
                     </div>
                   </motion.div>
@@ -1717,25 +1724,25 @@ export default function App() {
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: -10 }}
                   transition={{ duration: 0.2 }}
-                  className="flex-1 flex flex-col min-h-0 glass-panel overflow-hidden relative p-8 bg-[#050505] font-mono text-theme-emerald border border-theme-emerald/20 shadow-[inset_0_0_100px_rgba(16,185,129,0.05)]"
+                  className="flex-1 flex flex-col min-h-0 glass-panel overflow-hidden relative p-6 bg-[#050505] font-mono text-theme-emerald border border-theme-emerald/20 shadow-[inset_0_0_100px_rgba(16,185,129,0.05)]"
                 >
                   <div className="absolute inset-0 pointer-events-none opacity-[0.03] bg-[linear-gradient(rgba(18,16,16,0)_50%,rgba(0,0,0,0.25)_50%),linear-gradient(90deg,rgba(255,0,0,0.06),rgba(0,255,0,0.02),rgba(0,0,255,0.06))] bg-[length:100%_2px,3px_100%]" />
-                  <div className="flex items-center gap-3 mb-6 border-b border-theme-emerald/20 pb-6 relative z-10">
-                    <Terminal className="w-6 h-6 shadow-[0_0_15px_rgba(16,185,129,0.5)]" />
-                    <span className="text-xs font-black uppercase tracking-[0.4em]">Terminal de Execução do Enxame v2.2</span>
+                  <div className="flex items-center gap-2 mb-3 border-b border-theme-emerald/20 pb-3 relative z-10">
+                    <Terminal className="w-4 h-4 shadow-[0_0_15px_rgba(16,185,129,0.5)]" />
+                    <span className="text-[9px] font-black uppercase tracking-[0.4em]">Terminal de Execução do Enxame v2.2</span>
                   </div>
-                  <div className="flex-1 overflow-y-auto custom-scrollbar space-y-3 text-[11px] relative z-10">
-                    <div className="flex gap-3">
+                  <div className="flex-1 overflow-y-auto custom-scrollbar space-y-1.5 text-[9px] relative z-10">
+                    <div className="flex gap-2.5">
                       <span className="opacity-30 font-bold">17:43:52</span>
                       <span className="text-theme-blue font-black uppercase tracking-tighter">[SYS]</span>
                       <span className="opacity-80">Orquestrador inicializado com sucesso.</span>
                     </div>
-                    <div className="flex gap-3">
+                    <div className="flex gap-2.5">
                       <span className="opacity-30 font-bold">17:43:53</span>
                       <span className="text-theme-purple font-black uppercase tracking-tighter">[SWARM]</span>
                       <span className="opacity-80">Aguardando diretrizes para processamento paralelo...</span>
                     </div>
-                    <div className="flex gap-3">
+                    <div className="flex gap-2.5">
                       <span className="opacity-30 font-bold">17:43:55</span>
                       <span className="text-theme-emerald font-black uppercase tracking-tighter">[BRAIN]</span>
                       <span className="opacity-80">Sincronização de memória concluída (42 nós ativos).</span>
@@ -1752,80 +1759,80 @@ export default function App() {
                   transition={{ duration: 0.2 }}
                   className="flex-1 flex flex-col min-h-0 glass-panel overflow-hidden relative"
                 >
-                  <div className="h-20 border-b border-theme-glass flex items-center justify-between px-8 shrink-0 bg-theme-main/40 backdrop-blur-xl">
-                    <div className="flex items-center gap-4">
-                      <div className="w-12 h-12 bg-theme-blue rounded-2xl flex items-center justify-center shadow-[0_10px_25px_rgba(59,130,246,0.3)] border border-white/20">
-                        <LayoutDashboard className="w-6 h-6 text-white" />
+                  <div className="h-10 border-b border-theme-glass flex items-center justify-between px-4 shrink-0 bg-theme-main/40 backdrop-blur-xl">
+                    <div className="flex items-center gap-2">
+                      <div className="w-6 h-6 bg-theme-blue rounded-[8px] flex items-center justify-center shadow-[0_5px_15px_rgba(59,130,246,0.3)] border border-white/20">
+                        <LayoutDashboard className="w-3 h-3 text-white" />
                       </div>
                       <div>
-                        <h3 className="font-black tracking-tighter uppercase text-base text-theme-primary italic">Estúdio de Artefatos</h3>
-                        <p className="text-[9px] font-black text-theme-blue uppercase tracking-[0.3em] opacity-60">Workspace de Produção v2.2</p>
+                        <h3 className="font-black tracking-tighter uppercase text-[10px] text-theme-primary italic m-0 p-0 leading-none">Estúdio</h3>
+                        <p className="text-[6px] font-black text-theme-blue uppercase tracking-[0.3em] opacity-60 m-0 p-0 leading-none">Workspace v2.2</p>
                       </div>
                     </div>
                   </div>
                   
                   <div className="flex-1 flex min-h-0">
                     {/* Artifacts Sidebar */}
-                    <div className="w-64 border-r border-theme-glass overflow-y-auto custom-scrollbar p-4 space-y-4 bg-theme-glass/5">
-                      <h4 className="text-[10px] font-black uppercase tracking-widest text-theme-secondary opacity-40 px-2">Recentes</h4>
-                      <div className="space-y-2">
+                    <div className="w-48 border-r border-theme-glass overflow-y-auto custom-scrollbar p-2 space-y-2 bg-theme-glass/5">
+                      <h4 className="text-[7px] font-black uppercase tracking-widest text-theme-secondary opacity-40 px-1">Recentes</h4>
+                      <div className="space-y-1">
                         {allArtifacts.length > 0 ? (
                           allArtifacts.map((art) => (
                             <button
                               key={art.id}
                               onClick={() => setActiveArtifact(art)}
                               className={cn(
-                                "w-full p-3 rounded-xl text-left transition-all border group",
+                                "w-full p-1.5 rounded-[6px] text-left transition-all border group",
                                 activeArtifact?.id === art.id 
                                   ? "bg-theme-blue/10 border-theme-blue/30 text-theme-blue" 
                                   : "bg-theme-glass border-theme-glass text-theme-secondary hover:bg-theme-glass/80"
                               )}
                             >
-                              <div className="flex items-center gap-2 mb-1">
-                                <FileText className="w-3 h-3 opacity-40" />
-                                <span className="text-[8px] font-black uppercase tracking-widest">{art.type}</span>
+                              <div className="flex items-center gap-1 mb-0.5">
+                                <FileText className="w-2 h-2 opacity-40" />
+                                <span className="text-[6px] font-black uppercase tracking-widest">{art.type}</span>
                               </div>
-                              <p className="text-[11px] font-bold truncate">{art.title}</p>
+                              <p className="text-[8px] font-bold truncate">{art.title}</p>
                             </button>
                           ))
                         ) : (
-                          <div className="p-4 text-center space-y-2 opacity-20">
-                            <FileText className="w-8 h-8 mx-auto mb-2" />
-                            <p className="text-[10px] font-bold uppercase tracking-widest leading-tight">
-                              Nenhum artefato técnico nesta conversa
+                          <div className="p-3 text-center space-y-1.5 opacity-20">
+                            <FileText className="w-6 h-6 mx-auto mb-1" />
+                            <p className="text-[8px] font-bold uppercase tracking-widest leading-tight">
+                              Nenhum artefato
                             </p>
                           </div>
                         )}
                       </div>
                     </div>
 
-                    <div className="flex-1 overflow-y-auto p-8 custom-scrollbar">
+                    <div className="flex-1 overflow-y-auto p-4 custom-scrollbar">
                       {activeArtifact ? (
                         <div className="max-w-5xl mx-auto">
                           {activeArtifact.type === 'campaign' || activeArtifact.type === 'architecture' ? (
                             <CampaignAssetViewer artifact={activeArtifact} />
                           ) : (
-                            <div className="space-y-8">
+                            <div className="space-y-4">
                               <div className="flex items-start justify-between">
-                                <div className="space-y-3">
-                                  <div className="flex items-center gap-2">
-                                    <span className="px-3 py-1 bg-theme-blue/20 text-theme-blue rounded-full text-[10px] font-black uppercase tracking-widest border border-theme-blue/20">
+                                <div className="space-y-1.5">
+                                  <div className="flex items-center gap-1.5">
+                                    <span className="px-1.5 py-0.5 bg-theme-blue/20 text-theme-blue rounded-[4px] text-[7px] font-black uppercase tracking-widest border border-theme-blue/20">
                                       {activeArtifact.type}
                                     </span>
-                                    <span className="text-[10px] font-black text-theme-secondary uppercase tracking-widest">
+                                    <span className="text-[7px] font-black text-theme-secondary uppercase tracking-widest">
                                       Gerado por {activeArtifact.agentName}
                                     </span>
                                   </div>
-                                  <h2 className="text-4xl font-black tracking-tighter leading-tight italic text-theme-primary">
+                                  <h2 className="text-xl font-black tracking-tighter leading-tight italic text-theme-primary">
                                     {activeArtifact.title}
                                   </h2>
                                 </div>
-                                <div className="flex items-center gap-2">
+                                <div className="flex items-center gap-1.5">
                                   <button 
                                     onClick={() => copyToClipboard(activeArtifact.content, activeArtifact.id)}
-                                    className="p-4 bg-theme-surface border border-theme-glass rounded-2xl hover:bg-theme-glass transition-all active:scale-90 group/copy shadow-xl"
+                                    className="btn-secondary p-1.5 rounded-[8px]"
                                   >
-                                    {copiedId === activeArtifact.id ? <Check className="w-5 h-5 text-emerald-500" /> : <Copy className="w-5 h-5 text-theme-secondary group-hover/copy:text-theme-primary" />}
+                                    {copiedId === activeArtifact.id ? <Check className="w-3.5 h-3.5 text-emerald-500" /> : <Copy className="w-3.5 h-3.5 text-theme-secondary group-hover/copy:text-theme-primary" />}
                                   </button>
                                 </div>
                               </div>
@@ -1835,9 +1842,9 @@ export default function App() {
                                 animate={{ opacity: 1, y: 0 }}
                                 className="relative"
                               >
-                                <div className="bg-theme-surface border border-theme-glass rounded-3xl p-8 min-h-[600px] relative overflow-hidden shadow-2xl">
-                                  <div className="absolute top-0 left-0 w-full h-1 bg-theme-blue" />
-                                  <div className="prose prose-invert prose-sm max-w-none">
+                                <div className="bg-theme-surface border border-theme-glass rounded-xl p-4 min-h-[300px] relative overflow-hidden shadow-sm">
+                                  <div className="absolute top-0 left-0 w-full h-0.5 bg-theme-blue" />
+                                  <div className="prose prose-invert prose-sm max-w-none text-[10px] prose-headings:font-black">
                                     <ReactMarkdown>{activeArtifact.content}</ReactMarkdown>
                                   </div>
                                 </div>
@@ -1893,22 +1900,22 @@ export default function App() {
                     )}
                   </AnimatePresence>
                   {messages.length === 0 ? (
-                  <div className="flex-1 flex flex-col items-center justify-center text-center p-8">
-                    <div className="w-16 h-16 bg-theme-blue/10 rounded-2xl flex items-center justify-center mb-6 border border-theme-blue/20">
-                      <Sparkles className="w-8 h-8 text-theme-blue" />
+                    <div className="flex-1 flex flex-col items-center justify-center text-center p-6">
+                    <div className="w-12 h-12 bg-theme-blue/10 rounded-xl flex items-center justify-center mb-4 border border-theme-blue/20">
+                      <Sparkles className="w-6 h-6 text-theme-blue" />
                     </div>
-                    <h2 className="text-2xl font-black tracking-tight mb-3 text-theme-primary opacity-80">
+                    <h2 className="text-xl font-black tracking-tight mb-2 text-theme-primary opacity-80">
                       O que vamos conquistar hoje?
                     </h2>
-                    <p className="max-w-md text-theme-secondary text-[10px] font-semibold uppercase tracking-widest opacity-50 mb-8">
+                    <p className="max-w-md text-theme-secondary text-[8px] font-semibold uppercase tracking-widest opacity-50 mb-6">
                       O Enxame está conectado e aguardando comandos
                     </p>
-                    <div className="flex flex-wrap justify-center gap-3">
+                    <div className="flex flex-wrap justify-center gap-2">
                       {["Como aumentar meu ROI?", "Crie um Design System", "Analise meu anúncio", "Funil de Vendas SaaS"].map((q) => (
                         <button 
                           key={q}
                           onClick={() => setInput(q)}
-                          className="px-4 py-2 border border-theme-glass text-xs font-medium text-theme-secondary hover:bg-theme-glass hover:text-theme-primary transition-all rounded-lg"
+                          className="px-3 py-1.5 border border-theme-glass text-[10px] font-medium text-theme-secondary hover:bg-theme-glass hover:text-theme-primary transition-all rounded-[8px]"
                         >
                           {q}
                         </button>
@@ -1955,12 +1962,12 @@ export default function App() {
                 {/* Input Area */}
                 <div className="relative p-4 border-t border-theme-glass bg-theme-main/20 backdrop-blur-xl">
                   {messages.length > 0 && !isLoading && (
-                    <div className="absolute bottom-full right-4 mb-4 z-40">
+                    <div className="absolute bottom-full right-4 mb-2 z-40">
                       <button
                         onClick={() => handleSend("A estratégia está consolidada. Por favor, gere os artefatos finais (arquivos, scripts, copies) usando o formato de artefato apropriado.")}
-                        className="btn-primary shadow-lg flex items-center gap-2"
+                        className="btn-primary py-1.5 px-3 text-[10px] shadow-sm flex items-center gap-1.5 rounded-[8px]"
                       >
-                        <FileText className="w-4 h-4" />
+                        <FileText className="w-3 h-3" />
                         Gerar Artefatos Finais
                       </button>
                     </div>

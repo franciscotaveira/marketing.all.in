@@ -603,80 +603,80 @@ export default function TaskBoard({ allSkills = [] }: TaskBoardProps) {
           <p className="text-theme-secondary text-[10px] font-black uppercase tracking-[0.15em] opacity-40">Pipeline de Vendas e Integração WhatsApp.</p>
         </div>
 
-        <div className="flex flex-wrap items-center justify-start md:justify-end gap-3 w-full md:w-auto">
+        <div className="flex flex-wrap items-center justify-start md:justify-end gap-2 w-full md:w-auto">
           <div className="relative group w-full sm:w-auto flex-1 sm:flex-none">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-theme-secondary group-focus-within:text-blue-500 transition-colors" />
+            <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-theme-secondary group-focus-within:text-blue-500 transition-colors" />
             <input 
               type="text"
               placeholder="Buscar clientes por nome ou nicho..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-10 pr-10 py-2.5 bg-theme-card border border-theme-glass rounded-xl text-sm text-theme-primary placeholder:text-theme-secondary/60 focus:outline-none focus:border-blue-500/50 focus:ring-1 focus:ring-blue-500/20 transition-all w-full sm:w-64 shadow-inner"
+              className="pl-8 pr-8 py-2 bg-theme-card border border-theme-glass rounded-lg text-[10px] text-theme-primary placeholder:text-theme-secondary/60 focus:outline-none focus:border-blue-500/50 focus:ring-1 focus:ring-blue-500/20 transition-all w-full sm:w-56 shadow-inner"
             />
             {searchQuery && (
               <button 
                 onClick={() => setSearchQuery('')}
-                className="absolute right-3 top-1/2 -translate-y-1/2 p-0.5 hover:bg-theme-glass rounded-full text-theme-secondary opacity-40 hover:opacity-100 transition-all"
-              >
-                <X className="w-3.5 h-3.5" />
-              </button>
-            )}
-          </div>
-
-          <div className="relative group w-full sm:w-auto flex-1 sm:flex-none">
-            <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-theme-secondary opacity-30 group-focus-within:text-theme-blue transition-colors" />
-            <select 
-              value={assignedSearchQuery}
-              onChange={(e) => setAssignedSearchQuery(e.target.value)}
-              className="pl-10 pr-10 py-2.5 bg-theme-glass/40 border border-theme-glass/60 rounded-xl text-sm text-theme-primary focus:outline-none focus:border-theme-blue focus:bg-theme-glass/80 transition-all w-full sm:w-48 shadow-inner appearance-none cursor-pointer"
-            >
-              <option value="">Filtrar por SDR</option>
-              {allSkills.map(s => (
-                <option key={s.id} value={s.id}>{s.name}</option>
-              ))}
-            </select>
-            <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-theme-secondary opacity-30 pointer-events-none" />
-            {assignedSearchQuery && (
-              <button 
-                onClick={(e) => {
-                  e.stopPropagation();
-                  setAssignedSearchQuery('');
-                }}
-                className="absolute right-8 top-1/2 -translate-y-1/2 p-0.5 hover:bg-theme-glass rounded-full text-theme-secondary opacity-50 hover:opacity-100 transition-all"
+                className="absolute right-2 top-1/2 -translate-y-1/2 p-0.5 hover:bg-theme-glass rounded-[4px] text-theme-secondary opacity-40 hover:opacity-100 transition-all"
               >
                 <X className="w-3 h-3" />
               </button>
             )}
           </div>
 
-          <div className="flex items-center bg-theme-glass border border-theme-glass rounded-xl p-1 w-full sm:w-auto justify-center gap-1">
+          <div className="relative group w-full sm:w-auto flex-1 sm:flex-none">
+            <User className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-theme-secondary opacity-30 group-focus-within:text-theme-blue transition-colors" />
+            <select 
+              value={assignedSearchQuery}
+              onChange={(e) => setAssignedSearchQuery(e.target.value)}
+              className="pl-8 pr-8 py-2 bg-theme-glass/40 border border-theme-glass/60 rounded-lg text-[10px] text-theme-primary focus:outline-none focus:border-theme-blue focus:bg-theme-glass/80 transition-all w-full sm:w-40 shadow-inner appearance-none cursor-pointer"
+            >
+              <option value="">Filtrar por SDR</option>
+              {allSkills.map(s => (
+                <option key={s.id} value={s.id}>{s.name}</option>
+              ))}
+            </select>
+            <ChevronDown className="absolute right-2 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-theme-secondary opacity-30 pointer-events-none" />
+            {assignedSearchQuery && (
+              <button 
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setAssignedSearchQuery('');
+                }}
+                className="absolute right-6 top-1/2 -translate-y-1/2 p-0.5 hover:bg-theme-glass rounded-[4px] text-theme-secondary opacity-50 hover:opacity-100 transition-all"
+              >
+                <X className="w-3 h-3" />
+              </button>
+            )}
+          </div>
+
+          <div className="flex items-center bg-theme-glass border border-theme-glass rounded-lg p-0.5 w-full sm:w-auto justify-center gap-0.5">
             <button 
               onClick={() => setViewMode('kanban')}
               className={cn(
-                "p-1.5 rounded-lg transition-all flex-1 sm:flex-none flex justify-center",
+                "p-1.5 rounded-[6px] transition-all flex-1 sm:flex-none flex justify-center",
                 viewMode === 'kanban' ? "bg-blue-500 text-white shadow-sm" : "text-theme-secondary hover:text-theme-primary hover:bg-theme-glass"
               )}
             >
-              <LayoutGrid className="w-4 h-4" />
+              <LayoutGrid className="w-3.5 h-3.5" />
             </button>
             <button 
               onClick={() => setViewMode('list')}
               className={cn(
-                "p-1.5 rounded-lg transition-all flex-1 sm:flex-none flex justify-center",
+                "p-1.5 rounded-[6px] transition-all flex-1 sm:flex-none flex justify-center",
                 viewMode === 'list' ? "bg-blue-500 text-white shadow-sm" : "text-theme-secondary hover:text-theme-primary hover:bg-theme-glass"
               )}
             >
-              <ListIcon className="w-4 h-4" />
+              <ListIcon className="w-3.5 h-3.5" />
             </button>
           </div>
 
           <button 
             onClick={handleOptimizeTasks}
             disabled={isOptimizing || tasks.filter(t => t.status !== 'done' && t.status !== 'active').length === 0}
-            className="btn-orange w-full sm:w-auto"
+            className="btn-orange w-full sm:w-auto text-[10px] py-2 px-3 h-auto"
             title="Sugerir melhor ordem de setup de clientes"
           >
-            {isOptimizing ? <Loader2 className="w-4 h-4 animate-spin" /> : <Bot className="w-4 h-4" />}
+            {isOptimizing ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Bot className="w-3.5 h-3.5" />}
             <span>Otimizar Setup Pendente</span>
           </button>
 
@@ -1207,25 +1207,25 @@ export default function TaskBoard({ allSkills = [] }: TaskBoardProps) {
                                     </div>
                                   )}
 
-                                  <div className="grid grid-cols-2 gap-3">
+                                  <div className="grid grid-cols-2 gap-2">
                                     {task.assignedTo && (
-                                      <div className="space-y-1">
-                                        <span className="text-[8px] font-black uppercase tracking-widest text-theme-secondary opacity-50">Responsável</span>
-                                        <div className="flex items-center gap-1.5">
-                                          <div className="w-4 h-4 rounded-full bg-theme-blue/10 flex items-center justify-center">
-                                            <User className="w-2.5 h-2.5 text-theme-blue" />
+                                      <div className="space-y-0.5">
+                                        <span className="text-[6px] font-black uppercase tracking-widest text-theme-secondary opacity-50">Responsável</span>
+                                        <div className="flex items-center gap-1">
+                                          <div className="w-3 h-3 rounded-[3px] bg-theme-blue/10 flex items-center justify-center">
+                                            <User className="w-2 h-2 text-theme-blue" />
                                           </div>
-                                          <span className="text-[10px] text-theme-primary font-medium">{task.assignedTo}</span>
+                                          <span className="text-[8px] text-theme-primary font-medium">{task.assignedTo}</span>
                                         </div>
                                       </div>
                                     )}
                                     
                                     {task.tags && task.tags.length > 0 && (
-                                      <div className="space-y-1">
-                                        <span className="text-[8px] font-black uppercase tracking-widest text-theme-secondary opacity-50">Tags</span>
-                                        <div className="flex flex-wrap gap-1">
+                                      <div className="space-y-0.5">
+                                        <span className="text-[6px] font-black uppercase tracking-widest text-theme-secondary opacity-50">Tags</span>
+                                        <div className="flex flex-wrap gap-0.5">
                                           {task.tags.map((tag, i) => (
-                                            <span key={i} className="px-1.5 py-0.5 bg-theme-glass border border-theme-glass rounded text-[8px] font-black uppercase tracking-widest text-theme-secondary">
+                                            <span key={i} className="px-1 py-0.5 bg-theme-glass border border-theme-glass rounded-[4px] text-[6px] font-black uppercase tracking-widest text-theme-secondary">
                                               {tag}
                                             </span>
                                           ))}
@@ -1241,24 +1241,24 @@ export default function TaskBoard({ allSkills = [] }: TaskBoardProps) {
                           <div className="flex items-end justify-between gap-3 mt-2">
                             <div className="flex flex-wrap items-center gap-2 flex-1">
                               <div className={cn(
-                                "px-2 py-0.5 rounded text-[9px] font-black uppercase tracking-widest border shadow-sm flex items-center gap-1",
+                                "px-1! py-0.5! rounded-[4px]! text-[6px]! font-black uppercase tracking-widest border shadow-sm flex items-center gap-1",
                                 PRIORITY_COLORS[task.priority]
                               )}>
-                                {task.priority === 'high' && <TrendingUp className="w-2.5 h-2.5" />}
-                                {task.priority === 'medium' && <Activity className="w-2.5 h-2.5" />}
-                                {task.priority === 'low' && <TrendingDown className="w-2.5 h-2.5" />}
+                                {task.priority === 'high' && <TrendingUp className="w-2 h-2" />}
+                                {task.priority === 'medium' && <Activity className="w-2 h-2" />}
+                                {task.priority === 'low' && <TrendingDown className="w-2 h-2" />}
                                 {task.priority}
                               </div>
                               {task.dueDate && (
                                 <div className={cn(
-                                  "flex items-center gap-1 text-[10px] font-black uppercase tracking-widest font-mono px-1.5 py-0.5 rounded",
+                                  "flex items-center gap-1 text-[8px] font-black uppercase tracking-widest font-mono px-1 py-0.5 rounded",
                                   isOverdue(task.dueDate) && task.status !== 'active' && task.status !== 'paused' ? "text-theme-rose bg-theme-rose/10 border border-theme-rose/20" : 
                                   isUpcoming(task.dueDate) && task.status !== 'active' && task.status !== 'paused' ? "text-theme-yellow bg-theme-yellow/10 border border-theme-yellow/20" :
                                   "text-theme-secondary"
                                 )}>
-                                  <Clock className="w-3 h-3" />
+                                  <Clock className="w-2.5 h-2.5" />
                                   {task.dueDate instanceof Timestamp ? task.dueDate.toDate().toLocaleDateString() : new Date(task.dueDate).toLocaleDateString()}
-                                  {isOverdue(task.dueDate) && task.status !== 'active' && task.status !== 'paused' && <AlertCircle className="w-2.5 h-2.5 ml-0.5 animate-pulse" />}
+                                  {isOverdue(task.dueDate) && task.status !== 'active' && task.status !== 'paused' && <AlertCircle className="w-2 h-2 ml-0.5 animate-pulse" />}
                                 </div>
                               )}
                               {task.status !== 'active' && task.status !== 'paused' && (
@@ -1274,14 +1274,14 @@ export default function TaskBoard({ allSkills = [] }: TaskBoardProps) {
                                     }
                                   }}
                                   className={cn(
-                                    "flex items-center gap-1 text-[10px] font-black uppercase tracking-widest font-mono transition-all",
+                                    "flex items-center gap-1 text-[8px] font-black uppercase tracking-widest font-mono transition-all",
                                     task.reminderAt 
                                       ? "text-theme-blue bg-theme-blue/10 px-1.5 py-0.5 rounded border border-theme-blue/20" 
                                       : "text-theme-secondary opacity-40 hover:opacity-100 hover:text-theme-blue"
                                   )}
                                   title={task.reminderAt ? "Editar Lembrete" : "Definir Lembrete"}
                                 >
-                                  <Bell className="w-3 h-3" />
+                                  <Bell className="w-2.5 h-2.5" />
                                   {task.reminderAt ? (
                                     task.reminderAt instanceof Timestamp ? task.reminderAt.toDate().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : new Date(task.reminderAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
                                   ) : (
@@ -1290,8 +1290,8 @@ export default function TaskBoard({ allSkills = [] }: TaskBoardProps) {
                                 </button>
                               )}
                               {task.assignedTo && (
-                                <div className="flex items-center gap-1 text-[10px] font-black uppercase tracking-widest text-theme-blue bg-theme-blue/10 border border-theme-blue/20 px-1.5 py-0.5 rounded">
-                                  <User className="w-3 h-3" />
+                                <div className="flex items-center gap-1 text-[8px] font-black uppercase tracking-widest text-theme-blue bg-theme-blue/10 border border-theme-blue/20 px-1 py-0.5 rounded">
+                                  <User className="w-2.5 h-2.5" />
                                   {task.assignedTo}
                                 </div>
                               )}
@@ -1335,46 +1335,46 @@ export default function TaskBoard({ allSkills = [] }: TaskBoardProps) {
                 <motion.div 
                   layout
                   className={cn(
-                    "flex flex-col md:flex-row md:items-center justify-between p-4 bg-theme-glass border border-theme-glass rounded-2xl hover:bg-theme-glass/80 transition-all group gap-4",
+                    "flex flex-col md:flex-row md:items-center justify-between p-3 bg-theme-glass border border-theme-glass rounded-xl hover:bg-theme-glass/80 transition-all group gap-3",
                     isOverdue(task.dueDate) && task.status !== 'active' && task.status !== 'paused' && "border-theme-rose/50 bg-theme-rose/5 shadow-[0_0_15px_rgba(244,63,94,0.1)]"
                   )}
                 >
-                <div className="flex flex-wrap md:flex-nowrap items-center gap-4 flex-1">
+                <div className="flex flex-wrap md:flex-nowrap items-center gap-3 flex-1">
                   <button 
                     onClick={() => handleUpdateStatus(task.id, task.status === 'active' ? 'prospect' : 'active')}
                     className={cn(
-                      "w-5 h-5 rounded-full border-2 flex items-center justify-center transition-all",
+                      "w-4 h-4 rounded-full border-2 flex items-center justify-center transition-all",
                       task.status === 'active' ? "bg-theme-emerald border-theme-emerald text-white" : "border-theme-glass hover:border-theme-blue"
                     )}
                   >
-                    {task.status === 'active' && <CheckCircle2 className="w-3 h-3" />}
+                    {task.status === 'active' && <CheckCircle2 className="w-2.5 h-2.5" />}
                   </button>
                   <div 
                     className="flex-1 cursor-pointer"
                     onClick={() => setEditingTask(task)}
                   >
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-1.5">
                       <button 
                         onClick={(e) => {
                           e.stopPropagation();
                           toggleTaskExpansion(task.id);
                         }}
                         className={cn(
-                          "p-1 rounded-lg transition-all active:scale-95 hover:bg-theme-glass/50",
+                          "p-1 rounded-[6px] transition-all active:scale-95 hover:bg-theme-glass/50",
                           expandedTasks.includes(task.id) ? "text-theme-blue" : "text-theme-secondary"
                         )}
                         title={expandedTasks.includes(task.id) ? "Recolher" : "Expandir"}
                       >
-                        {expandedTasks.includes(task.id) ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
+                        {expandedTasks.includes(task.id) ? <ChevronUp className="w-2.5 h-2.5" /> : <ChevronDown className="w-2.5 h-2.5" />}
                       </button>
                       <h3 className={cn(
-                        "text-sm font-bold",
+                        "text-xs font-bold",
                         task.status === 'active' ? "text-theme-emerald" : "text-theme-primary"
                       )}>
                         {task.title}
                       </h3>
                       <span className={cn(
-                        "px-1.5 py-0.5 rounded text-[7px] font-black uppercase tracking-widest border opacity-60",
+                        "px-1 py-0.5 rounded-[4px] text-[6px] font-black uppercase tracking-widest border opacity-60",
                         STATUS_COLUMNS.find(c => c.id === task.status)?.color.replace('text-', 'border-').replace('opacity-50', 'opacity-20')
                       )}>
                         {STATUS_COLUMNS.find(c => c.id === task.status)?.name}
@@ -1408,25 +1408,25 @@ export default function TaskBoard({ allSkills = [] }: TaskBoardProps) {
                               </div>
                             )}
 
-                            <div className="flex flex-wrap items-center gap-4">
+                            <div className="flex flex-wrap items-center gap-3">
                               {task.assignedTo && (
-                                <div className="space-y-1">
-                                  <span className="text-[8px] font-black uppercase tracking-widest text-theme-secondary opacity-50">Responsável</span>
-                                  <div className="flex items-center gap-1.5">
-                                    <div className="w-4 h-4 rounded-full bg-theme-blue/10 flex items-center justify-center">
-                                      <User className="w-2.5 h-2.5 text-theme-blue" />
+                                <div className="space-y-0.5">
+                                  <span className="text-[6px] font-black uppercase tracking-widest text-theme-secondary opacity-50">Responsável</span>
+                                  <div className="flex items-center gap-1">
+                                    <div className="w-3 h-3 rounded-[3px] bg-theme-blue/10 flex items-center justify-center">
+                                      <User className="w-2 h-2 text-theme-blue" />
                                     </div>
-                                    <span className="text-[10px] text-theme-primary font-medium">{task.assignedTo}</span>
+                                    <span className="text-[8px] text-theme-primary font-medium">{task.assignedTo}</span>
                                   </div>
                                 </div>
                               )}
                               
                               {task.tags && task.tags.length > 0 && (
-                                <div className="space-y-1">
-                                  <span className="text-[8px] font-black uppercase tracking-widest text-theme-secondary opacity-50">Tags</span>
-                                  <div className="flex flex-wrap gap-1">
+                                <div className="space-y-0.5">
+                                  <span className="text-[6px] font-black uppercase tracking-widest text-theme-secondary opacity-50">Tags</span>
+                                  <div className="flex flex-wrap gap-0.5">
                                     {task.tags.map((tag, i) => (
-                                      <span key={i} className="px-1.5 py-0.5 bg-theme-glass border border-theme-glass rounded text-[8px] font-black uppercase tracking-widest text-theme-secondary">
+                                      <span key={i} className="px-1 py-0.5 bg-theme-glass border border-theme-glass rounded-[4px] text-[6px] font-black uppercase tracking-widest text-theme-secondary">
                                         {tag}
                                       </span>
                                     ))}
@@ -1440,24 +1440,24 @@ export default function TaskBoard({ allSkills = [] }: TaskBoardProps) {
                     </AnimatePresence>
                   </div>
                   <div className={cn(
-                    "px-2 py-0.5 rounded text-[9px] font-black uppercase tracking-widest border flex items-center gap-1",
+                    "px-1 py-0.5 rounded-[4px] text-[6px] font-black uppercase tracking-widest border flex items-center gap-1",
                     PRIORITY_COLORS[task.priority]
                   )}>
-                    {task.priority === 'high' && <TrendingUp className="w-2.5 h-2.5" />}
-                    {task.priority === 'medium' && <Activity className="w-2.5 h-2.5" />}
-                    {task.priority === 'low' && <TrendingDown className="w-2.5 h-2.5" />}
+                    {task.priority === 'high' && <TrendingUp className="w-2 h-2" />}
+                    {task.priority === 'medium' && <Activity className="w-2 h-2" />}
+                    {task.priority === 'low' && <TrendingDown className="w-2 h-2" />}
                     {task.priority}
                   </div>
                   {task.dueDate && (
                     <div className={cn(
-                      "flex items-center gap-1 text-[10px] font-black uppercase tracking-widest font-mono px-1.5 py-0.5 rounded",
+                      "flex items-center gap-1 text-[8px] font-black uppercase tracking-widest font-mono px-1 py-0.5 rounded",
                       isOverdue(task.dueDate) && task.status !== 'active' && task.status !== 'paused' ? "text-theme-rose bg-theme-rose/10 border border-theme-rose/20" : 
                       isUpcoming(task.dueDate) && task.status !== 'active' && task.status !== 'paused' ? "text-theme-yellow bg-theme-yellow/10 border border-theme-yellow/20" :
                       "text-theme-secondary opacity-30"
                     )}>
-                      <Clock className="w-3 h-3" />
+                      <Clock className="w-2.5 h-2.5" />
                       {task.dueDate instanceof Timestamp ? task.dueDate.toDate().toLocaleDateString() : new Date(task.dueDate).toLocaleDateString()}
-                      {isOverdue(task.dueDate) && task.status !== 'active' && task.status !== 'paused' && <AlertCircle className="w-2.5 h-2.5 ml-0.5 animate-pulse" />}
+                      {isOverdue(task.dueDate) && task.status !== 'active' && task.status !== 'paused' && <AlertCircle className="w-2 h-2 ml-0.5 animate-pulse" />}
                     </div>
                   )}
                   {task.status !== 'active' && task.status !== 'paused' && (
@@ -1473,14 +1473,14 @@ export default function TaskBoard({ allSkills = [] }: TaskBoardProps) {
                         }
                       }}
                       className={cn(
-                        "flex items-center gap-1 text-[10px] font-black uppercase tracking-widest font-mono transition-all",
+                        "flex items-center gap-1 text-[8px] font-black uppercase tracking-widest font-mono transition-all",
                         task.reminderAt 
-                          ? "text-theme-blue bg-theme-blue/10 px-1.5 py-0.5 rounded border border-theme-blue/20" 
+                          ? "text-theme-blue bg-theme-blue/10 px-1 py-0.5 rounded border border-theme-blue/20" 
                           : "text-theme-secondary opacity-40 hover:opacity-100 hover:text-theme-blue"
                       )}
                       title={task.reminderAt ? "Editar Lembrete" : "Definir Lembrete"}
                     >
-                      <Bell className="w-3 h-3" />
+                      <Bell className="w-2.5 h-2.5" />
                       {task.reminderAt ? (
                         task.reminderAt instanceof Timestamp ? task.reminderAt.toDate().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : new Date(task.reminderAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
                       ) : (
@@ -1489,12 +1489,12 @@ export default function TaskBoard({ allSkills = [] }: TaskBoardProps) {
                     </button>
                   )}
                 </div>
-                <div className="flex items-center gap-4">
+                <div className="flex items-center gap-3">
                   <select
                     value={task.priority}
                     onChange={(e) => handleUpdateTask(task.id, { priority: e.target.value as any })}
                     className={cn(
-                      "px-2 py-1 rounded-lg text-[10px] font-black uppercase tracking-widest border focus:outline-none cursor-pointer transition-all",
+                      "px-2 py-0.5 rounded-[6px] text-[8px] font-black uppercase tracking-widest border focus:outline-none cursor-pointer transition-all",
                       task.priority === 'high' ? "text-rose-500 border-rose-500/20 bg-rose-500/5" : 
                       task.priority === 'medium' ? "text-amber-500 border-amber-500/20 bg-amber-500/5" : 
                       "text-blue-500 border-blue-500/20 bg-blue-500/5"
@@ -1504,22 +1504,22 @@ export default function TaskBoard({ allSkills = [] }: TaskBoardProps) {
                     <option value="medium">Média</option>
                     <option value="high">Alta</option>
                   </select>
-                  <div className="flex items-center gap-2 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity justify-end md:justify-start">
+                  <div className="flex items-center gap-1 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity justify-end md:justify-start">
                   <button 
                     onClick={(e) => {
                       e.stopPropagation();
                       setEditingTask(task);
                     }}
-                    className="p-2 hover:bg-blue-500/10 rounded-xl text-theme-secondary opacity-50 md:opacity-20 hover:text-blue-400 hover:opacity-100 transition-all"
+                    className="p-1.5 hover:bg-blue-500/10 rounded-[6px] text-theme-secondary opacity-50 md:opacity-20 hover:text-blue-400 hover:opacity-100 transition-all"
                     title="Editar Cliente"
                   >
-                    <Edit2 className="w-4 h-4" />
+                    <Edit2 className="w-3.5 h-3.5" />
                   </button>
                   <button 
                     onClick={() => setTaskToDelete(task.id)}
-                    className="p-2 hover:bg-red-500/10 rounded-xl text-theme-secondary opacity-50 md:opacity-20 hover:text-red-400 hover:opacity-100 transition-all"
+                    className="p-1.5 hover:bg-red-500/10 rounded-[6px] text-theme-secondary opacity-50 md:opacity-20 hover:text-red-400 hover:opacity-100 transition-all"
                   >
-                    <Trash2 className="w-4 h-4" />
+                    <Trash2 className="w-3.5 h-3.5" />
                   </button>
                 </div>
               </div>
@@ -1640,12 +1640,12 @@ export default function TaskBoard({ allSkills = [] }: TaskBoardProps) {
                   <div className="space-y-2">
                     <label className="text-[10px] font-black uppercase tracking-widest text-theme-secondary px-1 block">Notificação (Lembrete)</label>
                     <div className="flex items-center gap-2 bg-theme-glass border border-theme-glass rounded-xl px-4 overflow-hidden focus-within:border-theme-blue/50">
-                      <Bell className="w-4 h-4 text-theme-secondary opacity-60" />
+                      <Bell className="w-3.5 h-3.5 text-theme-secondary opacity-60" />
                       <input 
                         type="datetime-local"
                         value={editingTask.reminderAt ? (editingTask.reminderAt instanceof Timestamp ? editingTask.reminderAt.toDate().toISOString().slice(0, 16) : new Date(editingTask.reminderAt).toISOString().slice(0, 16)) : ''}
                         onChange={(e) => setEditingTask({ ...editingTask, reminderAt: e.target.value })}
-                        className="w-full bg-transparent py-2 text-sm text-theme-primary focus:outline-none font-mono"
+                        className="w-full bg-transparent py-2 text-xs text-theme-primary focus:outline-none font-mono"
                       />
                     </div>
                   </div>
@@ -1684,7 +1684,7 @@ export default function TaskBoard({ allSkills = [] }: TaskBoardProps) {
                   </div>
                 )}
 
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div className="space-y-2">
                       <label className="text-[10px] font-black uppercase tracking-widest text-theme-secondary px-1">Agente SDR Atribuído</label>
                       <div className="relative">
@@ -1718,27 +1718,6 @@ export default function TaskBoard({ allSkills = [] }: TaskBoardProps) {
                             )}
                           >
                             {col.name}
-                          </button>
-                        ))}
-                      </div>
-                    </div>
-
-                    <div className="space-y-2">
-                      <label className="text-[10px] font-black uppercase tracking-widest text-theme-secondary opacity-40 px-1">Prioridade</label>
-                      <div className="flex gap-1 bg-theme-glass p-1 rounded-xl border border-theme-glass">
-                        {Object.entries(PRIORITY_ICONS).map(([p, Icon]) => (
-                          <button
-                            key={p}
-                            onClick={() => setEditingTask({ ...editingTask, priority: p as any })}
-                            className={cn(
-                              "flex-1 py-2 rounded-lg text-[9px] font-black uppercase tracking-widest transition-all flex items-center justify-center gap-1.5",
-                              editingTask.priority === p 
-                                ? PRIORITY_COLORS[p as keyof typeof PRIORITY_COLORS]
-                                : "text-theme-secondary opacity-40 hover:text-theme-primary"
-                            )}
-                          >
-                            <Icon className="w-3 h-3" />
-                            {p === 'low' ? 'Baixa' : p === 'medium' ? 'Média' : 'Alta'}
                           </button>
                         ))}
                       </div>

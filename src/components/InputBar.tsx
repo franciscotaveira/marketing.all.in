@@ -102,7 +102,7 @@ export function InputBar({
         </div>
         
           <div className={cn(
-            "group bg-theme-main/60 border border-theme-glass rounded-3xl p-2 transition-all focus-within:border-theme-blue/50 flex flex-col md:flex-row items-end gap-2 relative shadow-lg",
+            "group bg-theme-main/60 border border-theme-glass rounded-[20px] p-1.5 transition-all focus-within:border-theme-blue/50 flex flex-col md:flex-row items-end gap-1.5 relative shadow-sm",
             isLoading && "animate-pulse border-theme-blue/30"
           )}>
           
@@ -148,7 +148,7 @@ export function InputBar({
             onPaste={handlePaste}
             onKeyDown={handleInputKeyDown}
             placeholder={selectedSkill ? `Pergunte sobre ${selectedSkill.name.toLowerCase()}...` : "Qual é o seu desafio de marketing hoje? (Digite '/' para comandos)"}
-            className="flex-1 w-full bg-transparent rounded-2xl p-3 focus:outline-none transition-all min-h-[40px] max-h-[300px] resize-none font-medium text-sm md:text-xs text-theme-primary placeholder:text-theme-secondary/30 mt-1"
+            className="flex-1 w-full bg-transparent rounded-[12px] p-2 focus:outline-none transition-all min-h-[36px] max-h-[300px] resize-none font-medium text-xs md:text-[11px] text-theme-primary placeholder:text-theme-secondary/30"
           />
             <div className="flex gap-1.5 pb-1 pr-1 w-full md:w-auto overflow-x-auto no-scrollbar justify-end items-center">
               <input 
@@ -189,10 +189,10 @@ export function InputBar({
             </div>
           </div>
         </div>
-        <div className="mt-4 flex flex-wrap items-center justify-center gap-2 md:gap-6 opacity-40 text-center">
-          <p className="text-[9px] md:text-[10px] font-black uppercase tracking-[0.2em] text-theme-primary">Gemini 3 Flash Intelligence</p>
+        <div className="mt-2 flex flex-wrap items-center justify-center gap-2 md:gap-4 opacity-30 text-center">
+          <p className="text-[8px] font-black uppercase tracking-[0.2em] text-theme-primary">Gemini 3 Flash Intelligence</p>
           <div className="hidden md:block w-1 h-1 bg-theme-primary rounded-full opacity-20" />
-          <p className="text-[9px] md:text-[10px] font-black uppercase tracking-[0.2em] text-theme-primary">Enxame de Marketing v2.1 PRO</p>
+          <p className="text-[8px] font-black uppercase tracking-[0.2em] text-theme-primary">Enxame de Marketing v2.1 PRO</p>
         </div>
       </div>
     </div>

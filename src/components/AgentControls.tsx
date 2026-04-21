@@ -67,49 +67,49 @@ export function AgentControls({
   };
 
   return (
-    <div className="flex flex-wrap items-center justify-between gap-4 w-full">
-      <div className="flex items-center gap-4 w-full md:w-auto justify-between md:justify-start">
+    <div className="flex flex-wrap items-center justify-between gap-3 w-full">
+      <div className="flex items-center gap-2 w-full md:w-auto justify-between md:justify-start">
         <button
           onClick={() => setIsDarkMode(!isDarkMode)}
-          className="btn-secondary p-2.5 group"
+          className="btn-secondary p-1.5 rounded-[8px] group"
         >
-          {isDarkMode ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4 text-blue-500" />}
+          {isDarkMode ? <Sun className="w-3.5 h-3.5" /> : <Moon className="w-3.5 h-3.5 text-blue-500" />}
         </button>
-        <div className="flex items-center gap-2 bg-theme-surface px-3 py-1.5 rounded-full border border-theme-glass shadow-sm">
-          <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-          <span className="text-[10px] font-bold uppercase tracking-wider text-theme-primary">
+        <div className="flex items-center gap-1.5 bg-theme-surface/50 px-2.5 py-1 rounded-[8px] border border-theme-glass shadow-sm">
+          <div className="w-1 h-1 rounded-full bg-emerald-500 animate-pulse" />
+          <span className="text-[8px] font-black uppercase tracking-wider text-theme-primary">
             {selectedSkill ? `${selectedSkill.name} Pronto` : 'Sistema Ativo'}
           </span>
         </div>
       </div>
       
-      <div className="flex flex-wrap items-center gap-3 w-full md:w-auto justify-center md:justify-end">
+      <div className="flex flex-wrap items-center gap-2 w-full md:w-auto justify-center md:justify-end">
         <div className="flex items-center gap-1.5">
             <button
               onClick={() => setIsBrandContextModalOpen(true)}
               className={cn(
-                "btn-secondary gap-1.5 px-3 py-1.5 rounded-full text-[9px]",
-                activeCompanyId && "bg-blue-500/10 text-blue-500 border-blue-500/20"
+                "flex items-center gap-1 px-1.5 py-0.5 rounded-[4px] text-[6px] font-black uppercase tracking-widest border border-theme-glass transition-all shadow-sm bg-theme-surface/50 hover:bg-theme-glass text-theme-secondary",
+                activeCompanyId && "bg-blue-500/10 text-blue-500 border-blue-500/20 shadow-[0_0_10px_rgba(59,130,246,0.1)]"
               )}
             >
-            <Building2 className="w-3.5 h-3.5" />
+            <Building2 className="w-2 h-2" />
             <span className="hidden sm:inline pt-[2px]">
-              {activeCompanyId ? companies.find(c => c.id === activeCompanyId)?.name || "Empresa Ativa" : "Selecionar Empresa"}
+              {activeCompanyId ? companies.find(c => c.id === activeCompanyId)?.name || "Empresa Ativa" : "Cia"}
             </span>
           </button>
         </div>
 
-        <div className="flex flex-wrap items-center gap-1.5 justify-center md:justify-end">
+          <div className="flex flex-wrap items-center gap-1.5 justify-center md:justify-end">
           <div className="relative">
             <div className={cn(
-              "chip overflow-hidden",
-              useSwarmMode && "chip-active"
+              "flex items-center border border-theme-glass rounded-[4px] overflow-hidden text-[6px] font-black tracking-widest uppercase transition-all bg-theme-surface/50 hover:bg-theme-glass shadow-sm",
+              useSwarmMode && "border-blue-500/30 text-blue-500/90 shadow-[0_0_10px_rgba(59,130,246,0.1)] bg-blue-500/5 hover:bg-blue-500/10"
             )}>
               <button 
                 onClick={() => setUseSwarmMode(!useSwarmMode)}
-                className="flex items-center gap-1.5 pl-2.5 pr-1.5 py-1.5 transition-all text-[#64748b] hover:text-[#0f172a] dark:text-[#94a3b8] dark:hover:text-[#f8fafc]"
+                className="flex items-center gap-1 px-1.5 py-0.5 transition-all"
               >
-                <Users className={cn("w-3.5 h-3.5", useSwarmMode && "animate-pulse")} />
+                <Users className={cn("w-2 h-2", useSwarmMode && "animate-pulse")} />
                 <span className="hidden sm:inline pt-[2px]">Swarm</span>
               </button>
               {useSwarmMode && (
@@ -118,10 +118,10 @@ export function AgentControls({
                     e.stopPropagation(); 
                     setIsSwarmSettingsOpen(!isSwarmSettingsOpen);
                   }}
-                  className="pr-2.5 pl-1 py-1.5 opacity-60 hover:opacity-100 transition-opacity"
+                  className="pr-1 pl-0.5 py-0.5 opacity-60 hover:opacity-100 transition-opacity"
                   title="Configurações do Swarm"
                 >
-                  <Settings className="w-3.5 h-3.5" />
+                  <Settings className="w-2 h-2" />
                 </button>
               )}
             </div>
@@ -142,14 +142,14 @@ export function AgentControls({
           <button 
             onClick={connectGoogleDrive}
             className={cn(
-              "chip overflow-hidden pl-2.5 pr-2.5 py-1.5 transition-all text-[#64748b] hover:text-[#0f172a] dark:text-[#94a3b8] dark:hover:text-[#f8fafc]",
-              googleTokens && "chip-active text-emerald-600 dark:text-emerald-400"
+              "flex items-center gap-1 px-1.5 py-0.5 rounded-[4px] text-[6px] font-black uppercase tracking-widest border border-theme-glass transition-all shadow-sm bg-theme-surface/50 hover:bg-theme-glass text-theme-secondary",
+              googleTokens && "border-emerald-500/30 text-emerald-500 bg-emerald-500/5 hover:bg-emerald-500/10 shadow-[0_0_10px_rgba(16,185,129,0.1)]"
             )}
             title="Conectar Google Drive"
           >
-            <div className="flex items-center gap-1.5">
-              <Globe className={cn("w-3.5 h-3.5", googleTokens && "text-emerald-500")} />
-              <span className="hidden sm:inline pt-[2px]">{googleTokens ? "Drive Ativo" : "Drive"}</span>
+            <div className="flex items-center gap-1">
+              <Globe className={cn("w-2 h-2")} />
+              <span className="hidden sm:inline pt-[2px]">{googleTokens ? "Drive " : "Drive"}</span>
             </div>
           </button>
         </div>
@@ -158,14 +158,14 @@ export function AgentControls({
           <button 
             onClick={() => setUseGrounding(!useGrounding)}
             className={cn(
-              "chip overflow-hidden pl-2.5 pr-2.5 py-1.5 transition-all text-[#64748b] hover:text-[#0f172a] dark:text-[#94a3b8] dark:hover:text-[#f8fafc]",
-              useGrounding && "chip-active"
+              "flex items-center gap-1 px-1.5 py-0.5 rounded-[4px] text-[6px] font-black uppercase tracking-widest border border-theme-glass transition-all shadow-sm bg-theme-surface/50 hover:bg-theme-glass text-theme-secondary",
+              useGrounding && "border-blue-500/30 text-blue-500 bg-blue-500/5 hover:bg-blue-500/10 shadow-[0_0_10px_rgba(59,130,246,0.1)]"
             )}
             title="Habilitar Pesquisa na Web"
           >
-            <div className="flex items-center gap-1.5">
-              <Globe className={cn("w-3.5 h-3.5", useGrounding && "animate-spin-slow")} />
-              <span className="hidden sm:inline pt-[2px]">Pesquisa</span>
+            <div className="flex items-center gap-1">
+              <Globe className={cn("w-2 h-2", useGrounding && "animate-spin-slow")} />
+              <span className="hidden sm:inline pt-[2px]">Search</span>
             </div>
           </button>
         </div>
