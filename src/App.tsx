@@ -3,10 +3,11 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { useState, useRef, useEffect, useMemo } from "react";
+import React, { useState, useRef, useEffect, useMemo } from "react";
 
 import { motion, AnimatePresence } from "motion/react";
 import { orchestrateRequest } from "./services/orchestrator";
+import { SkillsDashboard } from "./components/SkillsDashboard";
 import { 
   Search, 
   Send, 
@@ -83,6 +84,7 @@ import { ChatMessage } from "./components/ChatMessage";
 import { CustomAgentModal } from "./components/CustomAgentModal";
 import { InputBar } from "./components/InputBar";
 import { AgentControls } from "./components/AgentControls";
+import { IntegrationsModal } from "./components/IntegrationsModal";
 import { SidebarChatHistory } from "./components/SidebarChatHistory";
 import { BrandContextModal } from "./components/BrandContextModal";
 import { CampaignAssetViewer } from "./components/CampaignAssetViewer";
@@ -104,12 +106,11 @@ import {
 export default function App() {
   const [user, setUser] = useState<FirebaseUser | null>(null);
   const [isAuthReady, setIsAuthReady] = useState(false);
-  const [selectedSkill, setSelectedSkill] = useState<MarketingSkill | null>(() => {
-    return MARKETING_SKILLS.find(s => s.id === 'orchestrator') || null;
-  });
+  const [selectedSkills, setSelectedSkills] = useState<MarketingSkill[]>([]);
   const [expandedCategory, setExpandedCategory] = useState<SkillCategory | null>(SkillCategory.STRATEGY);
   const [customSkills, setCustomSkills] = useState<MarketingSkill[]>([]);
   const [isCustomAgentModalOpen, setIsCustomAgentModalOpen] = useState(false);
+  const [isIntegrationsModalOpen, setIsIntegrationsModalOpen] = useState(false);
   const [editingCustomAgent, setEditingCustomAgent] = useState<MarketingSkill | null>(null);
   const [input, setInput] = useState("");
 
@@ -136,6 +137,18 @@ export default function App() {
   const [activeWorkflow, setActiveWorkflow] = useState<Workflow | null>(null);
   const [workflowStepIndex, setWorkflowStepIndex] = useState<number>(-1);
   const activeWorkflowRef = useRef<string | null>(null);
+
+  const handleToggleSkill = (skill: MarketingSkill) => {
+    if (selectedSkills.find(s => s.id === skill.id)) {
+      setSelectedSkills(selectedSkills.filter(s => s.id !== skill.id));
+    } else {
+      setSelectedSkills([...selectedSkills, skill]);
+    }
+  };
+
+  const handleClearSkills = () => {
+    setSelectedSkills([]);
+  };
 
   useEffect(() => {
     localStorage.setItem('companies', JSON.stringify(companies));
@@ -240,7 +253,7 @@ export default function App() {
   }, [messages]);
 
   const [activeArtifact, setActiveArtifact] = useState<Artifact | null>(null);
-  const [activeTab, setActiveTab] = useState<'chat' | 'operations' | 'brain' | 'terminal' | 'workspace'>('chat');
+  const [activeTab, setActiveTab] = useState<'chat' | 'operations' | 'brain' | 'terminal' | 'workspace' | 'skills'>('chat');
   const [googleTokens, setGoogleTokens] = useState<any>(() => {
     const saved = localStorage.getItem('google_drive_tokens');
     return saved ? JSON.parse(saved) : null;
@@ -339,7 +352,7 @@ export default function App() {
       setWorkflowStepIndex(0);
       return;
     }
-    setSelectedSkill(null);
+    setSelectedSkills([]);
     setActiveWorkflow(workflow);
     activeWorkflowRef.current = workflow.id;
     setWorkflowStepIndex(0);
@@ -400,7 +413,7 @@ export default function App() {
       try {
         const result = await orchestrateRequest(
           prompt,
-          agent.id,
+          [agent.id],
           agent.model,
           systemInstruction,
           false,
@@ -890,8 +903,8 @@ export default function App() {
     setIsLoading(true);
 
     try {
-      const skillContext = selectedSkill 
-        ? `\n\nContexto da Habilidade (${selectedSkill.name}):\n${selectedSkill.prompt}`
+      const skillContext = selectedSkills.length > 0
+        ? `\n\nContexto das Habilidades (${selectedSkills.map(s => s.name).join(', ')}):\n${selectedSkills.map(s => s.prompt).join('\n---\n')}`
         : "\n\nVocê é um Engenheiro de Automação multifacetado e experiente. Responda de forma abrangente, estratégica e prática, integrando conhecimentos de diversas áreas de automação e marketing conforme necessário.";
 
       const frameworkContext = selectedFramework 
@@ -904,7 +917,7 @@ export default function App() {
       const brandContextText = activeCompany ? `\n\nCONTEXTO DA MARCA ATIVA (${activeCompany.name}):\n${activeCompany.context}\n\n` : "";
 
       const systemInstruction = `Você é o Engenheiro de Automação de elite. 
-      ${selectedSkill ? `Atualmente, você está assumindo a persona de: ${selectedSkill.persona} (${selectedSkill.name}).` : "Você está atuando como Engenheiro de Automação Geral."}
+      ${selectedSkills.length > 0 ? `Atualmente, você está assumindo a(s) persona(s) de: ${selectedSkills.map(s => s.name).join(', ')}.` : "Você está atuando como Engenheiro de Automação Geral."}
       
       ${brandContextText}
       
@@ -943,7 +956,7 @@ export default function App() {
       8. ANÁLISE VISUAL: Você possui capacidades multimodais avançadas e pode ver imagens enviadas pelo usuário. Ao receber uma imagem, analise-a detalhadamente para fornecer insights estratégicos, identificar problemas de UX/UI, sugerir melhorias de conversão em peças criativas ou extrair informações relevantes para o contexto de marketing e automação.`;
 
       let aiResponse: string;
-      const model = selectedSkill?.model || "gemini-3-flash-preview";
+      const model = selectedSkills[0]?.model || "gemini-3-flash-preview";
       
       try {
         // Create a new chat if it doesn't exist
@@ -962,7 +975,7 @@ export default function App() {
 
         const result = await orchestrateRequest(
           prompt,
-          selectedSkill?.id || null,
+          selectedSkills.map(s => s.id),
           model,
           systemInstruction,
           useGrounding,
@@ -986,10 +999,10 @@ export default function App() {
       if (aiResponse && aiResponse.length > 100) {
         try {
           const brainMemory: Omit<BrainMemory, 'id' | 'createdAt'> = {
-            agentId: selectedSkill?.id || "general",
+            agentId: selectedSkills.length === 1 ? selectedSkills[0].id : "general",
             title: `Insight: ${userMessage.slice(0, 30)}...`,
             content: aiResponse,
-            tags: [selectedSkill?.category || "general", "auto-learned"],
+            tags: [selectedSkills[0]?.category || "general", "auto-learned"],
           };
           firebaseService.saveMemory(brainMemory);
         } catch (e) {
@@ -1037,7 +1050,7 @@ export default function App() {
           type: type as any,
           title,
           content,
-          agentName: selectedSkill?.name || "Assistente Geral",
+          agentName: selectedSkills.length === 1 ? selectedSkills[0].name : "Enxame de Especialistas",
           metadata
         });
       }
@@ -1054,8 +1067,8 @@ export default function App() {
       const aiMsg: Omit<Message, 'createdAt'> = { 
         role: "ai", 
         content: formattedResponse,
-        agentName: selectedSkill?.persona || "Assistente Geral",
-        agentTier: selectedSkill?.tier,
+        agentName: selectedSkills.length === 1 ? selectedSkills[0].persona : "Enxame de Especialistas",
+        agentTier: selectedSkills[0]?.tier,
         artifacts: artifacts.length > 0 ? artifacts : undefined
       };
 
@@ -1344,15 +1357,24 @@ export default function App() {
                 <div className="w-7 h-7 rounded-xl bg-purple-500/10 flex items-center justify-center border border-purple-500/20 shadow-sm">
                   <Users className="w-4 h-4 text-purple-500" />
                 </div>
-                <h2 className="text-[11px] uppercase tracking-widest font-black text-theme-primary">Agentes</h2>
+                <h2 className="text-[11px] uppercase tracking-widest font-black text-theme-primary">Especialistas</h2>
               </div>
-              <button 
-                onClick={() => setIsCustomAgentModalOpen(true)}
-                className="w-8 h-8 flex items-center justify-center bg-theme-glass border border-theme-glass hover:border-purple-500/40 rounded-xl shadow-sm transition-all active:scale-95"
-                title="Criar Agente Personalizado"
-              >
-                <Plus className="w-4 h-4 text-purple-400" />
-              </button>
+              <div className="flex items-center gap-1">
+                <button 
+                  onClick={() => setActiveTab('skills')}
+                  className="w-8 h-8 flex items-center justify-center bg-theme-glass border border-theme-glass hover:border-blue-500/40 rounded-xl shadow-sm transition-all active:scale-95"
+                  title="Gerenciar Skills"
+                >
+                  <Settings className="w-4 h-4 text-blue-400" />
+                </button>
+                <button 
+                  onClick={() => setIsCustomAgentModalOpen(true)}
+                  className="w-8 h-8 flex items-center justify-center bg-theme-glass border border-theme-glass hover:border-purple-500/40 rounded-xl shadow-sm transition-all active:scale-95"
+                  title="Criar Nova Skill"
+                >
+                  <Plus className="w-4 h-4 text-purple-400" />
+                </button>
+              </div>
             </div>
             
             <div className="space-y-2.5">
@@ -1403,7 +1425,7 @@ export default function App() {
                               whileTap={{ scale: 0.98 }}
                               key={skill.id}
                               onClick={() => {
-                                setSelectedSkill(skill);
+                                handleToggleSkill(skill);
                                 setActiveWorkflow(null);
                                 activeWorkflowRef.current = null;
                                 setWorkflowStepIndex(-1);
@@ -1411,14 +1433,14 @@ export default function App() {
                               }}
                               className={cn(
                                 "w-full flex items-center gap-1.5 px-1.5 py-1 rounded-[6px] transition-all group relative overflow-hidden text-[8px] font-black uppercase tracking-tighter border shadow-sm leading-none cursor-pointer",
-                                selectedSkill?.id === skill.id 
+                                selectedSkills.find(s => s.id === skill.id)
                                   ? "bg-theme-glass border-theme-secondary/40 text-theme-primary shadow-sm" 
                                   : "bg-theme-card/60 border-theme-glass text-theme-secondary hover:bg-theme-glass hover:text-theme-primary hover:border-theme-secondary/30"
                               )}
                             >
                               <div className={cn(
                                 "w-4 h-4 rounded-[4px] flex items-center justify-center transition-all overflow-hidden shrink-0 shadow-sm border border-theme-glass/20",
-                                selectedSkill?.id === skill.id ? CATEGORY_BG_LIGHT_COLORS[category] : "bg-theme-glass",
+                                selectedSkills.find(s => s.id === skill.id) ? CATEGORY_BG_LIGHT_COLORS[category] : "bg-theme-glass",
                                 CATEGORY_TEXT_COLORS[category]
                               )}>
                                 <AgentIcon agent={skill} size="sm" className="w-full h-full p-0.5" />
@@ -1441,14 +1463,14 @@ export default function App() {
                                     const url = URL.createObjectURL(blob);
                                     const a = document.createElement('a');
                                     a.href = url;
-                                    a.download = `agente-${skill.name.toLowerCase().replace(/\s+/g, '-')}.json`;
+                                    a.download = `skill-${skill.name.toLowerCase().replace(/\s+/g, '-')}.json`;
                                     document.body.appendChild(a);
                                     a.click();
                                     document.body.removeChild(a);
                                     URL.revokeObjectURL(url);
                                   }}
                                   className="p-1 hover:bg-theme-glass/80 rounded-[4px] text-theme-secondary hover:text-theme-primary transition-all shadow-sm"
-                                  title="Exportar Agente"
+                                  title="Exportar Skill"
                                 >
                                   <Download className="w-2 h-2" />
                                 </button>
@@ -1538,8 +1560,8 @@ export default function App() {
                   <span className="text-blue-400/80">{activeTab === 'chat' ? "Chat Intelligence" : "Operations"}</span>
                 </div>
                 <h1 className="text-[10px] font-bold tracking-tight flex items-center gap-1.5 text-theme-primary">
-                  {activeTab === 'chat' ? (selectedSkill ? (selectedSkill.id === 'orchestrator' ? "Orquestrador de Enxame" : selectedSkill.name) : "Marketing Intelligence") : "CRM & Pipelines"}
-                  {selectedSkill?.id === 'orchestrator' && (
+                  {activeTab === 'chat' ? (selectedSkills.length > 0 ? (selectedSkills.length === 1 && selectedSkills[0].id === 'orchestrator' ? "Orquestrador de Enxame" : `${selectedSkills.length} Especialistas`) : "Marketing Intelligence") : "Taskboard & Lab"}
+                  {selectedSkills.length > 1 && (
                     <div className="flex items-center gap-1 ml-1">
                       <div className="px-1 py-0.5 rounded-[4px] bg-blue-500/10 border border-blue-500/20 text-[7px] font-bold text-blue-400 uppercase tracking-tighter">Swarm Active</div>
                     </div>
@@ -1650,7 +1672,7 @@ export default function App() {
             <div className="h-4 w-[1px] bg-theme-glass mx-0.5 shrink-0" />
             <div className="shrink-0 flex items-center">
               <AgentControls
-                selectedSkill={selectedSkill}
+                selectedSkills={selectedSkills}
                 useGrounding={useGrounding}
                 setUseGrounding={setUseGrounding}
                 useSwarmMode={useSwarmMode}
@@ -1665,6 +1687,7 @@ export default function App() {
                 allSkills={[...MARKETING_SKILLS, ...customSkills]}
                 googleTokens={googleTokens}
                 connectGoogleDrive={connectGoogleDrive}
+                setIsIntegrationsModalOpen={setIsIntegrationsModalOpen}
               />
             </div>
           </div>
@@ -1711,7 +1734,7 @@ export default function App() {
                   className="flex-1 flex flex-col min-h-0 glass-panel overflow-hidden relative"
                 >
                   <AgentBrain 
-                    agent={selectedSkill} 
+                    agent={selectedSkills[0] || MARKETING_SKILLS[0]} 
                     onClose={() => setActiveTab('chat')} 
                     isDarkMode={isDarkMode}
                     isIntegrated={true}
@@ -1868,6 +1891,42 @@ export default function App() {
                     </div>
                   </div>
                 </motion.div>
+              ) : activeTab === 'skills' ? (
+                <motion.div 
+                  key="skills"
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -10 }}
+                  transition={{ duration: 0.2 }}
+                  className="flex-1 min-h-0 bg-theme-main rounded-tl-[32px] overflow-hidden"
+                >
+                  <div className="h-10 border-b border-theme-glass flex items-center justify-between px-4 shrink-0 bg-theme-main/40 backdrop-blur-xl">
+                    <div className="flex items-center gap-2">
+                      <div className="w-6 h-6 bg-theme-blue rounded-[8px] flex items-center justify-center shadow-[0_5px_15px_rgba(59,130,246,0.3)] border border-white/20">
+                        <Users className="w-3 h-3 text-white" />
+                      </div>
+                      <div>
+                        <h3 className="font-black tracking-tighter uppercase text-[10px] text-theme-primary italic m-0 p-0 leading-none">Skills Dashboard</h3>
+                        <p className="text-[6px] font-black text-theme-secondary uppercase tracking-[0.3em] opacity-60 m-0 p-0 leading-none">Gerenciamento</p>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="h-[calc(100%-2.5rem)]">
+                    <SkillsDashboard 
+                      MARKETING_SKILLS={MARKETING_SKILLS}
+                      customSkills={customSkills}
+                      setCustomSkills={setCustomSkills}
+                      onEditCustomSkill={(skill) => {
+                        setEditingCustomAgent(skill);
+                        setIsCustomAgentModalOpen(true);
+                      }}
+                      onNewCustomSkill={() => {
+                        setEditingCustomAgent(null);
+                        setIsCustomAgentModalOpen(true);
+                      }}
+                    />
+                  </div>
+                </motion.div>
               ) : (
                 <motion.div 
                   key="chat"
@@ -1976,8 +2035,9 @@ export default function App() {
                     input={input}
                     setInput={setInput}
                     isLoading={isLoading}
-                    selectedSkill={selectedSkill}
-                    setSelectedSkill={setSelectedSkill}
+                    selectedSkills={selectedSkills}
+                    setSelectedSkills={setSelectedSkills}
+                    availableSkills={[...MARKETING_SKILLS, ...customSkills]}
                     selectedImages={selectedImages}
                     removeImage={removeImage}
                     handleImageUpload={handleImageUpload}
@@ -2012,6 +2072,11 @@ export default function App() {
           setCompanies={setCompanies}
           activeCompanyId={activeCompanyId}
           setActiveCompanyId={setActiveCompanyId}
+        />
+        
+        <IntegrationsModal
+          isOpen={isIntegrationsModalOpen}
+          onClose={() => setIsIntegrationsModalOpen(false)}
         />
 
         <AnimatePresence>

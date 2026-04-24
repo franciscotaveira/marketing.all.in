@@ -142,7 +142,7 @@ export interface KnowledgeItem {
 export interface BrainNode {
   id: string;
   label: string;
-  type: "concept" | "campaign" | "metric" | "agent";
+  type: "concept" | "campaign" | "metric" | "skill";
   val: number;
   color?: string;
 }
@@ -162,6 +162,8 @@ export interface BrainMemory {
   createdAt: string;
   roi?: number;
   embedding?: number[]; // Adicionado para RAG
+  type?: string;
+  source?: string;
 }
 
 export interface InteractionLog {
@@ -189,15 +191,19 @@ export interface Task {
 }
 
 export interface Routine {
-  id: string;
+  id?: string;
   title: string;
-  frequency: "daily" | "weekly" | "monthly";
+  frequency: "daily" | "weekly" | "monthly" | "once";
   startTime: string;
   endTime: string;
-  days: string[];
-  agentId?: string; // Agente responsável pela execução automática
+  days?: string[];
+  monthDay?: number;
+  date?: string; // For 'once' execution
+  agentId?: string; // Deprecated: keeping for backwards compatibility
+  agentIds?: string[]; // Multiple agents responsible for execution
   lastExecutedAt?: any; // Timestamp da última execução
-  createdAt: any;
+  isActive?: boolean;
+  createdAt?: any;
   updatedAt?: any;
 }
 

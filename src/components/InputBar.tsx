@@ -2,7 +2,7 @@ import React, { useRef, useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { 
   Send, Loader2, Paperclip, X, Trash2, Mic, 
-  ImageIcon, Video, HelpCircle, Users 
+  ImageIcon, Video, HelpCircle, Users, Search, Plus
 } from 'lucide-react';
 import { cn } from '../lib/utils';
 import { MarketingSkill } from '../types';
@@ -11,8 +11,9 @@ interface InputBarProps {
   input: string;
   setInput: (value: string) => void;
   isLoading: boolean;
-  selectedSkill: MarketingSkill | null;
-  setSelectedSkill: (skill: MarketingSkill | null) => void;
+  selectedSkills: MarketingSkill[];
+  setSelectedSkills: (skills: MarketingSkill[]) => void;
+  availableSkills: MarketingSkill[];
   selectedImages: string[];
   removeImage: (index: number) => void;
   handleImageUpload: (e: React.ChangeEvent<HTMLInputElement>) => void;
@@ -31,8 +32,9 @@ export function InputBar({
   input,
   setInput,
   isLoading,
-  selectedSkill,
-  setSelectedSkill,
+  selectedSkills,
+  setSelectedSkills,
+  availableSkills,
   selectedImages,
   removeImage,
   handleImageUpload,
@@ -47,40 +49,42 @@ export function InputBar({
   useSwarmMode
 }: InputBarProps) {
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const [activeTooltip, setActiveTooltip] = useState<string | null>(null);
 
-  // Close tooltip when clicking outside
-  useEffect(() => {
-    const handleClickOutside = () => setActiveTooltip(null);
-    document.addEventListener('click', handleClickOutside);
-    return () => document.removeEventListener('click', handleClickOutside);
-  }, []);
+  const handleToggleSkill = (skill: MarketingSkill) => {
+    if (selectedSkills.find(s => s.id === skill.id)) {
+      setSelectedSkills(selectedSkills.filter(s => s.id !== skill.id));
+    } else {
+      setSelectedSkills([...selectedSkills, skill]);
+    }
+  };
 
   return (
     <div className="p-3 md:p-4 bg-theme-main/40 border-t border-theme-glass relative z-20 backdrop-blur-md">
       <div className="max-w-4xl mx-auto relative">
         <div className="absolute -top-12 left-0 flex gap-2 overflow-x-auto pb-2 no-scrollbar max-w-full">
-          {selectedSkill && (
-            <motion.div 
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="flex items-center gap-2.5 bg-theme-blue text-white px-4 py-2 rounded-full text-[11px] font-black uppercase tracking-wider whitespace-nowrap shadow-[0_5px_15px_rgba(59,130,246,0.3)] border border-white/20"
-            >
-              {getCategoryIcon(selectedSkill.category)}
-              {selectedSkill.name}
-              <button onClick={() => setSelectedSkill(null)} className="hover:text-white/70 transition-colors ml-1 p-0.5">
-                <X className="w-3.5 h-3.5" />
-              </button>
-            </motion.div>
-          )}
-          {useSwarmMode && (
+          {selectedSkills.map(skill => (
+             <motion.div 
+               key={skill.id}
+               initial={{ opacity: 0, y: 10 }}
+               animate={{ opacity: 1, y: 0 }}
+               exit={{ opacity: 0, scale: 0.9 }}
+               className="flex items-center gap-2.5 bg-theme-blue text-white px-4 py-2 rounded-full text-[11px] font-black uppercase tracking-wider whitespace-nowrap shadow-[0_5px_15px_rgba(59,130,246,0.3)] border border-white/20"
+             >
+               {getCategoryIcon(skill.category)}
+               {skill.name}
+               <button onClick={() => handleToggleSkill(skill)} className="hover:text-white/70 transition-colors ml-1 p-0.5">
+                 <X className="w-3.5 h-3.5" />
+               </button>
+             </motion.div>
+          ))}
+          {useSwarmMode && selectedSkills.length === 0 && (
             <motion.div 
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               className="flex items-center gap-2.5 bg-theme-purple text-white px-4 py-2 rounded-full text-[11px] font-black uppercase tracking-wider whitespace-nowrap shadow-[0_5px_15px_rgba(139,92,246,0.3)] border border-white/20"
             >
               <Users className="w-3.5 h-3.5" />
-              Swarm Ativo
+              Swarm Automático Ativo
             </motion.div>
           )}
           {selectedImages.map((img, idx) => (
@@ -147,10 +151,10 @@ export function InputBar({
             onChange={(e) => setInput(e.target.value)}
             onPaste={handlePaste}
             onKeyDown={handleInputKeyDown}
-            placeholder={selectedSkill ? `Pergunte sobre ${selectedSkill.name.toLowerCase()}...` : "Qual é o seu desafio de marketing hoje? (Digite '/' para comandos)"}
-            className="flex-1 w-full bg-transparent rounded-[12px] p-2 focus:outline-none transition-all min-h-[36px] max-h-[300px] resize-none font-medium text-xs md:text-[11px] text-theme-primary placeholder:text-theme-secondary/30"
+            placeholder={selectedSkills.length > 0 ? `Comando para ${selectedSkills.map(s=>s.name).join(', ')}...` : "Qual é o seu desafio de marketing hoje? (Digite '/' para comandos)"}
+            className="flex-1 w-full bg-transparent rounded-[12px] p-2 focus:outline-none transition-all min-h-[44px] max-h-[300px] resize-none font-medium text-xs md:text-sm text-theme-primary placeholder:text-theme-secondary/30 self-center border-0 focus:ring-0 shadow-none pt-3"
           />
-            <div className="flex gap-1.5 pb-1 pr-1 w-full md:w-auto overflow-x-auto no-scrollbar justify-end items-center">
+            <div className="flex gap-1.5 pb-2 pr-2 w-full md:w-auto overflow-x-auto no-scrollbar justify-end items-center self-end min-h-[44px]">
               <input 
                 type="file" 
                 ref={fileInputRef} 
@@ -160,30 +164,33 @@ export function InputBar({
                 accept="image/*" 
               />
               <div className="relative">
-                <div className="flex items-center btn-secondary px-1 py-0.5 overflow-hidden border-theme-glass bg-theme-glass/10">
+                <div className="flex items-center btn-secondary px-1 py-0.5 overflow-hidden border-theme-glass bg-theme-glass/10 rounded-xl">
                   <button
                     onClick={() => fileInputRef.current?.click()}
-                    className="p-1.5 hover:bg-theme-glass/80 hover:text-theme-primary transition-colors"
+                    className="p-1.5 hover:bg-theme-glass/80 hover:text-theme-primary transition-colors focus:outline-none"
                   >
-                    <Paperclip className="w-3.5 h-3.5" />
+                    <Paperclip className="w-4 h-4" />
                   </button>
                 </div>
               </div>
             
             <div className="relative">
               <div className={cn(
-                "flex items-center px-1 py-0.5 overflow-hidden transition-all duration-500 rounded-[12px] border",
-                useSwarmMode 
-                  ? "bg-theme-purple border-white/20 shadow-[0_8px_25px_rgba(139,92,246,0.5)] text-white" 
+                "flex items-center px-1.5 py-1 overflow-hidden transition-all duration-500 rounded-xl border",
+                (selectedSkills.length > 1 || useSwarmMode) 
+                  ? "bg-theme-purple border-purple-500/30 shadow-[0_8px_25px_rgba(139,92,246,0.3)] text-white" 
                   : "btn-primary shadow-[0_8px_25px_rgba(255,255,255,0.1)]",
                 (!input.trim() && selectedImages.length === 0 && !useSwarmMode) && "opacity-20 grayscale border-theme-glass scale-95"
               )}>
                 <button
                   onClick={handleSend}
                   disabled={(!input.trim() && selectedImages.length === 0) || isLoading}
-                  className="p-1.5 px-3 hover:brightness-110 transition-all disabled:opacity-50"
+                  className="p-1.5 px-3 hover:brightness-110 transition-all disabled:opacity-50 focus:outline-none flex items-center gap-2"
                 >
-                  {isLoading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Send className="w-3.5 h-3.5" />}
+                  <span className="text-xs font-bold uppercase tracking-wider hidden sm:block">
+                    {selectedSkills.length > 1 ? 'Swarm Sync' : 'Send'}
+                  </span>
+                  {isLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
                 </button>
               </div>
             </div>
@@ -192,7 +199,7 @@ export function InputBar({
         <div className="mt-2 flex flex-wrap items-center justify-center gap-2 md:gap-4 opacity-30 text-center">
           <p className="text-[8px] font-black uppercase tracking-[0.2em] text-theme-primary">Gemini 3 Flash Intelligence</p>
           <div className="hidden md:block w-1 h-1 bg-theme-primary rounded-full opacity-20" />
-          <p className="text-[8px] font-black uppercase tracking-[0.2em] text-theme-primary">Enxame de Marketing v2.1 PRO</p>
+          <p className="text-[8px] font-black uppercase tracking-[0.2em] text-theme-primary">{selectedSkills.length > 1 ? 'Swarm Execution' : 'Enxame de Marketing v2.1 PRO'}</p>
         </div>
       </div>
     </div>

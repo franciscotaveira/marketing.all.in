@@ -1,14 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { 
-  Globe, Brain, Terminal, LayoutDashboard, HelpCircle, Users, Building2, Sun, Moon, Settings
+  Globe, Brain, Terminal, LayoutDashboard, HelpCircle, Users, Building2, Sun, Moon, Settings, Plug
 } from 'lucide-react';
 import { cn } from '../lib/utils';
 import { MarketingSkill, Company } from '../types';
 import { SwarmSettingsPanel } from './SwarmSettingsPanel';
 
 interface AgentControlsProps {
-  selectedSkill: MarketingSkill | null;
+  selectedSkills: MarketingSkill[];
   useGrounding: boolean;
   setUseGrounding: (value: boolean) => void;
   useSwarmMode: boolean;
@@ -23,10 +23,11 @@ interface AgentControlsProps {
   allSkills: MarketingSkill[];
   googleTokens?: any;
   connectGoogleDrive?: () => void;
+  setIsIntegrationsModalOpen: (value: boolean) => void;
 }
 
 export function AgentControls({
-  selectedSkill,
+  selectedSkills,
   useGrounding,
   setUseGrounding,
   useSwarmMode,
@@ -40,7 +41,8 @@ export function AgentControls({
   setManualAgentPriorities,
   allSkills,
   googleTokens,
-  connectGoogleDrive
+  connectGoogleDrive,
+  setIsIntegrationsModalOpen
 }: AgentControlsProps) {
   const [activeTooltip, setActiveTooltip] = useState<string | null>(null);
   const [isSwarmSettingsOpen, setIsSwarmSettingsOpen] = useState(false);
@@ -78,7 +80,7 @@ export function AgentControls({
         <div className="flex items-center gap-1.5 bg-theme-surface/50 px-2.5 py-1 rounded-[8px] border border-theme-glass shadow-sm">
           <div className="w-1 h-1 rounded-full bg-emerald-500 animate-pulse" />
           <span className="text-[8px] font-black uppercase tracking-wider text-theme-primary">
-            {selectedSkill ? `${selectedSkill.name} Pronto` : 'Sistema Ativo'}
+            {selectedSkills.length > 0 ? (selectedSkills.length === 1 ? `${selectedSkills[0].name} Pronto` : `${selectedSkills.length} Skills Prontas`) : 'Sistema Ativo'}
           </span>
         </div>
       </div>
@@ -136,6 +138,19 @@ export function AgentControls({
               )}
             </AnimatePresence>
           </div>
+        </div>
+
+        <div className="flex items-center gap-1.5">
+          <button 
+            onClick={() => setIsIntegrationsModalOpen(true)}
+            className="flex items-center gap-1 px-1.5 py-0.5 rounded-[4px] text-[6px] font-black uppercase tracking-widest border border-theme-glass transition-all shadow-sm bg-theme-surface/50 hover:bg-theme-glass text-theme-secondary"
+            title="Conexões Globais (n8n, Supabase)"
+          >
+            <div className="flex items-center gap-1">
+              <Plug className="w-2 h-2" />
+              <span className="hidden sm:inline pt-[2px]">Integrações</span>
+            </div>
+          </button>
         </div>
 
         <div className="flex items-center gap-1.5">

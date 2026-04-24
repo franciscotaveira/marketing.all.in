@@ -45,7 +45,7 @@ async function compressContext(content: string, model: string): Promise<string> 
 
 export async function orchestrateRequest(
   userMessage: string,
-  selectedAgentId: string | null,
+  selectedAgentIds: string[],
   model: string,
   systemInstruction: string,
   useGrounding: boolean,
@@ -60,11 +60,11 @@ export async function orchestrateRequest(
   // Intelligent Semantic Cache
   const isCacheable = !useGrounding && (!images || images.length === 0) && (!history || history.length === 0);
   if (isCacheable) {
-    const cachedResponse = await getSemanticCache(`orchestration_${userMessage}_${selectedAgentId}_${useSwarmMode}`);
+    const cachedResponse = await getSemanticCache(`orchestration_${userMessage}_${selectedAgentIds.join(',')}_${useSwarmMode}`);
     if (cachedResponse) {
       try {
         const parsed = JSON.parse(cachedResponse);
-        onLog(selectedAgentId || "orchestrator", "⚡ Resultado recuperado do Cache Semântico Inteligente", "success", false);
+        onLog(selectedAgentIds[0] || "orchestrator", "⚡ Resultado recuperado do Cache Semântico Inteligente", "success", false);
         return { ...parsed, cached: true };
       } catch (e) {
         // Fallback if not JSON
@@ -72,16 +72,16 @@ export async function orchestrateRequest(
     }
   }
 
-  let targetAgentId = selectedAgentId || "orchestrator";
+  let targetAgentId = selectedAgentIds.length === 1 ? selectedAgentIds[0] : "orchestrator";
   let finalResponse = "";
 
   // RAG: Fetch relevant memories
   onLog("orchestrator", "Consultando memórias sinápticas relevantes...", "info", true);
-  const brainContext = await getBrainContext(userMessage, selectedAgentId);
+  const brainContext = await getBrainContext(userMessage, selectedAgentIds[0] || null);
   const enrichedMessage = `${userMessage}${brainContext}`;
 
   // Se nenhum agente foi selecionado e o modo Swarm está desligado, o Orquestrador decide se delega ou responde
-  if (!selectedAgentId && !useSwarmMode) {
+  if (selectedAgentIds.length === 0 && !useSwarmMode) {
     onLog("orchestrator", "Analisando necessidade de especialista...", "info", true);
     
     const decisionPrompt = `
@@ -112,13 +112,26 @@ Responda APENAS com o ID do agente ou "orchestrator".
     }
   }
 
-  if (useSwarmMode) {
-    onLog("orchestrator", "Iniciando Modo Swarm (Brainstorming)...", "info", true);
+  if (useSwarmMode || selectedAgentIds.length > 1) {
+    onLog("orchestrator", selectedAgentIds.length > 1 ? "Iniciando Swarm Personalizado (Múltiplas Skills)..." : "Iniciando Modo Swarm (Brainstorming)...", "info", true);
     
     // Planning Phase: Use LLM to prioritize agents and define tasks
     onLog("orchestrator", "Planejando colaboração entre agentes...", "action", true);
     
-    const planningPrompt = `
+    let planning;
+
+    if (selectedAgentIds.length > 1) {
+      planning = {
+        selectedAgents: selectedAgentIds.map(id => ({
+          id,
+          priority: 10,
+          task: "Perspectivativa especializada (selecionada manualmente) sobre o problema."
+        })),
+        plan: "Colaboração direta definida pelo usuário.",
+        criticality: "high"
+      };
+    } else {
+      const planningPrompt = `
 Desafio do Usuário: "${userMessage}"
 
 Agentes Disponíveis:
@@ -139,41 +152,41 @@ Retorne APENAS um JSON no formato:
 }
     `;
 
-    let planning;
-    try {
-      const planResponse = await sendMessageToAgent(
-        "orchestrator",
-        planningPrompt,
-        model,
-        "Você é um Orquestrador de IA. Seu objetivo é planejar a melhor colaboração entre especialistas. Você tem acesso a imagens enviadas pelo usuário para informar seu planejamento.",
-        undefined,
-        images,
-        undefined,
-        undefined,
-        "application/json"
-      );
-      planning = JSON.parse(planResponse);
-    } catch (e) {
-      console.warn("Planning error, falling back to heuristic:", e);
-      // Fallback to heuristic
-      const lowerMessage = userMessage.toLowerCase();
-      const prioritizedIds: string[] = [];
-      if (lowerMessage.includes("venda") || lowerMessage.includes("conversão") || lowerMessage.includes("copy")) prioritizedIds.push("copywriter");
-      if (lowerMessage.includes("estratégia") || lowerMessage.includes("posicionamento")) prioritizedIds.push("strategist");
-      if (lowerMessage.includes("tráfego") || lowerMessage.includes("anúncio")) prioritizedIds.push("media-buyer");
-      
-      const defaults = ["strategist", "growth-hacker", "copywriter"];
-      const selectedIds = [...new Set([...prioritizedIds, ...defaults])].slice(0, 3);
-      
-      planning = {
-        selectedAgents: selectedIds.map((id, idx) => ({
-          id,
-          priority: 10 - (idx * 2),
-          task: "Análise especializada do desafio."
-        })),
-        plan: "Colaboração paralela para brainstorming de perspectivas.",
-        criticality: "medium"
-      };
+      try {
+        const planResponse = await sendMessageToAgent(
+          "orchestrator",
+          planningPrompt,
+          model,
+          "Você é um Orquestrador de IA. Seu objetivo é planejar a melhor colaboração entre especialistas. Você tem acesso a imagens enviadas pelo usuário para informar seu planejamento.",
+          undefined,
+          images,
+          undefined,
+          undefined,
+          "application/json"
+        );
+        planning = JSON.parse(planResponse);
+      } catch (e) {
+        console.warn("Planning error, falling back to heuristic:", e);
+        // Fallback to heuristic
+        const lowerMessage = userMessage.toLowerCase();
+        const prioritizedIds: string[] = [];
+        if (lowerMessage.includes("venda") || lowerMessage.includes("conversão") || lowerMessage.includes("copy")) prioritizedIds.push("copywriter");
+        if (lowerMessage.includes("estratégia") || lowerMessage.includes("posicionamento")) prioritizedIds.push("strategist");
+        if (lowerMessage.includes("tráfego") || lowerMessage.includes("anúncio")) prioritizedIds.push("media-buyer");
+        
+        const defaults = ["strategist", "growth-hacker", "copywriter"];
+        const selectedIds = [...new Set([...prioritizedIds, ...defaults])].slice(0, 3);
+        
+        planning = {
+          selectedAgents: selectedIds.map((id, idx) => ({
+            id,
+            priority: 10 - (idx * 2),
+            task: "Análise especializada do desafio."
+          })),
+          plan: "Colaboração paralela para brainstorming de perspectivas.",
+          criticality: "medium"
+        };
+      }
     }
 
     // Apply manual priorities if provided
@@ -272,7 +285,7 @@ Como Orquestrador de Enxame, sua missão é sintetizar essas visões em uma estr
     );
 
     // Se o Orquestrador delegou, ele faz uma breve introdução/conclusão para dar contexto de gestão
-    if (targetAgentId !== "orchestrator" && !selectedAgentId) {
+    if (targetAgentId !== "orchestrator" && selectedAgentIds.length === 0) {
       onLog("orchestrator", "Finalizando orquestração do especialista...", "info", true);
       const wrapPrompt = `
 Desafio: "${userMessage}"
@@ -303,7 +316,7 @@ Mantenha a resposta do especialista intacta entre a introdução e a conclusão.
 
   // Save to intelligent semantic cache
   if (isCacheable && finalResponse) {
-    await saveToSemanticCache(`orchestration_${userMessage}_${selectedAgentId}_${useSwarmMode}`, JSON.stringify(result));
+    await saveToSemanticCache(`orchestration_${userMessage}_${selectedAgentIds.join(',')}_${useSwarmMode}`, JSON.stringify(result));
   }
 
   return result;

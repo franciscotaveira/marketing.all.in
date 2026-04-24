@@ -18,6 +18,7 @@ import {
   Calendar,
   Trash2,
   Edit2,
+  Send,
   Flag,
   ArrowRight,
   X,
@@ -73,10 +74,10 @@ const PRIORITY_ICONS = {
 };
 
 const STATUS_COLUMNS = [
-  { id: 'prospect', name: 'Leads / Prospecção', icon: Target, color: 'text-blue-500' },
-  { id: 'setup', name: 'Onboarding & n8n', icon: Settings, color: 'text-yellow-500' },
-  { id: 'active', name: 'SDR Ativo', icon: Zap, color: 'text-emerald-500' },
-  { id: 'paused', name: 'Pausado / Churn', icon: PauseCircle, color: 'text-rose-500' },
+  { id: 'prospect', name: 'Ideias & Backlog', icon: Target, color: 'text-blue-500' },
+  { id: 'setup', name: 'Em Produção (Copy/Design)', icon: Settings, color: 'text-yellow-500' },
+  { id: 'active', name: 'Ativo / Em Veiculação', icon: Zap, color: 'text-emerald-500' },
+  { id: 'paused', name: 'Avaliar / Pausado', icon: PauseCircle, color: 'text-rose-500' },
 ];
 
 const INITIAL_NEW_TASK = { 
@@ -124,6 +125,57 @@ export default function TaskBoard({ allSkills = [] }: TaskBoardProps) {
   const [editModalTab, setEditModalTab] = useState<'details' | 'history'>('details');
   const [handoffMessage, setHandoffMessage] = useState('');
   
+  const [isSendingWebhook, setIsSendingWebhook] = useState<string | null>(null);
+  const [webhookSuccess, setWebhookSuccess] = useState<string | null>(null);
+
+  const handleSendWebhook = async (task: Task) => {
+    let url = localStorage.getItem('n8nWebhookUrl');
+    
+    if (!url) {
+      const promptUrl = window.prompt("Configuração Ausente: Siga a diretriz informando a URL do seu Webhook (n8n ou Make) abaixo:");
+      if (!promptUrl) return; // User cancelled
+      url = promptUrl.trim();
+      localStorage.setItem('n8nWebhookUrl', url);
+    }
+
+    setIsSendingWebhook(task.id);
+    try {
+      // Execute Real Webhook to automation tool
+      const response = await fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'new_task',
+          timestamp: new Date().toISOString(),
+          task: {
+            id: task.id,
+            title: task.title,
+            description: task.description,
+            status: task.status,
+            priority: task.priority,
+            dueDate: task.dueDate
+          }
+        }),
+      });
+      
+      if (!response.ok) {
+        throw new Error(`Webhook error: ${response.status}`);
+      }
+
+      setWebhookSuccess(task.id);
+      setTimeout(() => setWebhookSuccess(null), 3000);
+    } catch (e) {
+      console.error("Failed to send webhook", e);
+      window.alert(`Falha ao exportar para o Webhook.\n\nSe estiver usando n8n, certifique-se de que a opção "Respond with CORS Headers" está HABILITADA nas opções do seu nó Webhook.\n\nURL: ${url}\nErro: ${(e as Error).message}`);
+      // Offer to reset the URL on failure
+      if (window.confirm("Deseja reconfigurar a URL do Webhook (n8n/Make) globalmente?")) {
+        localStorage.removeItem('n8nWebhookUrl');
+      }
+    } finally {
+      setIsSendingWebhook(null);
+    }
+  };
+
   const handleSendInteraction = (e: React.FormEvent) => {
     e.preventDefault();
     if (!editingTask || !handoffMessage.trim()) return;
@@ -412,7 +464,7 @@ export default function TaskBoard({ allSkills = [] }: TaskBoardProps) {
 
       const result = await orchestrateRequest(
         prompt,
-        'productivity-strategist',
+        ['productivity-strategist'],
         'gemini-3-flash-preview',
         'Você é um assistente de produtividade que ajuda a mover tarefas no Kanban.',
         false,
@@ -470,7 +522,7 @@ export default function TaskBoard({ allSkills = [] }: TaskBoardProps) {
 
       const result = await orchestrateRequest(
         prompt,
-        'productivity-strategist',
+        ['productivity-strategist'],
         'gemini-3-flash-preview',
         'Você é um mestre em produtividade e gestão de tempo.',
         false,
@@ -597,21 +649,21 @@ export default function TaskBoard({ allSkills = [] }: TaskBoardProps) {
       <div className="p-6 border-b border-theme-glass flex flex-col md:flex-row md:items-center justify-between gap-4 bg-theme-card/30">
         <div className="space-y-1">
           <h2 className="text-xl font-black tracking-tighter text-theme-primary flex items-center gap-3 uppercase italic">
-            <LayoutGrid className="w-5 h-5 text-blue-500" />
-            Gestão de <span className="text-blue-500">Clientes (SDR)</span>
+            <LayoutGrid className="w-5 h-5 text-theme-blue" />
+            Gestão de <span className="text-theme-blue">Marketing & Lab</span>
           </h2>
-          <p className="text-theme-secondary text-[10px] font-black uppercase tracking-[0.15em] opacity-40">Pipeline de Vendas e Integração WhatsApp.</p>
+          <p className="text-theme-secondary text-[10px] font-black uppercase tracking-[0.15em] opacity-40">Pipeline de Produção, Campanhas e Conteúdo.</p>
         </div>
 
         <div className="flex flex-wrap items-center justify-start md:justify-end gap-2 w-full md:w-auto">
           <div className="relative group w-full sm:w-auto flex-1 sm:flex-none">
-            <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-theme-secondary group-focus-within:text-blue-500 transition-colors" />
+            <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-theme-secondary group-focus-within:text-theme-blue transition-colors" />
             <input 
               type="text"
-              placeholder="Buscar clientes por nome ou nicho..."
+              placeholder="Buscar ideias ou campanhas..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-8 pr-8 py-2 bg-theme-card border border-theme-glass rounded-lg text-[10px] text-theme-primary placeholder:text-theme-secondary/60 focus:outline-none focus:border-blue-500/50 focus:ring-1 focus:ring-blue-500/20 transition-all w-full sm:w-56 shadow-inner"
+              className="pl-8 pr-8 py-2 bg-theme-card border border-theme-glass rounded-lg text-[10px] text-theme-primary placeholder:text-theme-secondary/60 focus:outline-none focus:border-theme-blue/50 focus:ring-1 focus:ring-theme-blue/20 transition-all w-full sm:w-56 shadow-inner"
             />
             {searchQuery && (
               <button 
@@ -630,7 +682,7 @@ export default function TaskBoard({ allSkills = [] }: TaskBoardProps) {
               onChange={(e) => setAssignedSearchQuery(e.target.value)}
               className="pl-8 pr-8 py-2 bg-theme-glass/40 border border-theme-glass/60 rounded-lg text-[10px] text-theme-primary focus:outline-none focus:border-theme-blue focus:bg-theme-glass/80 transition-all w-full sm:w-40 shadow-inner appearance-none cursor-pointer"
             >
-              <option value="">Filtrar por SDR</option>
+              <option value="">Filtrar por Copilot</option>
               {allSkills.map(s => (
                 <option key={s.id} value={s.id}>{s.name}</option>
               ))}
@@ -654,7 +706,7 @@ export default function TaskBoard({ allSkills = [] }: TaskBoardProps) {
               onClick={() => setViewMode('kanban')}
               className={cn(
                 "p-1.5 rounded-[6px] transition-all flex-1 sm:flex-none flex justify-center",
-                viewMode === 'kanban' ? "bg-blue-500 text-white shadow-sm" : "text-theme-secondary hover:text-theme-primary hover:bg-theme-glass"
+                viewMode === 'kanban' ? "bg-theme-blue text-white shadow-sm" : "text-theme-secondary hover:text-theme-primary hover:bg-theme-glass"
               )}
             >
               <LayoutGrid className="w-3.5 h-3.5" />
@@ -663,7 +715,7 @@ export default function TaskBoard({ allSkills = [] }: TaskBoardProps) {
               onClick={() => setViewMode('list')}
               className={cn(
                 "p-1.5 rounded-[6px] transition-all flex-1 sm:flex-none flex justify-center",
-                viewMode === 'list' ? "bg-blue-500 text-white shadow-sm" : "text-theme-secondary hover:text-theme-primary hover:bg-theme-glass"
+                viewMode === 'list' ? "bg-theme-blue text-white shadow-sm" : "text-theme-secondary hover:text-theme-primary hover:bg-theme-glass"
               )}
             >
               <ListIcon className="w-3.5 h-3.5" />
@@ -673,11 +725,11 @@ export default function TaskBoard({ allSkills = [] }: TaskBoardProps) {
           <button 
             onClick={handleOptimizeTasks}
             disabled={isOptimizing || tasks.filter(t => t.status !== 'done' && t.status !== 'active').length === 0}
-            className="btn-orange w-full sm:w-auto text-[10px] py-2 px-3 h-auto"
-            title="Sugerir melhor ordem de setup de clientes"
+            className="btn-orange w-full sm:w-auto text-[10px] py-1.5 px-3 h-auto min-h-0 rounded-[8px]"
+            title="Sugerir melhor ordem de produção"
           >
             {isOptimizing ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Bot className="w-3.5 h-3.5" />}
-            <span>Otimizar Setup Pendente</span>
+            <span>Otimizar Prioridades</span>
           </button>
 
           <button 
@@ -686,19 +738,19 @@ export default function TaskBoard({ allSkills = [] }: TaskBoardProps) {
               setIsAddingTask('prospect');
               setViewMode('kanban');
             }}
-            className="btn-primary w-full sm:w-auto"
+            className="btn-primary w-full sm:w-auto text-[10px] py-1.5 px-3 h-auto min-h-0 rounded-[8px]"
           >
-            <Plus className="w-4 h-4" />
-            <span>Novo Cliente</span>
+            <Plus className="w-3.5 h-3.5" />
+            <span>Nova Ideia</span>
           </button>
 
           <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto">
-            <div className="flex items-center gap-1 px-3 py-1.5 bg-theme-glass border border-theme-glass rounded-xl flex-1 sm:flex-none justify-center shadow-sm">
+            <div className="flex items-center gap-1 px-2.5 py-1 bg-theme-glass border border-theme-glass rounded-[8px] flex-1 sm:flex-none justify-center shadow-sm">
               <Filter className="w-3.5 h-3.5 text-theme-secondary opacity-60" />
               <select 
                 value={priorityFilter}
                 onChange={(e) => setPriorityFilter(e.target.value as any)}
-                className="bg-transparent text-[10px] font-bold uppercase tracking-wider text-theme-secondary focus:outline-none cursor-pointer hover:text-theme-primary transition-colors max-w-[80px] sm:max-w-none"
+                className="bg-transparent text-[9px] font-bold uppercase tracking-wider text-theme-secondary focus:outline-none cursor-pointer hover:text-theme-primary transition-colors max-w-[80px] sm:max-w-none"
               >
                 <option value="all" className="bg-theme-surface text-theme-primary">Prioridade: Todas</option>
                 <option value="low" className="bg-theme-surface text-theme-primary">Baixa</option>
@@ -707,27 +759,27 @@ export default function TaskBoard({ allSkills = [] }: TaskBoardProps) {
               </select>
             </div>
 
-            <div className="flex items-center gap-1 px-3 py-1.5 bg-theme-glass border border-theme-glass rounded-xl flex-1 sm:flex-none justify-center shadow-sm">
+            <div className="flex items-center gap-1 px-2.5 py-1 bg-theme-glass border border-theme-glass rounded-[8px] flex-1 sm:flex-none justify-center shadow-sm">
               <Activity className="w-3.5 h-3.5 text-theme-secondary opacity-60" />
               <select 
                 value={statusFilter}
                 onChange={(e) => setStatusFilter(e.target.value as any)}
-                className="bg-transparent text-[10px] font-bold uppercase tracking-wider text-theme-secondary focus:outline-none cursor-pointer hover:text-theme-primary transition-colors max-w-[80px] sm:max-w-none"
+                className="bg-transparent text-[9px] font-bold uppercase tracking-wider text-theme-secondary focus:outline-none cursor-pointer hover:text-theme-primary transition-colors max-w-[80px] sm:max-w-none"
               >
-                <option value="all" className="bg-theme-surface text-theme-primary">Status: Todos</option>
-                <option value="prospect" className="bg-theme-surface text-theme-primary">Prospecção</option>
-                <option value="setup" className="bg-theme-surface text-theme-primary">Setup n8n</option>
-                <option value="active" className="bg-theme-surface text-theme-primary">SDR Ativo</option>
+                <option value="all" className="bg-theme-surface text-theme-primary">Etapas: Todas</option>
+                <option value="prospect" className="bg-theme-surface text-theme-primary">Ideias</option>
+                <option value="setup" className="bg-theme-surface text-theme-primary">Produção</option>
+                <option value="active" className="bg-theme-surface text-theme-primary">Veiculação</option>
                 <option value="paused" className="bg-theme-surface text-theme-primary">Pausado</option>
               </select>
             </div>
 
-            <div className="flex items-center gap-1 px-3 py-1.5 bg-theme-glass border border-theme-glass rounded-xl flex-1 sm:flex-none justify-center shadow-sm">
+            <div className="flex items-center gap-1 px-2.5 py-1 bg-theme-glass border border-theme-glass rounded-[8px] flex-1 sm:flex-none justify-center shadow-sm">
               <CalendarIcon className="w-3.5 h-3.5 text-theme-secondary opacity-60" />
               <select 
                 value={dateFilter}
                 onChange={(e) => setDateFilter(e.target.value as any)}
-                className="bg-transparent text-[10px] font-bold uppercase tracking-wider text-theme-secondary focus:outline-none cursor-pointer hover:text-theme-primary transition-colors max-w-[80px] sm:max-w-none"
+                className="bg-transparent text-[9px] font-bold uppercase tracking-wider text-theme-secondary focus:outline-none cursor-pointer hover:text-theme-primary transition-colors max-w-[80px] sm:max-w-none"
               >
                 <option value="all" className="bg-theme-surface text-theme-primary">Data: Todas</option>
                 <option value="today" className="bg-theme-surface text-theme-primary">Hoje</option>
@@ -736,11 +788,11 @@ export default function TaskBoard({ allSkills = [] }: TaskBoardProps) {
               </select>
             </div>
 
-            <div className="flex items-center gap-1 px-3 py-1.5 bg-theme-glass border border-theme-glass rounded-xl flex-1 sm:flex-none justify-center shadow-sm">
+            <div className="flex items-center gap-1 px-2.5 py-1 bg-theme-glass border border-theme-glass rounded-[8px] flex-1 sm:flex-none justify-center shadow-sm">
               <select 
                 value={sortBy}
                 onChange={(e) => setSortBy(e.target.value as any)}
-                className="bg-transparent text-[10px] font-bold uppercase tracking-wider text-theme-secondary focus:outline-none cursor-pointer hover:text-theme-primary transition-colors max-w-[80px] sm:max-w-none"
+                className="bg-transparent text-[9px] font-bold uppercase tracking-wider text-theme-secondary focus:outline-none cursor-pointer hover:text-theme-primary transition-colors max-w-[80px] sm:max-w-none"
               >
                 <option value="createdAt" className="bg-theme-surface text-theme-primary">Criação</option>
                 <option value="dueDate" className="bg-theme-surface text-theme-primary">Prazo</option>
@@ -749,9 +801,9 @@ export default function TaskBoard({ allSkills = [] }: TaskBoardProps) {
               </select>
               <button 
                 onClick={() => setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc')}
-                className="p-1 hover:bg-theme-glass rounded text-theme-secondary hover:text-theme-primary transition-all"
+                className="p-0.5 hover:bg-theme-glass rounded-[4px] text-theme-secondary hover:text-theme-primary transition-all"
               >
-                {sortOrder === 'asc' ? <TrendingUp className="w-3.5 h-3.5" /> : <TrendingDown className="w-3.5 h-3.5" />}
+                {sortOrder === 'asc' ? <TrendingUp className="w-3 h-3" /> : <TrendingDown className="w-3 h-3" />}
               </button>
             </div>
 
@@ -764,10 +816,10 @@ export default function TaskBoard({ allSkills = [] }: TaskBoardProps) {
                   setSearchQuery('');
                   setAssignedSearchQuery('');
                 }}
-                className="chip bg-rose-500/10 border-rose-500/20 text-rose-500 hover:bg-rose-500/20"
+                className="chip bg-rose-500/10 border-rose-500/20 text-rose-500 hover:bg-rose-500/20 text-[9px] py-1 px-2 h-auto"
                 title="Limpar Filtros"
               >
-                <X className="w-3.5 h-3.5" />
+                <X className="w-3 h-3" />
                 Limpar
               </button>
             )}
@@ -776,26 +828,26 @@ export default function TaskBoard({ allSkills = [] }: TaskBoardProps) {
       </div>
 
       {/* Dashboard CRM Metrics */}
-      <div className="bg-theme-glass/5 px-6 py-4 border-b border-theme-glass grid grid-cols-2 md:grid-cols-4 gap-4">
-        {/* Leads */}
-        <div className="bg-theme-glass/20 border border-theme-glass/40 rounded-2xl p-4 flex flex-col">
-          <span className="text-[10px] font-black uppercase tracking-widest text-theme-secondary opacity-60 mb-1">Total de Leads</span>
-          <span className="text-2xl font-bold text-theme-primary">{tasks.filter(t => t.status === 'prospect').length}</span>
+      <div className="bg-theme-glass/5 px-6 py-3 border-b border-theme-glass grid grid-cols-2 md:grid-cols-4 gap-3">
+        {/* Ideias */}
+        <div className="bg-theme-glass/20 border border-theme-glass/40 rounded-xl p-3 flex flex-col">
+          <span className="text-[9px] font-black uppercase tracking-widest text-theme-secondary opacity-60 mb-0.5">Ideias no Backlog</span>
+          <span className="text-xl font-bold text-theme-primary">{tasks.filter(t => t.status === 'prospect').length}</span>
         </div>
-        {/* Setup */}
-        <div className="bg-theme-glass/20 border border-theme-glass/40 rounded-2xl p-4 flex flex-col">
-          <span className="text-[10px] font-black uppercase tracking-widest text-theme-secondary opacity-60 mb-1">Em Setup</span>
-          <span className="text-2xl font-bold text-yellow-500">{tasks.filter(t => t.status === 'setup').length}</span>
+        {/* Produção */}
+        <div className="bg-theme-glass/20 border border-theme-glass/40 rounded-xl p-3 flex flex-col">
+          <span className="text-[9px] font-black uppercase tracking-widest text-theme-secondary opacity-60 mb-0.5">Em Produção</span>
+          <span className="text-xl font-bold text-yellow-500">{tasks.filter(t => t.status === 'setup').length}</span>
         </div>
-        {/* SDR Ativo */}
-        <div className="bg-emerald-500/10 border border-emerald-500/20 rounded-2xl p-4 flex flex-col">
-          <span className="text-[10px] font-black uppercase tracking-widest text-emerald-500 opacity-80 mb-1">Atendimentos Ativos</span>
-          <span className="text-2xl font-bold text-emerald-500">{tasks.filter(t => t.status === 'active').length}</span>
+        {/* Ativos */}
+        <div className="bg-emerald-500/10 border border-emerald-500/20 rounded-xl p-3 flex flex-col">
+          <span className="text-[9px] font-black uppercase tracking-widest text-emerald-500 opacity-80 mb-0.5">Campanhas Ativas</span>
+          <span className="text-xl font-bold text-emerald-500">{tasks.filter(t => t.status === 'active').length}</span>
         </div>
-        {/* Conversion */}
-        <div className="bg-theme-glass/20 border border-theme-glass/40 rounded-2xl p-4 flex flex-col">
-          <span className="text-[10px] font-black uppercase tracking-widest text-theme-secondary opacity-60 mb-1">Taxa de Conversão</span>
-          <span className="text-2xl font-bold text-blue-500">
+        {/* Aproveitamento */}
+        <div className="bg-theme-glass/20 border border-theme-glass/40 rounded-xl p-3 flex flex-col">
+          <span className="text-[9px] font-black uppercase tracking-widest text-theme-secondary opacity-60 mb-0.5">Taxa de Aproveitamento</span>
+          <span className="text-xl font-bold text-blue-500">
             {tasks.length > 0 
               ? Math.round((tasks.filter(t => t.status === 'active').length / tasks.filter(t => t.status !== 'paused').length) * 100) || 0
               : 0}%
@@ -897,11 +949,11 @@ export default function TaskBoard({ allSkills = [] }: TaskBoardProps) {
       {viewMode === 'kanban' ? (
         <div className="flex-1 overflow-x-auto p-6 custom-scrollbar bg-gradient-to-b from-theme-glass/10 to-transparent">
           <div className="flex gap-6 h-full min-w-max">
-            {STATUS_COLUMNS.filter(col => statusFilter === 'all' || col.id === statusFilter).map((col) => (
+             {STATUS_COLUMNS.filter(col => statusFilter === 'all' || col.id === statusFilter).map((col) => (
               <div 
                 key={col.id} 
                 className={cn(
-                  "w-80 flex flex-col gap-4 rounded-3xl transition-all duration-300 relative",
+                  "w-72 flex flex-col gap-4 rounded-3xl transition-all duration-300 relative",
                   draggedTaskId && tasks.find(t => t.id === draggedTaskId)?.status !== col.id 
                     ? "bg-theme-blue/5 border-2 border-dashed border-theme-blue/20" 
                     : "border-2 border-transparent",
@@ -1077,7 +1129,7 @@ export default function TaskBoard({ allSkills = [] }: TaskBoardProps) {
                           whileHover={{ scale: 1.01 }}
                           whileTap={{ scale: 0.99 }}
                           className={cn(
-                            "group bg-theme-card border border-theme-glass rounded-2xl p-5 hover:border-theme-secondary/30 hover:bg-theme-glass transition-all cursor-grab active:cursor-grabbing relative overflow-hidden shadow-lg",
+                            "group bg-theme-card border border-theme-glass rounded-[0.75rem] p-3 hover:border-theme-secondary/30 hover:bg-theme-glass transition-all cursor-grab active:cursor-grabbing relative overflow-hidden shadow-lg",
                             draggedTaskId === task.id && "opacity-40 grayscale-[0.5]",
                             isOverdue(task.dueDate) && task.status !== 'done' && "border-theme-rose/50 bg-theme-rose/5 shadow-[0_0_20px_rgba(244,63,94,0.15)]"
                           )}
@@ -1105,13 +1157,13 @@ export default function TaskBoard({ allSkills = [] }: TaskBoardProps) {
                               className="flex-1 cursor-pointer"
                               onClick={() => setEditingTask(task)}
                             >
-                              <div className="flex items-center gap-2 mb-1">
+                              <div className="flex items-center gap-1.5 mb-1">
                                 <select
                                   value={task.priority}
                                   onChange={(e) => handleUpdateTask(task.id, { priority: e.target.value as any })}
                                   onClick={(e) => e.stopPropagation()}
                                   className={cn(
-                                    "px-2 py-0.5 rounded text-[8px] font-black uppercase tracking-widest border focus:outline-none cursor-pointer transition-all",
+                                    "px-1.5 py-0.5 rounded-[4px] text-[7px] font-black uppercase tracking-widest border focus:outline-none cursor-pointer transition-all",
                                     task.priority === 'high' ? "text-rose-500 border-rose-500/20 bg-rose-500/5" : 
                                     task.priority === 'medium' ? "text-amber-500 border-amber-500/20 bg-amber-500/5" : 
                                     "text-blue-500 border-blue-500/20 bg-blue-500/5"
@@ -1123,7 +1175,7 @@ export default function TaskBoard({ allSkills = [] }: TaskBoardProps) {
                                 </select>
                               </div>
                               <h3 className={cn(
-                                "text-sm font-bold leading-tight group-hover:text-theme-primary transition-colors",
+                                "text-[11px] font-bold leading-tight group-hover:text-theme-primary transition-colors",
                                 task.status === 'done' ? "text-theme-secondary line-through" : "text-theme-primary"
                               )}>
                                 {task.title}
@@ -1160,6 +1212,16 @@ export default function TaskBoard({ allSkills = [] }: TaskBoardProps) {
                                 ) : (
                                   <Brain className="w-3.5 h-3.5" />
                                 )}
+                              </button>
+                              <button 
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleSendWebhook(task);
+                                }}
+                                className="p-1.5 hover:bg-emerald-500/10 rounded-lg text-theme-secondary hover:text-emerald-400 transition-all active:scale-95"
+                                title="Exportar para Automação"
+                              >
+                                {isSendingWebhook === task.id ? <Loader2 className="w-3.5 h-3.5 animate-spin text-emerald-400" /> : webhookSuccess === task.id ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Send className="w-3.5 h-3.5" />}
                               </button>
                               <button 
                                 onClick={(e) => {
@@ -1238,27 +1300,27 @@ export default function TaskBoard({ allSkills = [] }: TaskBoardProps) {
                             )}
                           </AnimatePresence>
 
-                          <div className="flex items-end justify-between gap-3 mt-2">
-                            <div className="flex flex-wrap items-center gap-2 flex-1">
+                          <div className="flex items-end justify-between gap-2 mt-2">
+                            <div className="flex flex-wrap items-center gap-1.5 flex-1">
                               <div className={cn(
-                                "px-1! py-0.5! rounded-[4px]! text-[6px]! font-black uppercase tracking-widest border shadow-sm flex items-center gap-1",
+                                "px-1 py-0.5 rounded-[4px] text-[5px] font-black uppercase tracking-widest border shadow-sm flex items-center gap-0.5",
                                 PRIORITY_COLORS[task.priority]
                               )}>
-                                {task.priority === 'high' && <TrendingUp className="w-2 h-2" />}
-                                {task.priority === 'medium' && <Activity className="w-2 h-2" />}
-                                {task.priority === 'low' && <TrendingDown className="w-2 h-2" />}
+                                {task.priority === 'high' && <TrendingUp className="w-1.5 h-1.5" />}
+                                {task.priority === 'medium' && <Activity className="w-1.5 h-1.5" />}
+                                {task.priority === 'low' && <TrendingDown className="w-1.5 h-1.5" />}
                                 {task.priority}
                               </div>
                               {task.dueDate && (
                                 <div className={cn(
-                                  "flex items-center gap-1 text-[8px] font-black uppercase tracking-widest font-mono px-1 py-0.5 rounded",
+                                  "flex items-center gap-1 text-[7px] font-black uppercase tracking-wider font-mono px-1 py-0.5 rounded-[4px]",
                                   isOverdue(task.dueDate) && task.status !== 'active' && task.status !== 'paused' ? "text-theme-rose bg-theme-rose/10 border border-theme-rose/20" : 
                                   isUpcoming(task.dueDate) && task.status !== 'active' && task.status !== 'paused' ? "text-theme-yellow bg-theme-yellow/10 border border-theme-yellow/20" :
-                                  "text-theme-secondary"
+                                  "text-theme-secondary opacity-50"
                                 )}>
                                   <Clock className="w-2.5 h-2.5" />
                                   {task.dueDate instanceof Timestamp ? task.dueDate.toDate().toLocaleDateString() : new Date(task.dueDate).toLocaleDateString()}
-                                  {isOverdue(task.dueDate) && task.status !== 'active' && task.status !== 'paused' && <AlertCircle className="w-2 h-2 ml-0.5 animate-pulse" />}
+                                  {isOverdue(task.dueDate) && task.status !== 'active' && task.status !== 'paused' && <AlertCircle className="w-2.5 h-2.5 ml-0.5 text-theme-rose animate-pulse" />}
                                 </div>
                               )}
                               {task.status !== 'active' && task.status !== 'paused' && (
@@ -1274,10 +1336,10 @@ export default function TaskBoard({ allSkills = [] }: TaskBoardProps) {
                                     }
                                   }}
                                   className={cn(
-                                    "flex items-center gap-1 text-[8px] font-black uppercase tracking-widest font-mono transition-all",
+                                    "flex items-center gap-1 text-[7px] font-black uppercase tracking-wider font-mono transition-all",
                                     task.reminderAt 
-                                      ? "text-theme-blue bg-theme-blue/10 px-1.5 py-0.5 rounded border border-theme-blue/20" 
-                                      : "text-theme-secondary opacity-40 hover:opacity-100 hover:text-theme-blue"
+                                      ? "text-theme-blue bg-theme-blue/10 px-1 py-0.5 rounded-[4px] border border-theme-blue/20" 
+                                      : "text-theme-secondary opacity-40 hover:opacity-100 hover:text-theme-blue px-1 py-0.5"
                                   )}
                                   title={task.reminderAt ? "Editar Lembrete" : "Definir Lembrete"}
                                 >
@@ -1290,30 +1352,30 @@ export default function TaskBoard({ allSkills = [] }: TaskBoardProps) {
                                 </button>
                               )}
                               {task.assignedTo && (
-                                <div className="flex items-center gap-1 text-[8px] font-black uppercase tracking-widest text-theme-blue bg-theme-blue/10 border border-theme-blue/20 px-1 py-0.5 rounded">
-                                  <User className="w-2.5 h-2.5" />
+                                <div className="flex items-center gap-1 text-[7px] font-black uppercase tracking-wider text-theme-blue bg-theme-blue/10 border border-theme-blue/20 px-1 py-0.5 rounded-[4px]">
+                                  <User className="w-2 h-2" />
                                   {task.assignedTo}
                                 </div>
                               )}
                             </div>
 
-                            <div className="flex items-center gap-2">
+                            <div className="flex items-center gap-1">
                               <button 
                                 onClick={() => handleAIMagic(task)}
                                 disabled={isAnalyzing === task.id}
                                 className={cn(
-                                  "p-1.5 bg-theme-glass rounded-lg text-theme-purple opacity-50 hover:opacity-100 hover:bg-theme-purple/10 transition-all shadow-inner active:scale-95",
+                                  "p-1 bg-theme-glass rounded-[4px] text-theme-purple opacity-50 hover:opacity-100 hover:bg-theme-purple/10 transition-all shadow-inner active:scale-95",
                                   isAnalyzing === task.id && "animate-pulse opacity-100"
                                 )}
                               >
-                                {isAnalyzing === task.id ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Bot className="w-3.5 h-3.5" />}
+                                {isAnalyzing === task.id ? <Loader2 className="w-3 h-3 animate-spin" /> : <Bot className="w-3 h-3" />}
                               </button>
                               {col.id !== 'active' && col.id !== 'paused' && (
                                 <button 
                                   onClick={() => handleUpdateStatus(task.id, 'active')}
-                                  className="p-1.5 bg-theme-glass rounded-lg text-theme-secondary hover:text-theme-blue hover:bg-theme-blue/10 transition-all shadow-inner active:scale-95"
+                                  className="p-1 bg-theme-glass rounded-[4px] text-theme-secondary hover:text-theme-blue hover:bg-theme-blue/10 transition-all shadow-inner active:scale-95"
                                 >
-                                  <ArrowRight className="w-3.5 h-3.5" />
+                                  <ArrowRight className="w-3 h-3" />
                                 </button>
                               )}
                             </div>
@@ -1335,15 +1397,15 @@ export default function TaskBoard({ allSkills = [] }: TaskBoardProps) {
                 <motion.div 
                   layout
                   className={cn(
-                    "flex flex-col md:flex-row md:items-center justify-between p-3 bg-theme-glass border border-theme-glass rounded-xl hover:bg-theme-glass/80 transition-all group gap-3",
+                    "flex flex-col md:flex-row md:items-center justify-between p-2 bg-theme-glass border border-theme-glass rounded-xl hover:bg-theme-glass/80 transition-all group gap-2",
                     isOverdue(task.dueDate) && task.status !== 'active' && task.status !== 'paused' && "border-theme-rose/50 bg-theme-rose/5 shadow-[0_0_15px_rgba(244,63,94,0.1)]"
                   )}
                 >
-                <div className="flex flex-wrap md:flex-nowrap items-center gap-3 flex-1">
+                <div className="flex flex-wrap md:flex-nowrap items-center gap-2 flex-1">
                   <button 
                     onClick={() => handleUpdateStatus(task.id, task.status === 'active' ? 'prospect' : 'active')}
                     className={cn(
-                      "w-4 h-4 rounded-full border-2 flex items-center justify-center transition-all",
+                      "w-3.5 h-3.5 rounded-full border-2 flex items-center justify-center transition-all",
                       task.status === 'active' ? "bg-theme-emerald border-theme-emerald text-white" : "border-theme-glass hover:border-theme-blue"
                     )}
                   >
@@ -1360,7 +1422,7 @@ export default function TaskBoard({ allSkills = [] }: TaskBoardProps) {
                           toggleTaskExpansion(task.id);
                         }}
                         className={cn(
-                          "p-1 rounded-[6px] transition-all active:scale-95 hover:bg-theme-glass/50",
+                          "p-0.5 rounded-[4px] transition-all active:scale-95 hover:bg-theme-glass/50",
                           expandedTasks.includes(task.id) ? "text-theme-blue" : "text-theme-secondary"
                         )}
                         title={expandedTasks.includes(task.id) ? "Recolher" : "Expandir"}
@@ -1368,7 +1430,7 @@ export default function TaskBoard({ allSkills = [] }: TaskBoardProps) {
                         {expandedTasks.includes(task.id) ? <ChevronUp className="w-2.5 h-2.5" /> : <ChevronDown className="w-2.5 h-2.5" />}
                       </button>
                       <h3 className={cn(
-                        "text-xs font-bold",
+                        "text-[10px] font-bold uppercase tracking-wider",
                         task.status === 'active' ? "text-theme-emerald" : "text-theme-primary"
                       )}>
                         {task.title}
@@ -1440,24 +1502,24 @@ export default function TaskBoard({ allSkills = [] }: TaskBoardProps) {
                     </AnimatePresence>
                   </div>
                   <div className={cn(
-                    "px-1 py-0.5 rounded-[4px] text-[6px] font-black uppercase tracking-widest border flex items-center gap-1",
+                    "px-1 py-0.5 rounded-[4px] text-[5px] font-black uppercase tracking-widest border flex items-center gap-0.5",
                     PRIORITY_COLORS[task.priority]
                   )}>
-                    {task.priority === 'high' && <TrendingUp className="w-2 h-2" />}
-                    {task.priority === 'medium' && <Activity className="w-2 h-2" />}
-                    {task.priority === 'low' && <TrendingDown className="w-2 h-2" />}
+                    {task.priority === 'high' && <TrendingUp className="w-1.5 h-1.5" />}
+                    {task.priority === 'medium' && <Activity className="w-1.5 h-1.5" />}
+                    {task.priority === 'low' && <TrendingDown className="w-1.5 h-1.5" />}
                     {task.priority}
                   </div>
                   {task.dueDate && (
                     <div className={cn(
-                      "flex items-center gap-1 text-[8px] font-black uppercase tracking-widest font-mono px-1 py-0.5 rounded",
+                      "flex items-center gap-1 text-[7px] font-black uppercase tracking-wider font-mono px-1 py-0.5 rounded-[4px]",
                       isOverdue(task.dueDate) && task.status !== 'active' && task.status !== 'paused' ? "text-theme-rose bg-theme-rose/10 border border-theme-rose/20" : 
                       isUpcoming(task.dueDate) && task.status !== 'active' && task.status !== 'paused' ? "text-theme-yellow bg-theme-yellow/10 border border-theme-yellow/20" :
                       "text-theme-secondary opacity-30"
                     )}>
                       <Clock className="w-2.5 h-2.5" />
                       {task.dueDate instanceof Timestamp ? task.dueDate.toDate().toLocaleDateString() : new Date(task.dueDate).toLocaleDateString()}
-                      {isOverdue(task.dueDate) && task.status !== 'active' && task.status !== 'paused' && <AlertCircle className="w-2 h-2 ml-0.5 animate-pulse" />}
+                      {isOverdue(task.dueDate) && task.status !== 'active' && task.status !== 'paused' && <AlertCircle className="w-2.5 h-2.5 ml-0.5 text-theme-rose animate-pulse" />}
                     </div>
                   )}
                   {task.status !== 'active' && task.status !== 'paused' && (
@@ -1473,10 +1535,10 @@ export default function TaskBoard({ allSkills = [] }: TaskBoardProps) {
                         }
                       }}
                       className={cn(
-                        "flex items-center gap-1 text-[8px] font-black uppercase tracking-widest font-mono transition-all",
+                        "flex items-center gap-1 text-[7px] font-black uppercase tracking-wider font-mono transition-all",
                         task.reminderAt 
-                          ? "text-theme-blue bg-theme-blue/10 px-1 py-0.5 rounded border border-theme-blue/20" 
-                          : "text-theme-secondary opacity-40 hover:opacity-100 hover:text-theme-blue"
+                          ? "text-theme-blue bg-theme-blue/10 px-1 py-0.5 rounded-[4px] border border-theme-blue/20" 
+                          : "text-theme-secondary opacity-40 hover:opacity-100 hover:text-theme-blue px-1 py-0.5"
                       )}
                       title={task.reminderAt ? "Editar Lembrete" : "Definir Lembrete"}
                     >
@@ -1489,12 +1551,12 @@ export default function TaskBoard({ allSkills = [] }: TaskBoardProps) {
                     </button>
                   )}
                 </div>
-                <div className="flex items-center gap-3">
+                <div className="flex items-center gap-2">
                   <select
                     value={task.priority}
                     onChange={(e) => handleUpdateTask(task.id, { priority: e.target.value as any })}
                     className={cn(
-                      "px-2 py-0.5 rounded-[6px] text-[8px] font-black uppercase tracking-widest border focus:outline-none cursor-pointer transition-all",
+                      "px-1 py-0.5 rounded-[4px] text-[7px] font-black uppercase tracking-widest border focus:outline-none cursor-pointer transition-all",
                       task.priority === 'high' ? "text-rose-500 border-rose-500/20 bg-rose-500/5" : 
                       task.priority === 'medium' ? "text-amber-500 border-amber-500/20 bg-amber-500/5" : 
                       "text-blue-500 border-blue-500/20 bg-blue-500/5"
@@ -1504,22 +1566,32 @@ export default function TaskBoard({ allSkills = [] }: TaskBoardProps) {
                     <option value="medium">Média</option>
                     <option value="high">Alta</option>
                   </select>
-                  <div className="flex items-center gap-1 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity justify-end md:justify-start">
+                  <div className="flex items-center gap-0.5 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity justify-end md:justify-start">
+                  <button 
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleSendWebhook(task);
+                    }}
+                    className="p-1 hover:bg-emerald-500/10 rounded-[4px] text-theme-secondary opacity-50 md:opacity-20 hover:text-emerald-500 hover:opacity-100 transition-all"
+                    title="Exportar para Automação (n8n/Make)"
+                  >
+                    {isSendingWebhook === task.id ? <Loader2 className="w-3 h-3 animate-spin text-emerald-500" /> : webhookSuccess === task.id ? <Check className="w-3 h-3 text-emerald-500" /> : <Send className="w-3 h-3" />}
+                  </button>
                   <button 
                     onClick={(e) => {
                       e.stopPropagation();
                       setEditingTask(task);
                     }}
-                    className="p-1.5 hover:bg-blue-500/10 rounded-[6px] text-theme-secondary opacity-50 md:opacity-20 hover:text-blue-400 hover:opacity-100 transition-all"
+                    className="p-1 hover:bg-theme-glass rounded-[4px] text-theme-secondary opacity-50 md:opacity-20 hover:text-blue-400 hover:opacity-100 transition-all"
                     title="Editar Cliente"
                   >
-                    <Edit2 className="w-3.5 h-3.5" />
+                    <Edit2 className="w-3 h-3" />
                   </button>
                   <button 
                     onClick={() => setTaskToDelete(task.id)}
-                    className="p-1.5 hover:bg-red-500/10 rounded-[6px] text-theme-secondary opacity-50 md:opacity-20 hover:text-red-400 hover:opacity-100 transition-all"
+                    className="p-1 hover:bg-theme-rose/10 rounded-[4px] text-theme-secondary opacity-50 md:opacity-20 hover:text-theme-rose hover:opacity-100 transition-all"
                   >
-                    <Trash2 className="w-3.5 h-3.5" />
+                    <Trash2 className="w-3 h-3" />
                   </button>
                 </div>
               </div>
@@ -1572,38 +1644,38 @@ export default function TaskBoard({ allSkills = [] }: TaskBoardProps) {
               </div>
 
               {editModalTab === 'details' ? (
-                <div className="space-y-6">
-                <div className="space-y-2">
+                <div className="space-y-4">
+                <div className="space-y-1">
                   <label className="text-[10px] font-black uppercase tracking-widest text-theme-secondary px-1">Nome do Cliente ou Projeto</label>
                   <input 
                     value={editingTask.title}
                     onChange={(e) => setEditingTask({ ...editingTask, title: e.target.value })}
-                    className="w-full bg-theme-glass/40 backdrop-blur-md border border-theme-glass/60 rounded-2xl px-4 py-3 text-theme-primary font-bold focus:outline-none focus:border-theme-blue/50 focus:ring-1 focus:ring-theme-blue/20 transition-all"
+                    className="w-full bg-theme-glass/40 backdrop-blur-md border border-theme-glass/60 rounded-xl px-3 py-2 text-theme-primary font-bold focus:outline-none focus:border-theme-blue/50 focus:ring-1 focus:ring-theme-blue/20 transition-all text-sm"
                   />
                 </div>
 
-                <div className="space-y-2">
+                <div className="space-y-1">
                   <label className="text-[10px] font-black uppercase tracking-widest text-theme-secondary px-1">Nicho, Escopo e Detalhes</label>
                   <textarea 
                     value={editingTask.description || ''}
                     onChange={(e) => setEditingTask({ ...editingTask, description: e.target.value })}
-                    className="w-full bg-theme-glass/40 backdrop-blur-md border border-theme-glass/60 rounded-2xl px-4 py-3 text-theme-primary text-sm focus:outline-none focus:border-theme-blue/50 focus:ring-1 focus:ring-theme-blue/20 min-h-[120px] resize-none transition-all"
+                    className="w-full bg-theme-glass/40 backdrop-blur-md border border-theme-glass/60 rounded-xl px-3 py-2 text-theme-primary text-xs focus:outline-none focus:border-theme-blue/50 focus:ring-1 focus:ring-theme-blue/20 min-h-[80px] resize-none transition-all"
                   />
                 </div>
 
-                <div className="space-y-2">
+                <div className="space-y-1">
                   <label className="text-[10px] font-black uppercase tracking-widest text-theme-secondary px-1">Tags (separadas por vírgula)</label>
                   <input 
                     value={editingTask.tags?.join(', ') || ''}
                     onChange={(e) => setEditingTask({ ...editingTask, tags: e.target.value.split(',').map(t => t.trim()) })}
-                    className="w-full bg-theme-glass/40 backdrop-blur-md border border-theme-glass/60 rounded-2xl px-4 py-3 text-theme-primary text-sm focus:outline-none focus:border-theme-blue/50 focus:ring-1 focus:ring-theme-blue/20 transition-all"
+                    className="w-full bg-theme-glass/40 backdrop-blur-md border border-theme-glass/60 rounded-xl px-3 py-2 text-theme-primary text-xs focus:outline-none focus:border-theme-blue/50 focus:ring-1 focus:ring-theme-blue/20 transition-all"
                   />
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div className="space-y-2">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-1">
                     <label className="text-[10px] font-black uppercase tracking-widest text-theme-secondary opacity-40 px-1">Prioridade</label>
-                          <div className="flex gap-1 bg-theme-glass/40 p-1 rounded-xl border border-theme-glass/60">
+                          <div className="flex gap-1 bg-theme-glass/40 p-1 rounded-[8px] border border-theme-glass/60">
                             {['low', 'medium', 'high'].map((p) => {
                               const Icon = PRIORITY_ICONS[p as keyof typeof PRIORITY_ICONS];
                               return (
@@ -1611,13 +1683,13 @@ export default function TaskBoard({ allSkills = [] }: TaskBoardProps) {
                                   key={p}
                                   onClick={() => setEditingTask({ ...editingTask, priority: p as any })}
                                   className={cn(
-                                    "flex-1 py-2 rounded-lg text-[9px] font-black uppercase tracking-widest transition-all flex items-center justify-center gap-1.5",
+                                    "flex-1 py-1.5 rounded text-[8px] font-black uppercase tracking-widest transition-all flex items-center justify-center gap-1",
                                     editingTask.priority === p 
                                       ? PRIORITY_COLORS[p as keyof typeof PRIORITY_COLORS]
                                       : "text-theme-secondary opacity-40 hover:text-theme-primary hover:bg-theme-glass/50"
                                   )}
                                 >
-                                  <Icon className="w-3 h-3" />
+                                  <Icon className="w-2.5 h-2.5" />
                                   {p}
                                 </button>
                               );
@@ -1625,37 +1697,37 @@ export default function TaskBoard({ allSkills = [] }: TaskBoardProps) {
                           </div>
                   </div>
 
-                  <div className="space-y-2">
+                  <div className="space-y-1">
                     <label className="text-[10px] font-black uppercase tracking-widest text-theme-secondary px-1">Prazo</label>
                     <input 
                       type="date"
                       value={editingTask.dueDate ? (editingTask.dueDate instanceof Timestamp ? editingTask.dueDate.toDate().toISOString().split('T')[0] : new Date(editingTask.dueDate).toISOString().split('T')[0]) : ''}
                       onChange={(e) => setEditingTask({ ...editingTask, dueDate: e.target.value })}
-                      className="w-full bg-theme-glass border border-theme-glass rounded-xl px-4 py-2 text-sm text-theme-primary focus:outline-none focus:border-theme-blue/50 font-mono"
+                      className="w-full bg-theme-glass border border-theme-glass rounded-xl px-3 py-2 text-xs text-theme-primary focus:outline-none focus:border-theme-blue/50 font-mono"
                     />
                   </div>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div className="space-y-2">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-1">
                     <label className="text-[10px] font-black uppercase tracking-widest text-theme-secondary px-1 block">Notificação (Lembrete)</label>
-                    <div className="flex items-center gap-2 bg-theme-glass border border-theme-glass rounded-xl px-4 overflow-hidden focus-within:border-theme-blue/50">
-                      <Bell className="w-3.5 h-3.5 text-theme-secondary opacity-60" />
+                    <div className="flex items-center gap-2 bg-theme-glass border border-theme-glass rounded-xl px-3 overflow-hidden focus-within:border-theme-blue/50">
+                      <Bell className="w-3 h-3 text-theme-secondary opacity-60" />
                       <input 
                         type="datetime-local"
                         value={editingTask.reminderAt ? (editingTask.reminderAt instanceof Timestamp ? editingTask.reminderAt.toDate().toISOString().slice(0, 16) : new Date(editingTask.reminderAt).toISOString().slice(0, 16)) : ''}
                         onChange={(e) => setEditingTask({ ...editingTask, reminderAt: e.target.value })}
-                        className="w-full bg-transparent py-2 text-xs text-theme-primary focus:outline-none font-mono"
+                        className="w-full bg-transparent py-1.5 text-[10px] text-theme-primary focus:outline-none font-mono"
                       />
                     </div>
                   </div>
 
-                  <div className="space-y-2">
+                  <div className="space-y-1">
                     <label className="text-[10px] font-black uppercase tracking-widest text-theme-secondary px-1">Imagem em Anexo</label>
                     <label className="cursor-pointer block">
-                      <div className="w-full bg-theme-glass border border-theme-glass rounded-xl px-4 py-2 text-xs text-theme-secondary opacity-60 hover:border-theme-blue/50 transition-all flex items-center justify-between">
+                      <div className="w-full bg-theme-glass border border-theme-glass rounded-xl px-3 py-2 text-[10px] text-theme-secondary opacity-60 hover:border-theme-blue/50 transition-all flex items-center justify-between">
                         <span className="truncate">{editingTask.image ? 'Imagem selecionada' : 'Anexar imagem'}</span>
-                        <ImageIcon className="w-3.5 h-3.5" />
+                        <ImageIcon className="w-3 h-3" />
                       </div>
                       <input 
                         type="file"
@@ -1668,7 +1740,7 @@ export default function TaskBoard({ allSkills = [] }: TaskBoardProps) {
                 </div>
 
                 {editingTask.image && (
-                  <div className="relative group rounded-2xl overflow-hidden border border-theme-glass/40 max-h-48 bg-theme-glass/10">
+                  <div className="relative group rounded-xl overflow-hidden border border-theme-glass/40 max-h-40 bg-theme-glass/10 mt-2">
                     <img 
                       src={editingTask.image} 
                       alt="Anexo" 
@@ -1677,22 +1749,22 @@ export default function TaskBoard({ allSkills = [] }: TaskBoardProps) {
                     />
                     <button 
                       onClick={() => setEditingTask({ ...editingTask, image: undefined })}
-                      className="absolute top-2 right-2 p-2 bg-red-500/80 text-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity shadow-lg"
+                      className="absolute top-2 right-2 p-1.5 bg-red-500/80 text-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity shadow-lg"
                     >
-                      <X className="w-4 h-4" />
+                      <X className="w-3.5 h-3.5" />
                     </button>
                   </div>
                 )}
 
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div className="space-y-2">
-                      <label className="text-[10px] font-black uppercase tracking-widest text-theme-secondary px-1">Agente SDR Atribuído</label>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="space-y-1">
+                      <label className="text-[10px] font-black uppercase tracking-widest text-theme-secondary px-1">Agente/Copilot Atribuído</label>
                       <div className="relative">
-                        <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-theme-secondary opacity-50" />
+                        <User className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-theme-secondary opacity-50" />
                         <select 
                           value={editingTask.assignedTo || ''}
                           onChange={(e) => setEditingTask({ ...editingTask, assignedTo: e.target.value })}
-                          className="w-full bg-theme-glass border border-theme-glass rounded-xl pl-10 pr-4 py-2 text-sm text-theme-primary focus:outline-none focus:border-theme-blue/50 appearance-none cursor-pointer"
+                          className="w-full bg-theme-glass border border-theme-glass rounded-xl pl-9 pr-3 py-2 text-xs text-theme-primary focus:outline-none focus:border-theme-blue/50 appearance-none cursor-pointer"
                         >
                           <option value="">Sem atribuição</option>
                           {allSkills.map(skill => (
@@ -1703,15 +1775,15 @@ export default function TaskBoard({ allSkills = [] }: TaskBoardProps) {
                       </div>
                     </div>
 
-                    <div className="space-y-2">
+                    <div className="space-y-1">
                       <label className="text-[10px] font-black uppercase tracking-widest text-theme-secondary px-1">Status</label>
-                      <div className="flex gap-1 bg-theme-glass p-1 rounded-xl border border-theme-glass">
+                      <div className="flex gap-1 bg-theme-glass p-0.5 rounded-[8px] border border-theme-glass overflow-x-auto custom-scrollbar pb-1">
                         {STATUS_COLUMNS.map((col) => (
                           <button
                             key={col.id}
                             onClick={() => setEditingTask({ ...editingTask, status: col.id as any })}
                             className={cn(
-                              "flex-1 py-2 rounded-lg text-[9px] font-black uppercase tracking-widest transition-all",
+                              "flex-1 py-1.5 px-2 min-w-max rounded text-[8px] font-black uppercase tracking-widest transition-all",
                               editingTask.status === col.id 
                                 ? "bg-theme-blue text-white shadow-lg"
                                 : "text-theme-secondary opacity-40 hover:text-theme-primary"
@@ -1732,7 +1804,7 @@ export default function TaskBoard({ allSkills = [] }: TaskBoardProps) {
                       <div className="m-auto flex flex-col items-center justify-center text-center opacity-40">
                         <Bot className="w-10 h-10 mb-3 text-theme-secondary" />
                         <p className="text-xs font-medium uppercase tracking-widest">Nenhuma Interação</p>
-                        <p className="text-[10px] mt-1 max-w-[200px] leading-relaxed">O SDR ainda não iniciou a qualificação deste lead.</p>
+                        <p className="text-[10px] mt-1 max-w-[200px] leading-relaxed">Ainda não há histórico ou geração de conteúdo neste card.</p>
                       </div>
                     ) : (
                       editingTask.interactions.map((interaction) => (
@@ -1750,7 +1822,7 @@ export default function TaskBoard({ allSkills = [] }: TaskBoardProps) {
                           <div className="flex items-center gap-1.5 mb-1.5 opacity-60">
                             {interaction.role === 'human' ? <User className="w-3 h-3" /> : interaction.role === 'lead' ? <User className="w-3 h-3" /> : <Bot className="w-3 h-3" />}
                             <span className="text-[9px] font-black uppercase tracking-widest flex items-center gap-1">
-                              {interaction.role === 'human' ? 'Você (SDR Local)' : interaction.role === 'lead' ? 'Lead' : 'SDR Inteligência'}
+                              {interaction.role === 'human' ? 'Você' : interaction.role === 'lead' ? 'Público/Lead' : 'Copilot IA'}
                               <span className="opacity-50">•</span>
                               <span className="opacity-70">
                                 {interaction.timestamp 
@@ -1772,7 +1844,7 @@ export default function TaskBoard({ allSkills = [] }: TaskBoardProps) {
                         type="text"
                         value={handoffMessage}
                         onChange={(e) => setHandoffMessage(e.target.value)}
-                        placeholder="Enviar mensagem para o Lead (Assumir Atendimento)..."
+                        placeholder="Adicionar comentário ao histórico..."
                         className="flex-1 bg-theme-card/50 border border-theme-glass/50 rounded-xl px-4 py-2.5 text-sm text-theme-primary placeholder:text-theme-secondary/50 focus:outline-none focus:border-theme-blue/50 focus:ring-1 focus:ring-theme-blue/20 transition-all font-medium"
                       />
                       <button 
@@ -1790,25 +1862,25 @@ export default function TaskBoard({ allSkills = [] }: TaskBoardProps) {
                 </div>
               )}
 
-              <div className="flex flex-col sm:flex-row items-center justify-between mt-10 gap-4">
+              <div className="flex flex-col sm:flex-row items-center justify-between mt-6 gap-3">
                 <button 
                   onClick={() => setTaskToDelete(editingTask.id)}
-                  className="w-full sm:w-auto flex items-center justify-center gap-2 px-4 py-2 text-theme-rose hover:bg-theme-rose/10 rounded-xl transition-all font-black uppercase tracking-widest text-[10px] group order-2 sm:order-1"
+                  className="w-full sm:w-auto flex items-center justify-center gap-1.5 px-3 py-2 text-theme-rose hover:bg-theme-rose/10 rounded-xl transition-all font-black uppercase tracking-widest text-[9px] group order-2 sm:order-1"
                 >
-                  <Trash2 className="w-4 h-4 group-hover:scale-110 transition-transform" />
+                  <Trash2 className="w-3.5 h-3.5 group-hover:scale-110 transition-transform" />
                   Excluir Cliente
                 </button>
-                <div className="flex flex-col sm:flex-row items-center gap-4 w-full sm:w-auto order-1 sm:order-2">
+                <div className="flex flex-col sm:flex-row items-center gap-2 w-full sm:w-auto order-1 sm:order-2">
                   <button 
                     onClick={() => setEditingTask(null)}
-                    className="btn-secondary w-full sm:w-auto"
+                    className="btn-secondary w-full sm:w-auto py-1.5 text-xs"
                   >
                     Descartar
                   </button>
                   <button 
                     onClick={() => handleUpdateTask(editingTask.id, editingTask)}
                     disabled={isSubmitting}
-                    className="btn-primary px-8 w-full sm:w-auto"
+                    className="btn-primary px-6 py-1.5 w-full sm:w-auto text-xs"
                   >
                     {isSubmitting ? <Loader2 className="w-3 h-3 animate-spin" /> : 'Salvar Alterações'}
                   </button>

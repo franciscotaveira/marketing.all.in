@@ -107,10 +107,10 @@ O System Prompt gerado deve guiar o modelo a atuar perfeitamente nessa função,
           </div>
           <div>
             <h2 className="text-xl font-black tracking-tight text-theme-primary">
-              {initialAgent ? 'Editar Agente' : 'Criar Agente Personalizado'}
+              {initialAgent ? 'Editar Skill' : 'Criar Skill Personalizada'}
             </h2>
             <p className="text-xs text-blue-400 font-black tracking-widest uppercase italic">
-              {initialAgent ? 'Ajuste a persona e habilidades' : 'Defina uma nova persona e habilidades'}
+              {initialAgent ? 'Ajuste a persona e capacidades' : 'Defina uma nova especialidade e capacidades'}
             </p>
           </div>
         </div>
@@ -125,7 +125,7 @@ O System Prompt gerado deve guiar o modelo a atuar perfeitamente nessa função,
           <div className="space-y-2">
             <label className="text-[10px] font-black uppercase tracking-widest text-theme-secondary opacity-40 flex items-center gap-2">
               <Bot className="w-3 h-3" />
-              Nome do Agente
+              Nome da Skill
             </label>
             <input
               type="text"
@@ -187,7 +187,7 @@ O System Prompt gerado deve guiar o modelo a atuar perfeitamente nessa função,
           <div className="flex items-center justify-between">
             <label className="text-[10px] font-black uppercase tracking-widest text-theme-secondary opacity-40 flex items-center gap-2">
               <Brain className="w-3 h-3" />
-              System Prompt (Instruções do Agente)
+              System Prompt (Instruções da Skill)
             </label>
             <button
               onClick={handleGeneratePrompt}
@@ -209,7 +209,7 @@ O System Prompt gerado deve guiar o modelo a atuar perfeitamente nessa função,
         <div className="space-y-3 pt-2">
           <label className="text-[10px] font-black uppercase tracking-widest text-theme-secondary opacity-40 flex items-center gap-2">
             <Sparkles className="w-3 h-3" />
-            Skills e Integrações (Tools)
+            Ferramentas Integradas (Tools)
           </label>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             {AVAILABLE_TOOLS.map((tool) => (
@@ -244,7 +244,7 @@ O System Prompt gerado deve guiar o modelo a atuar perfeitamente nessa função,
             disabled={!name}
           >
             <Download className="w-4 h-4" />
-            Exportar Agente
+            Exportar Skill
           </button>
         </div>
         <div className="flex gap-3 w-full sm:w-auto">

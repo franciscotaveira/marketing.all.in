@@ -72,7 +72,8 @@ export function AgentBrain({ agent, onClose, isDarkMode = true, isIntegrated }: 
           tags: ["auto-pilot", "growth", "background-task", "insight"],
           type: "insight",
           source: "Background Thread / Auto Pilot",
-          roi: Math.floor(Math.random() * 30) + 5
+          roi: Math.floor(Math.random() * 30) + 5,
+          agentId: agent.id
         };
         await firebaseService.saveMemory(newInsight as any);
       }, 15000);
@@ -132,25 +133,6 @@ export function AgentBrain({ agent, onClose, isDarkMode = true, isIntegrated }: 
   };
 
   useEffect(() => {
-    let interval: any;
-    if (autoPilotActive) {
-      interval = setInterval(async () => {
-        // Mock Auto-Pilot generating insights
-        const newInsight: Omit<BrainMemory, "id" | "createdAt" | "updatedAt"> = {
-          title: `Insight Autônomo: ${new Date().toLocaleTimeString()}`,
-          content: `Análise em background concluída.\n\n Identificamos uma queda de **12% no engajamento** em posts de fundo cinza, mas as conversões do webhook do n8n cresceram.\n\nSugestão: Aumentar orçamento na pauta de testes A/B.`,
-          tags: ["auto-pilot", "growth", "background-task", "insight"],
-          type: "insight",
-          source: "Background Thread / Auto Pilot",
-          roi: Math.floor(Math.random() * 30) + 5
-        };
-        await firebaseService.saveMemory(newInsight as any); // cast for simplicity, triggering listener
-      }, 15000); // 15 seconds for testing
-    }
-    return () => clearInterval(interval);
-  }, [autoPilotActive]);
-
-  useEffect(() => {
     loadMemories();
     const interval = setInterval(() => {
       setNeuralPulse(prev => (prev + 1) % 100);
@@ -186,9 +168,9 @@ export function AgentBrain({ agent, onClose, isDarkMode = true, isIntegrated }: 
         importance: 9
       },
       {
-        title: "[God-Tier] RAG Complexo e Agentes Autônomos no n8n",
-        content: "Para criar um Agente de IA no n8n, use o nó 'AI Agent' conectado a um 'Window Buffer Memory' (para lembrar o contexto) e ferramentas (Tools) como 'Wikipedia', 'Calculator' ou 'HTTP Request'. Para RAG, conecte um 'Vector Store' (Pinecone/Qdrant) alimentado por um 'Document Loader' e um 'Text Splitter' (chunk size 1000, overlap 200).",
-        tags: ["ia", "rag", "langchain", "agentes", "memoria"],
+        title: "[God-Tier] RAG Complexo e Habilidades Autônomas no n8n",
+        content: "Para criar uma Habilidade de IA no n8n, use o nó 'AI Agent' conectado a um 'Window Buffer Memory' (para lembrar o contexto) e ferramentas (Tools) como 'Wikipedia', 'Calculator' ou 'HTTP Request'. Para RAG, conecte um 'Vector Store' (Pinecone/Qdrant) alimentado por um 'Document Loader' e um 'Text Splitter' (chunk size 1000, overlap 200).",
+        tags: ["ia", "rag", "langchain", "skills", "memoria"],
         agentId: "automation-engineer",
         type: "insight" as const,
         importance: 10
@@ -295,7 +277,7 @@ export function AgentBrain({ agent, onClose, isDarkMode = true, isIntegrated }: 
 
   const generateGraph = (mems: BrainMemory[]) => {
     const nodes: BrainNode[] = [
-      { id: "core", label: agent?.name || "Cérebro Central", type: "agent", val: 20, color: "#3b82f6" }
+      { id: "core", label: agent?.name || "Cérebro Central", type: "skill", val: 20, color: "#3b82f6" }
     ];
     const links: BrainLink[] = [];
 
@@ -565,7 +547,7 @@ ${selectedMemory.content}`;
                 </button>
                 <div className="flex items-center gap-6 text-[9px] uppercase font-black tracking-[0.25em] text-theme-secondary">
                   <div className="flex items-center gap-3">
-                    <div className="w-2.5 h-2.5 rounded-full bg-theme-blue shadow-[0_0_15px_rgba(59,130,246,0.8)]" /> Agente
+                    <div className="w-2.5 h-2.5 rounded-full bg-theme-blue shadow-[0_0_15px_rgba(59,130,246,0.8)]" /> Skill
                   </div>
                   <div className="flex items-center gap-3">
                     <div className="w-2.5 h-2.5 rounded-full bg-theme-orange shadow-[0_0_15px_rgba(249,115,22,0.8)]" /> Insight

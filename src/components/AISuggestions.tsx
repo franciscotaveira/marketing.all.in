@@ -49,7 +49,7 @@ export const AISuggestions: React.FC = () => {
 
       const result = await orchestrateRequest(
         prompt,
-        'productivity-strategist',
+        ['productivity-strategist'],
         'gemini-3-flash-preview',
         'Você é um estrategista de produtividade que gera sugestões em JSON.',
         false,

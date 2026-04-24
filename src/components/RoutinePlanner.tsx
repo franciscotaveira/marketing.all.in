@@ -35,7 +35,8 @@ import {
 import { cn } from '../lib/utils';
 import { Task } from '../types';
 
-const FREQUENCY_LABELS = {
+const FREQUENCY_LABELS: Record<string, string> = {
+  once: 'Uma Vez',
   daily: 'Diário',
   weekly: 'Semanal',
   monthly: 'Mensal',
@@ -59,9 +60,12 @@ export default function RoutinePlanner() {
     title: '',
     frequency: 'daily',
     days: [],
+    monthDay: 1,
+    date: '',
     startTime: '09:00',
     endTime: '10:00',
-    agentId: 'productivity-strategist',
+    agentIds: ['productivity-strategist'],
+    isActive: true,
   });
   const [draggedTaskId, setDraggedTaskId] = useState<string | null>(null);
   const [isOverRoutineId, setIsOverRoutineId] = useState<string | null>(null);
@@ -164,9 +168,12 @@ export default function RoutinePlanner() {
         title: '',
         frequency: 'daily',
         days: [],
+        monthDay: 1,
+        date: '',
         startTime: '09:00',
         endTime: '10:00',
-        agentId: 'productivity-strategist',
+        agentIds: ['productivity-strategist'],
+        isActive: true,
       });
       setIsAddingRoutine(false);
     } catch (error) {
@@ -293,7 +300,7 @@ export default function RoutinePlanner() {
                             </span>
                           </div>
                           <div className="flex flex-wrap gap-1 items-center">
-                            {DAYS_OF_WEEK.map((day) => (
+                            {routine.frequency === 'weekly' && DAYS_OF_WEEK.map((day) => (
                               <span 
                                 key={day.id}
                                 className={cn(
@@ -306,14 +313,28 @@ export default function RoutinePlanner() {
                                 {day.label}
                               </span>
                             ))}
-                            {routine.agentId && (
-                              <div className="ml-2 flex items-center gap-1.5 px-2 py-0.5 bg-theme-glass border border-theme-glass rounded-lg">
-                                <div className="w-1.5 h-1.5 rounded-full bg-theme-blue" />
-                                <span className="text-[8px] font-black uppercase tracking-widest text-theme-secondary opacity-60">
-                                  {MARKETING_SKILLS.find(s => s.id === routine.agentId)?.name || 'Agente'}
-                                </span>
-                              </div>
+                            {routine.frequency === 'monthly' && (
+                              <span className="px-2 py-1 bg-theme-glass border border-theme-glass rounded-lg text-[9px] font-bold uppercase text-theme-secondary tracking-widest">
+                                Dia {routine.monthDay || 1}
+                              </span>
                             )}
+                            {routine.frequency === 'once' && (
+                              <span className="px-2 py-1 bg-theme-glass border border-theme-glass rounded-lg text-[9px] font-bold uppercase text-theme-secondary tracking-widest">
+                                {routine.date ? new Date(routine.date).toLocaleDateString() : 'Data não definida'}
+                              </span>
+                            )}
+                            {(routine.agentIds || (routine.agentId ? [routine.agentId] : [])).map(id => {
+                              const skill = MARKETING_SKILLS.find(s => s.id === id);
+                              if (!skill) return null;
+                              return (
+                                <div key={skill.id} className="ml-1 flex items-center gap-1.5 px-2 py-0.5 bg-theme-blue/10 border border-theme-blue/20 rounded-lg">
+                                  <div className="w-1.5 h-1.5 rounded-full bg-theme-blue" />
+                                  <span className="text-[8px] font-black uppercase tracking-widest text-theme-blue">
+                                    {skill.name}
+                                  </span>
+                                </div>
+                              );
+                            })}
                           </div>
                         </div>
                       </div>
@@ -518,7 +539,7 @@ export default function RoutinePlanner() {
                   <div>
                     <label className="text-[11px] font-bold uppercase tracking-wider text-theme-secondary mb-2 block">Frequência</label>
                     <div className="flex gap-2 bg-theme-glass/40 p-1 rounded-xl border border-theme-glass/60">
-                      {(['daily', 'weekly', 'monthly'] as const).map((freq) => (
+                      {(['daily', 'weekly', 'monthly', 'once'] as const).map((freq) => (
                         <button
                           key={freq}
                           onClick={() => setNewRoutine({ ...newRoutine, frequency: freq, days: freq === 'daily' ? DAYS_OF_WEEK.map(d => d.id) : [] })}
@@ -557,18 +578,35 @@ export default function RoutinePlanner() {
                   </div>
 
                   <div>
-                    <label className="text-[11px] font-bold uppercase tracking-wider text-theme-secondary mb-2 block">Agente Responsável</label>
-                    <select 
-                      value={newRoutine.agentId}
-                      onChange={(e) => setNewRoutine({ ...newRoutine, agentId: e.target.value })}
-                      className="w-full bg-theme-glass border border-theme-glass rounded-xl px-4 py-3 text-theme-primary focus:outline-none focus:border-orange-500/50 transition-all text-sm font-medium appearance-none"
-                    >
-                      {MARKETING_SKILLS.map(skill => (
-                        <option key={skill.id} value={skill.id} className="bg-theme-surface">
-                          {skill.name}
-                        </option>
-                      ))}
-                    </select>
+                    <label className="text-[11px] font-bold uppercase tracking-wider text-theme-secondary mb-2 block">Skills Responsáveis</label>
+                    <div className="flex flex-wrap gap-2">
+                      {MARKETING_SKILLS.map(skill => {
+                        const isSelected = newRoutine.agentIds?.includes(skill.id) || newRoutine.agentId === skill.id;
+                        return (
+                          <button
+                            key={skill.id}
+                            type="button"
+                            onClick={() => {
+                              const currentIds = newRoutine.agentIds || (newRoutine.agentId ? [newRoutine.agentId] : []);
+                              if (isSelected) {
+                                setNewRoutine({ ...newRoutine, agentIds: currentIds.filter(id => id !== skill.id), agentId: undefined });
+                              } else {
+                                setNewRoutine({ ...newRoutine, agentIds: [...currentIds, skill.id], agentId: undefined });
+                              }
+                            }}
+                            className={cn(
+                              "px-3 py-1.5 rounded-full text-[10px] font-bold border transition-all flex items-center gap-1.5",
+                              isSelected 
+                                ? "bg-theme-blue/20 border-theme-blue/50 text-theme-blue" 
+                                : "bg-theme-glass border-theme-glass text-theme-secondary hover:text-theme-primary hover:border-theme-glass"
+                            )}
+                          >
+                            <div className={cn("w-1.5 h-1.5 rounded-full", isSelected ? "bg-theme-blue" : "bg-theme-secondary opacity-50")} />
+                            {skill.name}
+                          </button>
+                        );
+                      })}
+                    </div>
                   </div>
                 </div>
 
@@ -599,10 +637,28 @@ export default function RoutinePlanner() {
                       <p className="text-[10px] text-theme-secondary opacity-60 uppercase font-black tracking-widest">Execução Diária</p>
                       <p className="text-xs text-theme-primary mt-1">Esta rotina será executada todos os dias nos horários definidos.</p>
                     </div>
-                  ) : (
-                    <div className="p-4 bg-theme-glass/20 border border-theme-glass/40 rounded-2xl text-center">
+                  ) : newRoutine.frequency === 'monthly' ? (
+                    <div className="p-4 bg-theme-glass/20 border border-theme-glass/40 rounded-2xl text-center space-y-3">
                       <p className="text-[10px] text-theme-secondary opacity-60 uppercase font-black tracking-widest">Execução Mensal</p>
-                      <p className="text-xs text-theme-primary mt-1">Esta rotina será executada uma vez por mês.</p>
+                      <p className="text-xs text-theme-primary mt-1">Escolha o dia do mês para execução (1 a 31):</p>
+                      <input 
+                        type="number"
+                        min="1" max="31" step="1"
+                        value={newRoutine.monthDay || 1}
+                        onChange={(e) => setNewRoutine({ ...newRoutine, monthDay: parseInt(e.target.value) || 1 })}
+                        className="w-full max-w-24 bg-theme-glass text-center border border-theme-glass rounded-xl px-4 py-2 text-theme-primary focus:outline-none focus:border-orange-500/50 transition-all text-sm mx-auto block"
+                      />
+                    </div>
+                  ) : (
+                    <div className="p-4 bg-theme-glass/20 border border-theme-glass/40 rounded-2xl text-center space-y-3">
+                      <p className="text-[10px] text-theme-secondary opacity-60 uppercase font-black tracking-widest">Execução Única</p>
+                      <p className="text-xs text-theme-primary mt-1">Escolha a data de execução:</p>
+                      <input 
+                        type="date"
+                        value={newRoutine.date || ''}
+                        onChange={(e) => setNewRoutine({ ...newRoutine, date: e.target.value })}
+                        className="w-full bg-theme-glass text-center border border-theme-glass rounded-xl px-4 py-2 text-theme-primary focus:outline-none focus:border-orange-500/50 transition-all text-sm mx-auto block"
+                      />
                     </div>
                   )}
                 </div>
